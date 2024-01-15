@@ -9,7 +9,7 @@
             ],
             "liveries": [
                 {
-                    "name": "Lucas is cool",
+                    "name": "Yellow",
                     "texture": [
                         "/models/aircraft/premium/cub/texture_0.jpg"
                     ]
@@ -19,7 +19,14 @@
                     "texture": [
                         "/models/aircraft/premium/cub/texture_1.jpg"
                     ]
+                },
+				{
+                    "name": "Lucas and Dad are super cool",
+                    "texture": [
+                        "/liveries/kermit-cesna.jpg"
+                    ]
                 }
+				
             ],
             "labels": ["Texture"]
         },
