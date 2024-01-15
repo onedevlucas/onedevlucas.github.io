@@ -35,7 +35,7 @@ async function init(){
     //Load liveries
 
 
-    await fetch("file:///C:/bin/lucas.json").then(res => res.json()).then(data => liveryobj = data)
+    await fetch("https://onedevlucas.github.io/lucas.json").then(res => res.json()).then(data => liveryobj = data)
 
     //remove original buttons
 
