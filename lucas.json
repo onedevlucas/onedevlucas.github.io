@@ -9080,6 +9080,13 @@
                         "/models/aircraft/premium/777_300/specular_0.jpg",
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/cathaypacificold.jpg"
                     ]
+                },
+				{
+                    "name": "LATAM Airlines",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://cdn.discordapp.com/attachments/1195565724488450082/1196194841747525742/b777-300er_9.png?ex=65b6be42&is=65a44942&hm=35db0fa6e6a6a8a95502ec0f823cf6ff0b0c4006c94e026939a81a4bdd493856&"
+                    ]
                 }
             ],
             "labels": ["Specular shader", "Texture"]
