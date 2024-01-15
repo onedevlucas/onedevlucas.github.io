@@ -9087,7 +9087,99 @@
                         "/models/aircraft/premium/777_300/specular_0.jpg",
                         "https://cdn.discordapp.com/attachments/1195565724488450082/1196194841747525742/b777-300er_9.png?ex=65b6be42&is=65a44942&hm=35db0fa6e6a6a8a95502ec0f823cf6ff0b0c4006c94e026939a81a4bdd493856&"
                     ]
+                },
+				{
+                    "name": "Aeroflot (Skyteam Livery)",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://cdn.discordapp.com/attachments/1195565724488450082/1196185403863072949/b777-300er_4.png?ex=65b6b578&is=65a44078&hm=fd2fe8b27cd5dff5a8531ed20d49ed21ce266c3d90175e05ab6d5d88c8cfbd17&"
+                    ]
+                },
+				{
+                    "name": "Azur Air",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://cdn.discordapp.com/attachments/1195565724488450082/1196176557287419935/b777-300er_3.png?ex=65b6ad3b&is=65a4383b&hm=13678692195aee74e5232eef7f037f3a8dead2b0f0ff58d78bf727f12e2708e3&"
+                    ]
+                },
+				{
+                    "name": "Austrian Airlines",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://cdn.discordapp.com/attachments/1195565724488450082/1196156833900007524/b777-300er_12.png?ex=65b69adc&is=65a425dc&hm=be0b22095b7a18b50bf0a0611f9c2f66d1e491f2bddbd4b06a88481cb2569a05&"
+                    ]
+                },
+				{
+                    "name": "United Airlines (Star Alliance Livery)",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://cdn.discordapp.com/attachments/1195565724488450082/1196148078428827688/b777-300er_9.png?ex=65b692b5&is=65a41db5&hm=8daa7ad7d9aff22d7dd9af166029336b527fbec0e6e70b68c7cd829e4e17349b&"
+                    ]
+                },
+				{
+                    "name": "Gecas Cargo",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://cdn.discordapp.com/attachments/1195565724488450082/1195839767393345656/b777-300er_7.png?ex=65b57392&is=65a2fe92&hm=5ef9b04b2b1eb9617d83ef702b257b8cecd7694c46cfbc106ec444a987b44ace&"
+                    ]
+                },
+				{
+                    "name": "British Airways",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://cdn.discordapp.com/attachments/1195565724488450082/1195776758453129326/b777-300er_5.png?ex=65b538e3&is=65a2c3e3&hm=4e8589d1436b92a30dff3a51bab19e7fac2d2b5f30990f6091c64250ead1c9c1&"
+                    ]
+                },
+				{
+                    "name": "MGA Airways",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://cdn.discordapp.com/attachments/1195565724488450082/1195571960290213948/b777-300er_2.png?ex=65b47a27&is=65a20527&hm=bd929647940c600bb319f9746af7c066756099a27e187eefbd124a97ec458130&"
+                    ]
+                },
+				{
+                    "name": "Ethiopian Airlines",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://cdn.discordapp.com/attachments/1195565724488450082/1195565761717088336/b777-300er.png?ex=65b47462&is=65a1ff62&hm=b1ebc4605e58ae7e2fd0e0a9ce0136b6a9e4beb26cb2ffe16cd00624312e09bc&"
+                    ]
+                },
+				{
+                    "name": "Air France (Skyteam Livery)",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1196194956633714799/Sans_titre.png?ex=65b6be5d&is=65a4495d&hm=e740f99a2069abe735a96588b6bb4f9a1fdfd60c4d041e975a84151a2a110058&"
+                    ]
+                },
+				{
+                    "name": "ANA (Star Alliance Livery)",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1196177527518015538/Sans_titre.png?ex=65b6ae22&is=65a43922&hm=d17b427b84980dd61427aeb662a83adbe9fd0f5f4e8a6ab44a55aa241d1ac193&"
+                    ]
+                },
+				{
+                    "name": "Eva Air Old Design",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1196173805886898216/EVA_777-300ER_V2.png?ex=65b6aaab&is=65a435ab&hm=23e89ca97fc06e87d6739cf785061c3e7e3b330ead9dc616c233e2ca2c68de7a&"
+                    ]
+                },
+				{
+                    "name": "Eva Air Old Design (2nd Version)",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1196173807824670820/EVA_777-300ER.png?ex=65b6aaab&is=65a435ab&hm=1ddfe6d303cd823b78103c2881426c6a67b25d2d12c788b247ffc272d10f69ae&"
+                    ]
+                },
+				{
+                    "name": "Air France Paris Livery",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1196134717418905600/Sans_titre.png?ex=65b68643&is=65a41143&hm=506ed8c951619a0a5e503d2db6eb11d840c59b7a316677c225d4a2230bac3dc8&"
+                    ]
                 }
+				
             ],
             "labels": ["Specular shader", "Texture"]
         },
