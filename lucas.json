@@ -9192,7 +9192,14 @@
                         "/models/aircraft/premium/777_300/specular_0.jpg",
                         "https://cdn.discordapp.com/attachments/1086991627723227298/1196499740305670234/mmexport1705314641669.png?ex=65b7da37&is=65a56537&hm=336eee880cc295b1583a7493bba060b3cde5c36253624a6971de2374d9b99895&"
                     ]
-                }
+                },
+				{
+                    "name": "Garuda Indonesia (Skyteam livery)",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/garudasky.png"
+                    ]
+                },
 				
             ],
             "labels": ["Specular shader", "Texture"]
