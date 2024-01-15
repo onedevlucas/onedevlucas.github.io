@@ -9135,11 +9135,11 @@
                     "name": "ANA (Skyteam livery)",
                     "texture": [
                         "/models/aircraft/premium/777_300/specular_0.jpg",
-                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/anasky.png"
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1196177527518015538/Sans_titre.png?ex=65b6ae22&is=65a43922&hm=d17b427b84980dd61427aeb662a83adbe9fd0f5f4e8a6ab44a55aa241d1ac193&"
                     ]
                 },
                 {
-                    "name": "Australian Airlines",
+                    "name": "Austrian Airlines",
                     "texture": [
                         "/models/aircraft/premium/777_300/specular_0.jpg",
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/austrian.png"
@@ -9174,17 +9174,17 @@
                     ]
                 },
                 {
-                    "name": "EVA Air (old logo)",
+                    "name": "EVA Air (old design)",
                     "texture": [
                         "/models/aircraft/premium/777_300/specular_0.jpg",
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/eva1.png"
                     ]
                 },
                 {
-                    "name": "EVA Air (new logo)",
+                    "name": "EVA Air (old design 2nd version)",
                     "texture": [
                         "/models/aircraft/premium/777_300/specular_0.jpg",
-                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/eva2s.png"
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1196173807824670820/EVA_777-300ER.png?ex=65b6aaab&is=65a435ab&hm=1ddfe6d303cd823b78103c2881426c6a67b25d2d12c788b247ffc272d10f69ae&"
                     ]
                 },
                 {
@@ -9219,7 +9219,7 @@
                     "name": "goturkiye.com",
                     "texture": [
                         "/models/aircraft/premium/777_300/specular_0.jpg",
-                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/qoturkiye.png"
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1195572217635938334/b777-300er_2.png?ex=65b47a65&is=65a20565&hm=9fe1b995a9ccc2091f816fa267cd5ab322d06cfa0cba29e21d5e798127f78e2d&"
                     ]
                 },
                 {
