@@ -9185,6 +9185,13 @@
                         "/models/aircraft/premium/777_300/specular_0.jpg",
                         "https://cdn.discordapp.com/attachments/1086991627723227298/1194636834572075078/Qatar.jpg?ex=65b11340&is=659e9e40&hm=9aa208afb043fe595595a41b2a72a5e794d0071e7b8e342a02373c21a9539699&"
                     ]
+                },
+				{
+                    "name": "Air China (Dream Chaser Livery)",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1196499740305670234/mmexport1705314641669.png?ex=65b7da37&is=65a56537&hm=336eee880cc295b1583a7493bba060b3cde5c36253624a6971de2374d9b99895&"
+                    ]
                 }
 				
             ],
