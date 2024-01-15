@@ -9080,13 +9080,6 @@
                         "/models/aircraft/premium/777_300/specular_0.jpg",
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/cathaypacificold.jpg"
                     ]
-                },
-				{
-                    "name": "British Airways",
-                    "texture": [
-                        "/models/aircraft/premium/777_300/specular_0.jpg",
-                        "https://cdn.discordapp.com/attachments/1195565724488450082/1195776758453129326/b777-300er_5.png?ex=65b538e3&is=65a2c3e3&hm=4e8589d1436b92a30dff3a51bab19e7fac2d2b5f30990f6091c64250ead1c9c1&"
-                    ]
                 }
             ],
             "labels": ["Specular shader", "Texture"]
