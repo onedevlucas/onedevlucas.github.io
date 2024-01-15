@@ -14,12 +14,6 @@
                         "/models/aircraft/premium/cub/texture_0.jpg"
                     ]
                 },
-                {
-                    "name": "Red",
-                    "texture": [
-                        "/models/aircraft/premium/cub/texture_1.jpg"
-                    ]
-                },
 				{
                     "name": "Lucas and Dad are super cool",
                     "texture": [
