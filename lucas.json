@@ -9277,6 +9277,34 @@
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/speculars/ersf.png",
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/bigtwin.png"
                     ]
+                },
+				{
+                    "name": "AeroLogic",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/speculars/ersf.png",
+                        "https://cdn.discordapp.com/attachments/1195565724488450082/1197564701974999160/b777-300er-2.png?ex=65bbba0a&is=65a9450a&hm=5389db34693835fced0ba2711965c7db0f40c3c9ba1d40e1fa2d326795858642&"
+                    ]
+                },
+				{
+                    "name": "Air France Cargo",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/speculars/ersf.png",
+                        "https://cdn.discordapp.com/attachments/1195565724488450082/1197564775111078042/b777-300er-1-1.png?ex=65bbba1c&is=65a9451c&hm=766185f9a5622210795bef37f44c38c1c085a553ee163768bacb874671559487&"
+                    ]
+                },
+				{
+                    "name": "ANA Cargo",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/speculars/ersf.png",
+                        "https://cdn.discordapp.com/attachments/1195565724488450082/1197564902915706880/b777-300er-1-2.png?ex=65bbba3a&is=65a9453a&hm=668b2442c962040afa652131f59d667f4da39b2e99e44ac0f52803da6317fa02&"
+                    ]
+                },
+				{
+                    "name": "CMA CGM Air Cargo",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/speculars/ersf.png",
+                        "https://cdn.discordapp.com/attachments/1195565724488450082/1197569939876360212/b777-300er_1_1_1.png?ex=65bbbeeb&is=65a949eb&hm=f78bcb69d4474322a191e5e618968a594ca0a5c7d028cabdd6759838b3629bfc&"
+                    ]
                 }
             ],
             "labels": ["Specular shader", "Texture"]
