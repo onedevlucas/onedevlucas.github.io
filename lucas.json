@@ -15,7 +15,7 @@
                     ]
                 },
                 {
-                    "name": "Lucas is awesome",
+                    "name": "Red",
                     "texture": [
                         "/models/aircraft/premium/cub/texture_1.jpg"
                     ]
@@ -3858,6 +3858,12 @@
                     "texture": [
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/ATR_72-600/newzealand.png"
                     ]
+                },
+                {
+                    "name": "Alitalia Express",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/ATR_72-600/alitalia.png"
+                    ]
                 }
             ],
             "labels": ["Texture"]
@@ -4491,6 +4497,18 @@
                     "name": "Kenya Airways (retro livery)",
                     "texture": [
                         "https://raw.githubusercontent.com/Spice9/stuff2/main/KenyaRetro789_NEW.png"
+                    ]
+                },
+                {
+                    "name": "Juneyao Air (Genshin livery)",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b787-9/genshin.png"
+                    ]
+                },
+                {
+                    "name": "Xiamen Airlines (in support of the UN livery)",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b787-9/xiamenun.png"
                     ]
                 }
             ],
@@ -5516,9 +5534,15 @@
                     ]
                 },
                 {
-                    "name": "Chuniqu Airways",
+                    "name": "Chunqiu Airways",
                     "texture": [
-                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/airbus_a320neo/chuniqu.png"
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/airbus_a320neo/chunqiu.png"
+                    ]
+                },
+                {
+                    "name": "Sichuan Airlines",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/airbus_a320neo/sichuan.png"
                     ]
                 }
             ],
@@ -8151,13 +8175,19 @@
                 {
                     "name": "Air China (Star Alliance livery)",
                     "texture": [
-                        "https://i.ibb.co/WB4LwRn/359.jpg"
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/airbus_a350-900/airchinastar.jpgs"
                     ]
                 },
                 {
                     "name": "Sichuan Airlines",
                     "texture": [
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/airbus_a350-900/sichuanairlines.png"
+                    ]
+                },
+                {
+                    "name": "China Eastern (1st Airbus A350 delivered form China livery)",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/airbus_a350-900/chinaeastern1st.jpg"
                     ]
                 }
             ],
@@ -8727,6 +8757,18 @@
                     "texture": [
                         "https://raw.githubusercontent.com/Spice9/stuff2/main/KLM%20A321neo.png"
                     ]
+                },
+                {
+                    "name": "Chunqiu Airways",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/airbus_a321neo/chunqiu.png"
+                    ]
+                },
+                {
+                    "name": "Sichuan Airlines",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/airbus_a321neo/sichuan.png"
+                    ]
                 }
             ],
             "labels": ["Texture"]
@@ -9132,10 +9174,10 @@
                     ]
                 },
                 {
-                    "name": "ANA (Skyteam livery)",
+                    "name": "ANA (Star Alliance livery)",
                     "texture": [
                         "/models/aircraft/premium/777_300/specular_0.jpg",
-                        "https://cdn.discordapp.com/attachments/1086991627723227298/1196177527518015538/Sans_titre.png?ex=65b6ae22&is=65a43922&hm=d17b427b84980dd61427aeb662a83adbe9fd0f5f4e8a6ab44a55aa241d1ac193&"
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/anastar.png"
                     ]
                 },
                 {
@@ -9163,7 +9205,7 @@
                     "name": "Air China (Dream Chaser livery)",
                     "texture": [
                         "/models/aircraft/premium/777_300/specular_0.jpg",
-                        "https://cdn.discordapp.com/attachments/1086991627723227298/1196499740305670234/mmexport1705314641669.png?ex=65b7da37&is=65a56537&hm=336eee880cc295b1583a7493bba060b3cde5c36253624a6971de2374d9b99895&"
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/dreamchaser.png"
                     ]
                 },
                 {
@@ -9174,17 +9216,17 @@
                     ]
                 },
                 {
-                    "name": "EVA Air (old design)",
+                    "name": "EVA Air (old logo)",
                     "texture": [
                         "/models/aircraft/premium/777_300/specular_0.jpg",
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/eva1.png"
                     ]
                 },
                 {
-                    "name": "EVA Air (old design 2nd version)",
+                    "name": "EVA Air (new logo)",
                     "texture": [
                         "/models/aircraft/premium/777_300/specular_0.jpg",
-                        "https://cdn.discordapp.com/attachments/1086991627723227298/1196173807824670820/EVA_777-300ER.png?ex=65b6aaab&is=65a435ab&hm=1ddfe6d303cd823b78103c2881426c6a67b25d2d12c788b247ffc272d10f69ae&"
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/eva2.png"
                     ]
                 },
                 {
@@ -9198,7 +9240,7 @@
                     "name": "Korean Air Lines (Skyteam livery)",
                     "texture": [
                         "/models/aircraft/premium/777_300/specular_0.jpg",
-                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/garudasky.png"
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/koreansky.png"
                     ]
                 },
                 {
@@ -9219,7 +9261,7 @@
                     "name": "goturkiye.com",
                     "texture": [
                         "/models/aircraft/premium/777_300/specular_0.jpg",
-                        "https://cdn.discordapp.com/attachments/1086991627723227298/1195572217635938334/b777-300er_2.png?ex=65b47a65&is=65a20565&hm=9fe1b995a9ccc2091f816fa267cd5ab322d06cfa0cba29e21d5e798127f78e2d&"
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/goturkiye.png"
                     ]
                 },
                 {
@@ -9227,6 +9269,13 @@
                     "texture": [
                         "/models/aircraft/premium/777_300/specular_0.jpg",
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/unitedstar.png"
+                    ]
+                },
+                {
+                    "name": "IAI - GECAS CARGO 777-300ERSF Big Twin",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/speculars/ersf.png",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/bigtwin.png"
                     ]
                 }
             ],
