@@ -9353,6 +9353,27 @@
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/speculars/ersf.png",
                         "https://cdn.discordapp.com/attachments/1195565724488450082/1198009133278953482/b777-300ersf.png?ex=65bd57f3&is=65aae2f3&hm=6fb880f513a39d5a7c6f242e59563e72c78a97701caad11f1b658ec7496c2fc6&"
                     ]
+                },
+				{
+                    "name": "Cargojet Canada",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/speculars/ersf.png",
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1197955981133496452/Cargojet_777.png?ex=65bd2672&is=65aab172&hm=d6bdc40627f5fa20ed3e6d249cd0c40c75e79298c88024ed250159d48d67488f&"
+                    ]
+                },
+				{
+                    "name": "Mammoth Cargo",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/speculars/ersf.png",
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1197967755140403292/Mammoth.png?ex=65bd3169&is=65aabc69&hm=8208bf54337ceb28b89769986e892e9fb0c507b9f2dcef4b2d2bd79e800afd08&"
+                    ]
+                },
+				{
+                    "name": "Big Twin Blue Version",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/speculars/ersf.png",
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1197994220393345135/ERSF.png?ex=65bd4a0f&is=65aad50f&hm=8aa4f2395721668ace289836965ba2edb45739a64d9d18f91939eb91f2efa189&"
+                    ]
                 }
             ],
             "labels": ["Specular shader", "Texture"]
