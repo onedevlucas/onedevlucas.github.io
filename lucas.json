@@ -9312,6 +9312,13 @@
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/speculars/ersf.png",
                         "https://cdn.discordapp.com/attachments/1086991627723227298/1197724533914882098/image_2024-01-18_180734324.png?ex=65bc4ee5&is=65a9d9e5&hm=bfc0efd25c55d52bd3e1bfdb509c98d866e7a0dca35841fb59cd8c40bf69891b&"
                     ]
+                },
+				{
+                    "name": "Asiana Airlines",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/speculars/ersf.png",
+                        "https://cdn.discordapp.com/attachments/1195565724488450082/1197736177772535889/b777-300er_20.png?ex=65bc59bd&is=65a9e4bd&hm=dd060608ea4c5070efbaa70cd2bcc0cbab6945d041a28bdfd7da019e1d25030e&"
+                    ]
                 }
             ],
             "labels": ["Specular shader", "Texture"]
