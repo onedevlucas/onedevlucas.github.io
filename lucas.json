@@ -9305,6 +9305,13 @@
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/speculars/ersf.png",
                         "https://cdn.discordapp.com/attachments/1195565724488450082/1197569939876360212/b777-300er_1_1_1.png?ex=65bbbeeb&is=65a949eb&hm=f78bcb69d4474322a191e5e618968a594ca0a5c7d028cabdd6759838b3629bfc&"
                     ]
+                },
+				{
+                    "name": "Emirates SkyCargo",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/speculars/ersf.png",
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1197724533914882098/image_2024-01-18_180734324.png?ex=65bc4ee5&is=65a9d9e5&hm=bfc0efd25c55d52bd3e1bfdb509c98d866e7a0dca35841fb59cd8c40bf69891b&"
+                    ]
                 }
             ],
             "labels": ["Specular shader", "Texture"]
