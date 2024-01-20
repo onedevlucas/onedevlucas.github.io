@@ -9395,6 +9395,13 @@
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/speculars/ersf.png",
                         "https://cdn.discordapp.com/attachments/1086991627723227298/1198026779512815766/Sans_titre.png?ex=65bd6862&is=65aaf362&hm=ec025f69cebfa4ffd73c0ca381c35cf90bb74c9badfddaf84db27a18ffe2cc92&"
                     ]
+                },
+				{
+                    "name": "Thai Airways Cargo",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/speculars/ersf.png",
+                        "https://cdn.discordapp.com/attachments/1195565724488450082/1198119283843154020/b777-300ersf.png?ex=65bdbe89&is=65ab4989&hm=c6d827ae931c99c91a6e01505aff14d20083182fb00bf1cac3a03017f3efd6d4&"
+                    ]
                 }
             ],
             "labels": ["Specular shader", "Texture"]
