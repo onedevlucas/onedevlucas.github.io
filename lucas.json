@@ -9374,6 +9374,27 @@
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/speculars/ersf.png",
                         "https://cdn.discordapp.com/attachments/1086991627723227298/1197994220393345135/ERSF.png?ex=65bd4a0f&is=65aad50f&hm=8aa4f2395721668ace289836965ba2edb45739a64d9d18f91939eb91f2efa189&"
                     ]
+                },
+				{
+                    "name": "Turkish Airlines Cargo",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/speculars/ersf.png",
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1198078627057774662/b777-300ersf_6.png?ex=65bd98ab&is=65ab23ab&hm=208e24113dc963b4f2f247867d48e792b72c9b25b7e262814eef11d751f4dda1&"
+                    ]
+                },
+				{
+                    "name": "Ethiopian Airlines Cargo",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/speculars/ersf.png",
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1198072006332141598/b777-300ersf_2.png?ex=65bd9281&is=65ab1d81&hm=010be8123ef8bd5dc12299a75ff3136c8b71fb9a6b8262ec0143b79ad0283b91&"
+                    ]
+                },
+				{
+                    "name": "Japan Airways OneWorld Livery",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/speculars/ersf.png",
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1198026779512815766/Sans_titre.png?ex=65bd6862&is=65aaf362&hm=ec025f69cebfa4ffd73c0ca381c35cf90bb74c9badfddaf84db27a18ffe2cc92&"
+                    ]
                 }
             ],
             "labels": ["Specular shader", "Texture"]
