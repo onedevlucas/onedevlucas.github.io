@@ -569,6 +569,12 @@
                     "texture": [
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/airbus_a380/zeroe.png"
                     ]
+                },
+				{
+                    "name": "Airbus ZeroE (planned livery)",
+                    "texture": [
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1198129884250263672/a380_7.png?ex=65bdc868&is=65ab5368&hm=2aa314a4b56aa426f2d6102e50e64a7f56b872f8e7648dd6cbe43e543c1e16a4&"
+                    ]
                 }
             ],
             "labels": ["Texture"]
@@ -9401,6 +9407,20 @@
                     "texture": [
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/speculars/ersf.png",
                         "https://cdn.discordapp.com/attachments/1086991627723227298/1198119878863892600/b777-300ersf_1.png?ex=65bdbf17&is=65ab4a17&hm=44209f584e072397276e5647d08d9d0967fb8a7734f1c306a1f08fc330e29fd0&"
+                    ]
+                },
+				{
+                    "name": "Air New Zealand",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1198138828867780648/b777-300er_7.png?ex=65bdd0bd&is=65ab5bbd&hm=e80e6f4af8b7cf3e1c05b7aea4e5874a577cd450c9e23eb85500957f335c2e1a&"
+                    ]
+                },
+				{
+                    "name": "DHL",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/speculars/ersf.png",
+                        "https://cdn.discordapp.com/attachments/1195565724488450082/1198133540202749982/Official_Subway_Trains_Map_3_1.png?ex=65bdcbd0&is=65ab56d0&hm=a3ea738f70580b51635cc1e850cb6febe5df7048670c4391984923105cd33a20&"
                     ]
                 }
             ],
