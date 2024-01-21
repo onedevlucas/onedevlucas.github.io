@@ -15,7 +15,7 @@
                     ]
                 },
                 {
-                    "name": "Lucas IS AWESOME!!!!!!!!",
+                    "name": "Lucas Added MOre Cargo Liveries like an idiot",
                     "texture": [
                         "/models/aircraft/premium/cub/texture_1.jpg"
                     ]
@@ -9462,6 +9462,34 @@
                     "texture": [
                         "/models/aircraft/premium/777_300/specular_0.jpg",
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/baone.png"
+                    ]
+                },
+				{
+                    "name": "Korean Air Cargo",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/speculars/ersf.png",
+                        "https://cdn.discordapp.com/attachments/1195565724488450082/1198661470297280683/b777-300ersf_10.png?ex=65bfb77c&is=65ad427c&hm=3831d73372fd90e64709ec8ab735e04942afb3743165865cc5abe2af2cd3d2e1&"
+                    ]
+                },
+				{
+                    "name": "Qatar Airways Cargo",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/speculars/ersf.png",
+                        "https://cdn.discordapp.com/attachments/1195565724488450082/1198665843136016476/b777-300ersf_11.png?ex=65bfbb8f&is=65ad468f&hm=dacc5ca5eeec653625c760deca53dc0ebb9c855179706a10c419ed07e6cf71f0&"
+                    ]
+                },
+				{
+                    "name": "Saudi Arabian Cargo",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/speculars/ersf.png",
+                        "https://cdn.discordapp.com/attachments/1195565724488450082/1198671274700972115/Official_Subway_Trains_Map_4_1.png?ex=65bfc09e&is=65ad4b9e&hm=c9bcc8cf23c847f74dd40573091de3f6967e498bd99ee849ad0253d1b5d8672c&"
+                    ]
+                },
+				{
+                    "name": "Lufthansa Cargo (New Design)",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/speculars/ersf.png",
+                        "https://cdn.discordapp.com/attachments/1195565724488450082/1198674274999873556/b777-300ersf_16.png?ex=65bfc369&is=65ad4e69&hm=0c4ea06717f24e0ad2b3f7d787c40fec8eb05fdf49e2ae2dd18cb5fa506082ac&"
                     ]
                 }
             ],
