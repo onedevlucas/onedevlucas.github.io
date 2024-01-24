@@ -15,7 +15,7 @@
                     ]
                 },
                 {
-                    "name": "Lucas Updated With Everything now lmaooo",
+                    "name": "Red",
                     "texture": [
                         "/models/aircraft/premium/cub/texture_1.jpg"
                     ]
@@ -580,6 +580,18 @@
                     "name": "Swissair (planned livery)",
                     "texture": [
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/airbus_a380/Swissair.png"
+                    ]
+                },
+                {
+                    "name": "ANA (Sea Turtle livery)",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/airbus_a380/anaturtle.png"
+                    ]
+                },
+                {
+                    "name": "Emirates (new design)",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/airbus_a380/emiratesnew.png"
                     ]
                 }
             ],
@@ -5813,7 +5825,7 @@
                 {
                     "name": "BOC Aviation",
                     "texture": [
-                        "https://raw.githubusercontent.com/Spice9/stuff2/main/texture_251.jpgs"
+                        "https://raw.githubusercontent.com/Spice9/stuff2/main/texture_251.jpg"
                     ]
                 },
                 {
@@ -6477,7 +6489,7 @@
                 {
                     "name": "Ryan Air (Boeing house design)",
                     "texture": [
-                        "https://raw.githubusercontent.com/Spice9/stuff2/main/texture_289.jpg"
+                        "https://raw.githubusercontent.com/Spice9/stuff2/main/texture_289.png"
                     ]
                 },
                 {
@@ -7258,6 +7270,18 @@
                     "name": "Spring Airlines",
                     "texture": [
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b737-800/spring.png"
+                    ]
+                },
+                {
+                    "name": "Shandong Airlines (Friendly Shandong livery)",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b737-800/shandong.jpg"
+                    ]
+                },
+                {
+                    "name": "Shandong Airlines",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b737-800/shandong2.jpg"
                     ]
                 }
             ],
@@ -8369,7 +8393,7 @@
                 {
                     "name": "Air China (Star Alliance livery)",
                     "texture": [
-                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/airbus_a350-900/airchinastar.jpgs"
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/airbus_a350-900/airchinastar.jpg"
                     ]
                 },
                 {
@@ -9041,6 +9065,18 @@
                     "texture": [
                         "https://raw.githubusercontent.com/Spice9/stuff2/main/Transavia%20A321neo.png"
                     ]
+                },
+                {
+                    "name": "Xiamen Airlines (First Airbus to XIAMENAIR livery)",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/airbus_a321neo/xiamen1st.png"
+                    ]
+                },
+                {
+                    "name": "Xiamen Airlines",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/airbus_a321neo/xiamen.jpg"
+                    ]
                 }
             ],
             "labels": ["Texture"]
@@ -9097,7 +9133,7 @@
                 {
                     "name": "Delta",
                     "texture": [
-                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b757-300wl/Delta.png"
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b757-300wl/Delta.jpg"
                     ]
                 },
                 {
@@ -9122,6 +9158,12 @@
                     "name": "Cebu Pacific",
                     "texture": [
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b757-300wl/cebu.png"
+                    ]
+                },
+                {
+                    "name": "Icelandair (Thingvellir livery)",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b757-300wl/Thingvellir.png"
                     ]
                 }
             ],
