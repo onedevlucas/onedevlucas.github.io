@@ -15,7 +15,7 @@
                     ]
                 },
                 {
-                    "name": "Yay",
+                    "name": "NEW LIVERY?!?!?!?!",
                     "texture": [
                         "/models/aircraft/premium/cub/texture_1.jpg"
                     ]
@@ -9793,6 +9793,20 @@
                     "texture": [
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/speculars/ersf.png",
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/saudiacargo.png"
+                    ]
+                },
+				{
+                    "name": "TAM",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://cdn.discordapp.com/attachments/1195565724488450082/1200579170321834055/Boeing_777-300ER_Passenger_6.png?ex=65c6b17b&is=65b43c7b&hm=acf3dc5ad924642c51bd2e91c5b9875cd9b6e182e2adce74129005b143d1a1dc&"
+                    ]
+                },
+				{
+                    "name": "Air Canada (new design, more clearer)",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://cdn.discordapp.com/attachments/1195565724488450082/1200579171945021607/Boeing_777-300ER_Passenger_2.png?ex=65c6b17c&is=65b43c7c&hm=b8e2b0ed001ae4167640a9b91846d10eed870c62ba3726bfb9a562e16c53e896&"
                     ]
                 }
             ],
