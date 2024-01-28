@@ -15,7 +15,7 @@
                     ]
                 },
                 {
-                    "name": "OK!!!!!testys?",
+                    "name": "New Update Once More?!??!!",
                     "texture": [
                         "/models/aircraft/premium/cub/texture_1.jpg"
                     ]
@@ -2359,6 +2359,19 @@
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b757-200/saudiarabian.jpg",
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b757-200/saudiarabian.jpg"
                     ]
+                },
+				{
+                    "name": "British Airways (Chelsea Rose Livery)",
+                    "texture": [
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1200924811866689546/chelsearose.jpg?ex=65c7f363&is=65b57e63&hm=d94045e16e00227f38ddb4bb03d85df704ac8a74f4f43499c78b381a86c83a92&",
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1200924811866689546/chelsearose.jpg?ex=65c7f363&is=65b57e63&hm=d94045e16e00227f38ddb4bb03d85df704ac8a74f4f43499c78b381a86c83a92&",
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1200924811866689546/chelsearose.jpg?ex=65c7f363&is=65b57e63&hm=d94045e16e00227f38ddb4bb03d85df704ac8a74f4f43499c78b381a86c83a92&",
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1200924811866689546/chelsearose.jpg?ex=65c7f363&is=65b57e63&hm=d94045e16e00227f38ddb4bb03d85df704ac8a74f4f43499c78b381a86c83a92&",
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1200924811866689546/chelsearose.jpg?ex=65c7f363&is=65b57e63&hm=d94045e16e00227f38ddb4bb03d85df704ac8a74f4f43499c78b381a86c83a92&",
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1200924811866689546/chelsearose.jpg?ex=65c7f363&is=65b57e63&hm=d94045e16e00227f38ddb4bb03d85df704ac8a74f4f43499c78b381a86c83a92&",
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1200924811866689546/chelsearose.jpg?ex=65c7f363&is=65b57e63&hm=d94045e16e00227f38ddb4bb03d85df704ac8a74f4f43499c78b381a86c83a92&",
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1200924811866689546/chelsearose.jpg?ex=65c7f363&is=65b57e63&hm=d94045e16e00227f38ddb4bb03d85df704ac8a74f4f43499c78b381a86c83a92&",
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1200924811866689546/chelsearose.jpg?ex=65c7f363&is=65b57e63&hm=d94045e16e00227f38ddb4bb03d85df704ac8a74f4f43499c78b381a86c83a92&"
                 }
             ],
             "labels": ["Texture"]
@@ -3895,6 +3908,12 @@
                     "name": "Alitalia Express",
                     "texture": [
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/ATR_72-600/alitalia.png"
+                    ]
+                },
+				{
+                    "name": "Clic Air Colombia",
+                    "texture": [
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1200864844576993451/Clic_Air.png?ex=65c7bb89&is=65b54689&hm=1676664e757535a5789e277888f0e1992f02645043067f79d7fe3f553b06879a&"
                     ]
                 }
             ],
@@ -9440,7 +9459,7 @@
                     "name": "Air Canada (new design)",
                     "texture": [
                         "/models/aircraft/premium/777_300/specular_0.jpg",
-                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/aircanadanew.png"
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1200819180635693086/Boeing_777-300ER_Passenger_2_3.png?ex=65c79102&is=65b51c02&hm=0d87b600d660da8c9b93b28b217e393ed766d54dead5a32e8f975f9de437f5c6&"
                     ]
                 },
                 {
@@ -9811,7 +9830,14 @@
                     "name": "TAM Linhas Aéreas",
                     "texture": [
                         "/models/aircraft/premium/777_300/specular_0.jpg",
-                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/latam.png"
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1200579228136116404/Boeing_777-300ER_Passenger_6.png?ex=65c6b189&is=65b43c89&hm=32857a37cc08ac698b3239452bd542805869e2a9a2c516c076b64637d310361a&"
+                    ]
+                },
+				{
+                    "name": "Fly Meta Cargo",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/speculars/ersf.png",
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1200845542322868375/Fly_Meta_777-300ERSF.png?ex=65c7a98f&is=65b5348f&hm=f0ae4a237efecf136b1e05cc785b85c066dac3ab4eba25f802123f956c8fc94d&"
                     ]
                 }
             ],
