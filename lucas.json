@@ -15,7 +15,7 @@
                     ]
                 },
                 {
-                    "name": "New Update Once More?!??!!",
+                    "name": "ADDED 6 LVIERIES LOOOLOL",
                     "texture": [
                         "/models/aircraft/premium/cub/texture_1.jpg"
                     ]
@@ -366,6 +366,12 @@
                     "name": "Thai Airways",
                     "texture": [
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b737-700/thai.png"
+                    ]
+                },
+                {
+                    "name": "Janet",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b737-700/janet.png"
                     ]
                 }
             ],
@@ -2360,18 +2366,32 @@
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b757-200/saudiarabian.jpg"
                     ]
                 },
-				{
-                    "name": "British Airways (Chelsea Rose Livery)",
+                {
+                    "name": "Cargojet",
                     "texture": [
-                        "https://cdn.discordapp.com/attachments/1086991627723227298/1200924811866689546/chelsearose.jpg?ex=65c7f363&is=65b57e63&hm=d94045e16e00227f38ddb4bb03d85df704ac8a74f4f43499c78b381a86c83a92&",
-                        "https://cdn.discordapp.com/attachments/1086991627723227298/1200924811866689546/chelsearose.jpg?ex=65c7f363&is=65b57e63&hm=d94045e16e00227f38ddb4bb03d85df704ac8a74f4f43499c78b381a86c83a92&",
-                        "https://cdn.discordapp.com/attachments/1086991627723227298/1200924811866689546/chelsearose.jpg?ex=65c7f363&is=65b57e63&hm=d94045e16e00227f38ddb4bb03d85df704ac8a74f4f43499c78b381a86c83a92&",
-                        "https://cdn.discordapp.com/attachments/1086991627723227298/1200924811866689546/chelsearose.jpg?ex=65c7f363&is=65b57e63&hm=d94045e16e00227f38ddb4bb03d85df704ac8a74f4f43499c78b381a86c83a92&",
-                        "https://cdn.discordapp.com/attachments/1086991627723227298/1200924811866689546/chelsearose.jpg?ex=65c7f363&is=65b57e63&hm=d94045e16e00227f38ddb4bb03d85df704ac8a74f4f43499c78b381a86c83a92&",
-                        "https://cdn.discordapp.com/attachments/1086991627723227298/1200924811866689546/chelsearose.jpg?ex=65c7f363&is=65b57e63&hm=d94045e16e00227f38ddb4bb03d85df704ac8a74f4f43499c78b381a86c83a92&",
-                        "https://cdn.discordapp.com/attachments/1086991627723227298/1200924811866689546/chelsearose.jpg?ex=65c7f363&is=65b57e63&hm=d94045e16e00227f38ddb4bb03d85df704ac8a74f4f43499c78b381a86c83a92&",
-                        "https://cdn.discordapp.com/attachments/1086991627723227298/1200924811866689546/chelsearose.jpg?ex=65c7f363&is=65b57e63&hm=d94045e16e00227f38ddb4bb03d85df704ac8a74f4f43499c78b381a86c83a92&",
-                        "https://cdn.discordapp.com/attachments/1086991627723227298/1200924811866689546/chelsearose.jpg?ex=65c7f363&is=65b57e63&hm=d94045e16e00227f38ddb4bb03d85df704ac8a74f4f43499c78b381a86c83a92&"
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b757-200/Cargojet.png",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b757-200/Cargojet.png",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b757-200/Cargojet.png",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b757-200/Cargojet.png",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b757-200/Cargojet.png",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b757-200/Cargojet.png",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b757-200/Cargojet.png",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b757-200/Cargojet.png",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b757-200/Cargojet.png"
+                    ]
+                },
+                {
+                    "name": "British Airways (Chelsea rose livery)",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b757-200/chelsearose.jpg",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b757-200/chelsearose.jpg",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b757-200/chelsearose.jpg",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b757-200/chelsearose.jpg",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b757-200/chelsearose.jpg",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b757-200/chelsearose.jpg",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b757-200/chelsearose.jpg",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b757-200/chelsearose.jpg",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b757-200/chelsearose.jpg"
                     ]
                 }
             ],
@@ -3144,6 +3164,20 @@
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/airbus_a350-900/tam.png",
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/airbus_a350-900/tam.png"
                     ]
+                },
+				{
+                    "name": "Air India (New Design)",
+                    "texture": [
+                        "https://raw.githubusercontent.com/coolpilot11/stuff/main/A359AirIndiaNewlivery.jpg",
+                        "https://raw.githubusercontent.com/coolpilot11/stuff/main/A359AirIndiaNewlivery.jpg",
+                        "https://raw.githubusercontent.com/coolpilot11/stuff/main/A359AirIndiaNewlivery.jpg",
+                        "https://raw.githubusercontent.com/coolpilot11/stuff/main/A359AirIndiaNewlivery.jpg",
+                        "https://raw.githubusercontent.com/coolpilot11/stuff/main/A359AirIndiaNewlivery.jpg",
+                        "https://raw.githubusercontent.com/coolpilot11/stuff/main/A359AirIndiaNewlivery.jpg",
+                        "https://raw.githubusercontent.com/coolpilot11/stuff/main/A359AirIndiaNewlivery.jpg",
+                        "https://raw.githubusercontent.com/coolpilot11/stuff/main/A359AirIndiaNewlivery.jpg",
+                        "https://raw.githubusercontent.com/coolpilot11/stuff/main/A359AirIndiaNewlivery.jpg"
+                    ]
                 }
             ],
             "labels": ["Texture"]
@@ -3911,10 +3945,10 @@
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/ATR_72-600/alitalia.png"
                     ]
                 },
-				{
-                    "name": "Clic Air Colombia",
+                {
+                    "name": "Clic Air",
                     "texture": [
-                        "https://cdn.discordapp.com/attachments/1086991627723227298/1200864844576993451/Clic_Air.png?ex=65c7bb89&is=65b54689&hm=1676664e757535a5789e277888f0e1992f02645043067f79d7fe3f553b06879a&"
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/ATR_72-600/clicair.png"
                     ]
                 }
             ],
@@ -4579,6 +4613,12 @@
                     "name": "Xiamen Airlines (BRICS dream livery)",
                     "texture": [
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b787-9/xiamenbrics.png"
+                    ]
+                },
+                {
+                    "name": "Shanghai Airways (100th Jet livery)",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b787-9/shanghai100.jpg"
                     ]
                 }
             ],
@@ -5637,6 +5677,12 @@
                     "name": "China Eastern",
                     "texture": [
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/airbus_a320neo/chinaeastern.jpg"
+                    ]
+                },
+                {
+                    "name": "Delta",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/airbus_a320neo/delta.png"
                     ]
                 }
             ],
@@ -6917,7 +6963,7 @@
                 {
                     "name": "Corendon Airlines",
                     "texture": [
-                        "https://raw.githubusercontent.com/Spice9/stuff2/main/Corendon.png"
+                        "https://i.ibb.co/0yzvy2t/Corendon.png"
                     ]
                 },
                 {
@@ -7854,6 +7900,33 @@
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/bombardier_dash8-q400/unitedexpress.jpg",
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/bombardier_dash8-q400/unitedexpress.jpg",
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/bombardier_dash8-q400/unitedexpress.jpg"
+                    ]
+                },
+                {
+                    "name": "Porter",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/bombardier_dash8-q400/porter.jpg",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/bombardier_dash8-q400/porter.jpg",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/bombardier_dash8-q400/porter.jpg",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/bombardier_dash8-q400/porter.jpg"
+                    ]
+                },
+                {
+                    "name": "WestJet",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/bombardier_dash8-q400/westjet.png",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/bombardier_dash8-q400/westjet.png",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/bombardier_dash8-q400/westjet.png",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/bombardier_dash8-q400/westjet.png"
+                    ]
+                },
+                {
+                    "name": "Widerøe",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/bombardier_dash8-q400/wideroe.png",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/bombardier_dash8-q400/wideroe.png",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/bombardier_dash8-q400/wideroe.png",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/bombardier_dash8-q400/wideroe.png"
                     ]
                 }
             ],
@@ -9101,7 +9174,7 @@
                 {
                     "name": "Xiamen Airlines (First Airbus to XIAMENAIR livery)",
                     "texture": [
-                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/airbus_a321neo/xiamen1st.png"
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/airbus_a321neo/xiamen1st.jpg"
                     ]
                 },
                 {
@@ -9135,6 +9208,12 @@
                 },
                 {
                     "name": "US Air Force Tigers",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/f16/usaftiger.png"
+                    ]
+                },
+                {
+                    "name": "FACh",
                     "texture": [
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/f16/usaftiger.png"
                     ]
@@ -9460,7 +9539,7 @@
                     "name": "Air Canada (new design)",
                     "texture": [
                         "/models/aircraft/premium/777_300/specular_0.jpg",
-                        "https://cdn.discordapp.com/attachments/1086991627723227298/1200819180635693086/Boeing_777-300ER_Passenger_2_3.png?ex=65c79102&is=65b51c02&hm=0d87b600d660da8c9b93b28b217e393ed766d54dead5a32e8f975f9de437f5c6&"
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/aircanadanew.png"
                     ]
                 },
                 {
@@ -9831,14 +9910,98 @@
                     "name": "TAM Linhas Aéreas",
                     "texture": [
                         "/models/aircraft/premium/777_300/specular_0.jpg",
-                        "https://cdn.discordapp.com/attachments/1086991627723227298/1200579228136116404/Boeing_777-300ER_Passenger_6.png?ex=65c6b189&is=65b43c89&hm=32857a37cc08ac698b3239452bd542805869e2a9a2c516c076b64637d310361a&"
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/tam.png"
+                    ]
+                },
+                {
+                    "name": "Air China (50th Anniversaire Chine-France livery)",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/chinafrance.png"
+                    ]
+                },
+                {
+                    "name": "EVA (Hello Kitty livery)",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/evakitty.png"
+                    ]
+                },
+                {
+                    "name": "Polar - DHL",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/speculars/ersf.png",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/polar.png"
+                    ]
+                },
+                {
+                    "name": "Fly Meta",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/speculars/ersf.png",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/flymeta.png"
+                    ]
+                },
+                {
+                    "name": "KLM (old design)",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/klmold.png"
+                    ]
+                },
+                {
+                    "name": "Air China (Love China livery)",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/lovechina.png"
+                    ]
+                },
+                {
+                    "name": "Philippine Airlines (70th anniversary livery)",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/philippines70.png"
                     ]
                 },
 				{
-                    "name": "Fly Meta Cargo",
+                    "name": "Kenya Airways",
                     "texture": [
-                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/speculars/ersf.png",
-                        "https://cdn.discordapp.com/attachments/1086991627723227298/1200845542322868375/Fly_Meta_777-300ERSF.png?ex=65c7a98f&is=65b5348f&hm=f0ae4a237efecf136b1e05cc785b85c066dac3ab4eba25f802123f956c8fc94d&"
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1203129988052811786/KenyaAir.png?ex=65cff91e&is=65bd841e&hm=42c6f9e9c0c6257bb6938111cc7778c8188af397b71bd2792524da2194a7334c&"
+                    ]
+                },
+				{
+                    "name": "Kuwait Airlines",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1203129970101194823/KuwaitAir.png?ex=65cff919&is=65bd8419&hm=2efc4da33a85b110fb1437d9cbef3bb86417f0a2723108ef9746f3b3ddc119f2&"
+                    ]
+                },
+				{
+                    "name": "Nordwind Airlines",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1203129935267373056/NordwindAir.png?ex=65cff911&is=65bd8411&hm=179d22772fdb96264477727f9d193238385c85262168abed5abe869545408dd1&"
+                    ]
+                },
+				{
+                    "name": "PIA Pakistan International",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1203129910294618162/PakistanIntl.png?ex=65cff90b&is=65bd840b&hm=d4f36e63eb9d51a34332016b2988b4e508aaa8541f12030f07fcf4d549e61c21&"
+                    ]
+                },
+				{
+                    "name": "RoyalFlight",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1203129888945475594/RoyalFlight.png?ex=65cff906&is=65bd8406&hm=616169e6d4776e05bd6309fa639c60d4bfde5ad0b9ca0712664df85b62fdfba9&"
+                    ]
+                },
+				{
+                    "name": "Transaero",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://cdn.discordapp.com/attachments/1086991627723227298/1203129869068935189/Transearo.png?ex=65cff901&is=65bd8401&hm=794f2a2d54ed7a0d250d5cb7b70b28013e4d7776d389ace7273e6320f29ed892&"
                     ]
                 }
             ],
