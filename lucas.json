@@ -15,7 +15,7 @@
                     ]
                 },
                 {
-                    "name": "ADDED 6 LVIERIES LOOOLOL",
+                    "name": "Red",
                     "texture": [
                         "/models/aircraft/premium/cub/texture_1.jpg"
                     ]
@@ -3164,20 +3164,6 @@
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/airbus_a350-900/tam.png",
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/airbus_a350-900/tam.png"
                     ]
-                },
-				{
-                    "name": "Air India (New Design)",
-                    "texture": [
-                        "https://raw.githubusercontent.com/coolpilot11/stuff/main/A359AirIndiaNewlivery.jpg",
-                        "https://raw.githubusercontent.com/coolpilot11/stuff/main/A359AirIndiaNewlivery.jpg",
-                        "https://raw.githubusercontent.com/coolpilot11/stuff/main/A359AirIndiaNewlivery.jpg",
-                        "https://raw.githubusercontent.com/coolpilot11/stuff/main/A359AirIndiaNewlivery.jpg",
-                        "https://raw.githubusercontent.com/coolpilot11/stuff/main/A359AirIndiaNewlivery.jpg",
-                        "https://raw.githubusercontent.com/coolpilot11/stuff/main/A359AirIndiaNewlivery.jpg",
-                        "https://raw.githubusercontent.com/coolpilot11/stuff/main/A359AirIndiaNewlivery.jpg",
-                        "https://raw.githubusercontent.com/coolpilot11/stuff/main/A359AirIndiaNewlivery.jpg",
-                        "https://raw.githubusercontent.com/coolpilot11/stuff/main/A359AirIndiaNewlivery.jpg"
-                    ]
                 }
             ],
             "labels": ["Texture"]
@@ -4814,6 +4800,12 @@
                     "name": "Green Africa",
                     "texture": [
                         "https://raw.githubusercontent.com/Spice9/stuff2/main/Green%20Africa%20A220.png "
+                    ]
+                },
+                {
+                    "name": "AtlasJet",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/airbus_a220-300/atlasjet.jpg"
                     ]
                 }
             ],
@@ -8285,6 +8277,14 @@
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/embraer_erj170/british/wing.jpg",
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/embraer_erj170/british/engine.jpg"
                     ]
+                },
+                {
+                    "name": "Air Canada Express",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/embraer_erj170/aircanada/fuselage.png",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/embraer_erj170/aircanada/wing.png",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/embraer_erj170/aircanada/engine.png"
+                    ]
                 }
             ],
             "labels": ["Fuselage texture", "Wing texture", "Engine texture"]
@@ -8511,6 +8511,24 @@
                     "name": "China Eastern (1st Airbus A350 delivered form China livery)",
                     "texture": [
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/airbus_a350-900/chinaeastern1st.jpg"
+                    ]
+                },
+                {
+                    "name": "HongKong Airlines",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/airbus_a350-900/hongkong.jpg"
+                    ]
+                },
+                {
+                    "name": "Hainan Airlines",
+                    "texture": [
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/airbus_a350-900/hainan.jpg"
+                    ]
+                },
+                {
+                    "name": "Air India (new design)",
+                    "texture": [
+                        "https://raw.githubusercontent.com/coolpilot11/stuff/main/A359AirIndiaNewlivery.jpg"
                     ]
                 }
             ],
@@ -9962,46 +9980,88 @@
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/philippines70.png"
                     ]
                 },
-				{
+                {
+                    "name": "Etihad Airways (old design)",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/etihadold.png"
+                    ]
+                },
+                {
                     "name": "Kenya Airways",
                     "texture": [
                         "/models/aircraft/premium/777_300/specular_0.jpg",
-                        "https://cdn.discordapp.com/attachments/1086991627723227298/1203129988052811786/KenyaAir.png?ex=65cff91e&is=65bd841e&hm=42c6f9e9c0c6257bb6938111cc7778c8188af397b71bd2792524da2194a7334c&"
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/kenya.png"
                     ]
                 },
-				{
-                    "name": "Kuwait Airlines",
+                {
+                    "name": "Kuwait Airways",
                     "texture": [
                         "/models/aircraft/premium/777_300/specular_0.jpg",
-                        "https://cdn.discordapp.com/attachments/1086991627723227298/1203129970101194823/KuwaitAir.png?ex=65cff919&is=65bd8419&hm=2efc4da33a85b110fb1437d9cbef3bb86417f0a2723108ef9746f3b3ddc119f2&"
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/KuwaitAir.png"
                     ]
                 },
-				{
+                {
                     "name": "Nordwind Airlines",
                     "texture": [
                         "/models/aircraft/premium/777_300/specular_0.jpg",
-                        "https://cdn.discordapp.com/attachments/1086991627723227298/1203129935267373056/NordwindAir.png?ex=65cff911&is=65bd8411&hm=179d22772fdb96264477727f9d193238385c85262168abed5abe869545408dd1&"
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/nordwind.png"
                     ]
                 },
-				{
-                    "name": "PIA Pakistan International",
+                {
+                    "name": "Pakistan International",
                     "texture": [
                         "/models/aircraft/premium/777_300/specular_0.jpg",
-                        "https://cdn.discordapp.com/attachments/1086991627723227298/1203129910294618162/PakistanIntl.png?ex=65cff90b&is=65bd840b&hm=d4f36e63eb9d51a34332016b2988b4e508aaa8541f12030f07fcf4d549e61c21&"
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/pia.png"
                     ]
                 },
-				{
-                    "name": "RoyalFlight",
+                {
+                    "name": "Royal Flight",
                     "texture": [
                         "/models/aircraft/premium/777_300/specular_0.jpg",
-                        "https://cdn.discordapp.com/attachments/1086991627723227298/1203129888945475594/RoyalFlight.png?ex=65cff906&is=65bd8406&hm=616169e6d4776e05bd6309fa639c60d4bfde5ad0b9ca0712664df85b62fdfba9&"
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/royalflight.png"
                     ]
                 },
-				{
+                {
                     "name": "Transaero",
                     "texture": [
                         "/models/aircraft/premium/777_300/specular_0.jpg",
-                        "https://cdn.discordapp.com/attachments/1086991627723227298/1203129869068935189/Transearo.png?ex=65cff901&is=65bd8401&hm=794f2a2d54ed7a0d250d5cb7b70b28013e4d7776d389ace7273e6320f29ed892&"
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/transaero.png"
+                    ]
+                },
+                {
+                    "name": "KLM (orange pride livery)",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/KLM_Orange_Pride.png"
+                    ]
+                },
+                {
+                    "name": "KLM Asia",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/klmasia.png"
+                    ]
+                },
+                {
+                    "name": "Air New Zealand (Leased)",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/newzealandleased.png"
+                    ]
+                },
+                {
+                    "name": "United Airlines (Blue Tulip design)",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/United_Blue_Tulip.png"
+                    ]
+                },
+                {
+                    "name": "United Airlines (Battleship Grey design)",
+                    "texture": [
+                        "/models/aircraft/premium/777_300/specular_0.jpg",
+                        "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/boeing_b777-300er/United_Battleship_Grey.png"
                     ]
                 }
             ],
@@ -10054,6 +10114,29 @@
                     "name": "Aeroclub Milano",
                     "texture": [
                         "https://raw.githubusercontent.com/kolos26/GEOFS-LiverySelector/main/liveries/piper_pa28/Aeroclub_Milano.png"
+                    ]
+                }
+            ],
+            "labels": ["Texture"]
+        },
+        "3289": {
+            "index": [
+                0
+            ],
+            "parts": [
+                0
+            ],
+            "liveries": [
+                {
+                    "name": "Aerocardal",
+                    "texture": [
+                        "https://raw.githubusercontent.com/Spice9/stuff2/main/texture_2005.jpg"
+                    ]
+                },
+                {
+                    "name": "Tara air",
+                    "texture": [
+                        "https://raw.githubusercontent.com/Spice9/stuff2/main/texture_2006.jpg"
                     ]
                 }
             ],
