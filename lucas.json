@@ -15,7 +15,7 @@
                     ]
                 },
                 {
-                    "name": "Red",
+                    "name": "CRAZYTESTON350??S?S",
                     "texture": [
                         "/models/aircraft/premium/cub/texture_1.jpg"
                     ]
@@ -8529,6 +8529,13 @@
                     "name": "Air India (new design)",
                     "texture": [
                         "https://raw.githubusercontent.com/coolpilot11/stuff/main/A359AirIndiaNewlivery.jpg"
+                    ]
+                },
+				{
+                    "name": "Airbus Cargo",
+                    "texture": [
+                        "https://cdn.discordapp.com/attachments/1195772521291731044/1207033853206732830/black_cargo_test_yes.png?ex=65de2ce0&is=65cbb7e0&hm=d4246a2658bdaf66ce9da82f679afbbc30c4681ae465369124477b8c65d4e362&",
+						"https://cdn.discordapp.com/attachments/1195772521291731044/1207034349023924274/agaiana.png?ex=65de2d56&is=65cbb856&hm=d238ebbdaeba0eecc50d9ed74886d7b33c990caa57bcef76f7d32ad47deeb22d&"
                     ]
                 }
             ],
