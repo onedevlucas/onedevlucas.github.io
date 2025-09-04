@@ -279,6 +279,31 @@
   ];
 
   // ---------------------------
+  // TERMINAL-ONLY DESTINATION RULES
+  // If the selected station is a terminal listed here,
+  // only show departures *to* the destinations in this list.
+  // Also, we always hide any row where destination === selected station.
+  // ---------------------------
+  const TERMINAL_RULES = {
+    'Mount River': ['Port Williamson', 'Newkirk'],
+    'Leighton Castle': ['East Heights'],
+    'Oakville Plaza': ['Harrington City', 'Hadleigh'],
+    'East Heights': ['Leighton Castle', 'Santa Mora'],
+    'Santa Mora': ['East Heights'],
+    'Harrington City': ['Oakville Plaza'],
+    'Hadleigh': ['Oakville Plaza'],
+    'Wychwood - Oakville City Airport': ['East Heights', 'Veridia Nexus'],
+    'Port Williamson': ['Mount River'],
+    'Newkirk': ['Mount River', 'Kenilworth', 'Boylston', 'Whitebranch'],
+    'Berwick Hall': ['Bradford Bay'],
+    'Bradford Bay': ['Berwick Hall'],
+    'Kenilworth': ['Newkirk'],
+    'Boylston': ['Newkirk'],
+    'Whitebranch': ['Newkirk'],
+    'Veridia Nexus': ['Wychwood - Oakville City Airport']
+  };
+
+  // ---------------------------
   // 2) ENGINE
   // ---------------------------
   function line(name, color, routeStationIds, segmentMins, service) {
@@ -374,8 +399,22 @@
       });
     }
 
-    results.sort((a,b)=>a.timeMin-b.timeMin);
-    return results;
+    // ---------------------------
+    // Terminal filtering & self-destination suppression
+    // ---------------------------
+    const selectedName = STATIONS.find(s => s.id === stationId)?.name || stationId;
+
+    // 1) Hide any train whose destination is the selected station itself
+    let filtered = results.filter(r => r.destination !== selectedName);
+
+    // 2) If selected station has explicit terminal rules, enforce allowed destinations only
+    if (TERMINAL_RULES[selectedName]) {
+      const allowed = new Set(TERMINAL_RULES[selectedName]);
+      filtered = filtered.filter(r => allowed.has(r.destination));
+    }
+
+    filtered.sort((a,b)=>a.timeMin-b.timeMin);
+    return filtered;
   }
 
   // ---------------------------
