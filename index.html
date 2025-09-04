@@ -69,8 +69,6 @@
 
     footer { color: var(--muted); font-size: 12px; padding: 40px 0 80px; text-align: center; }
 
-    .late-night { background: rgba(255, 157, 0, 0.1); border: 1px solid rgba(255, 157, 0, 0.3); }
-
     @media (min-width: 700px) { .grid { grid-template-columns: 2fr 1fr; } }
   </style>
 </head>
@@ -129,8 +127,10 @@
 
   <script>
   // ---------------------------
-  // 1) DATA MODEL
+  // 1) DATA MODEL (edit here)
   // ---------------------------
+  // Minimal sample network shown; extend to all 62 stations.
+  // Strategy: define stations once, each line's ordered route, segment times, and service patterns.
   const STATIONS = [
     { id: 'Alpherst', name: 'Alpherst' },
     { id: 'Ameryville', name: 'Ameryville' },
@@ -195,30 +195,14 @@
     { id: 'Wychwood - Oakville City Airport', name: 'Wychwood - Oakville City Airport' }
   ];
 
-  // Helper functions
-  const isWeekend = d => (d.getDay()===0 || d.getDay()===6);
-  const isLateNight = (now = new Date()) => {
-    const hour = now.getHours();
-    return hour >= 23 || hour < 5;
-  };
-  const toMin = t => { const [h,m]=t.split(':').map(Number); return h*60+m; };
-  const expandDepartures = periods => {
-    const out=[]; periods.forEach(p=>{ let cur=toMin(p.start), end=toMin(p.end); while(cur<=end){ out.push(cur); cur+=p.every; } }); return out;
-  };
-  const cumulative = (seg,i)=>{ let s=0; for(let k=0;k<i;k++) s+=seg[k]; return s; };
+  // Helper to build uniform 3-min segments for any route
   const segFor = (route, mins=3) => Array(route.length-1).fill(mins);
 
-  // Late night suspended stations
-  const LATE_NIGHT_SUSPENDED = new Set([
-    'Port Williamson', 'Radcliff Fields', 'Veridia Nexus', 'Newkirk - Oak Street',
-    'Bayview Park', 'Westpoint', 'Bradford Square', 'Bradford Bay', 'Garner',
-    'Kenilworth', 'Foxston', 'New Cottage', 'Whitebranch', 'Hutchinson Point',
-    'Vanwood', 'South Harrington', 'Harrington City', 'Carrollton', 'Hadleigh',
-    'Alpherst', 'New Halifax', 'Tyford Farms', 'Scottsbury', 'Ameryville',
-    'Scottsdale', 'Grant Park', 'Brandywine', 'Santa Mora'
-  ]);
-
-  // Route variants
+  // ---------------------------
+  // ROUTE VARIANTS (with codes)
+  // bidirectional=true means we can run this code both ways (reverse the route for the opposite direction)
+  // Brown Line is special: RW01N and RW01S are direction-specific.
+  // ---------------------------
   const ROUTE_VARIANTS = [
     // GREEN
     { line: 'Green', color: '#34c759', code: 'RG01', bidirectional: true, route: ['Mount River','Talmedge Hill','Oakville Plaza','Oakville Exchange','Wychwood - Oakville City Airport','Atkins Bridge','Cannon View','Rockcastle','Willow Springs','Port Williamson'] },
@@ -232,10 +216,10 @@
     { line: 'Red', color: '#ff3b30', code: 'RR02', bidirectional: true, route: ['Newkirk','Berwick Hall','Cambridge Central','Atkinson Junction','La Vista','Brookfield Lawn','Foxston','New Cottage','Whitebranch'] },
     { line: 'Red', color: '#ff3b30', code: 'RR01', bidirectional: true, route: ['Newkirk','Hoganville','Berwick Hall','Atkinson Junction','Garner','Kenilworth'] },
 
-    // GOLD
+    // GOLD (only RG01)
     { line: 'Gold', color: '#ffcc00', code: 'RG01', bidirectional: true, route: ['Berwick Hall','Westpoint','Bradford Square','Bradford Bay'] },
 
-    // ORANGE
+    // ORANGE (only RO01)
     { line: 'Orange', color: '#ff9500', code: 'RO01', bidirectional: true, route: ['Wychwood - Oakville City Airport','Veridia Nexus'] },
 
     // BLUE
@@ -247,17 +231,18 @@
     { line: 'Pink', color: '#ff2d55', code: 'RP01', bidirectional: true, route: ['Leighton Castle','Oakville Plaza','Oakville City Center','Oakville Exchange','Perry Road','Mount Hindsboro','Wood-By-Hike','New Salemview','Millford Heights','Roxbury Landing','East Heights'] },
     { line: 'Pink', color: '#ff2d55', code: 'RP02', bidirectional: true, route: ['Wychwood - Oakville City Airport','Perry Road','Mount Hindsboro','Wood-By-Hike','New Salemview','Millford Heights','Roxbury Landing','East Heights'] },
 
-    // BROWN
-    { line: 'Brown', color: '#a2845e', code: 'RW01N', bidirectional: false, route: ['East Heights','Alpherst','New Halifax','Tyford Farms','Scottsbury','Ameryville','Scottsdale','Grant Park','Brandywine','Santa Mora'] },
-    { line: 'Brown', color: '#a2845e', code: 'RW01S', bidirectional: false, route: ['Santa Mora','Brandywine','Grant Park','Scottsdale','Ameryville','Scottsbury','Tyford Farms','New Halifax','Alpherst','Roxbury Landing','East Heights'] }
+    // BROWN (direction-specific)
+    { line: 'Brown', color: '#a2845e', code: 'RW01N', bidirectional: false, route: ['East Heights','Alpherst','New Halifax','Tyford Farms','Scottsbury','Ameryville','Scottsdale','Grant Park','Cherrywood','Brandywine','Santa Mora'] },
+    { line: 'Brown', color: '#a2845e', code: 'RW01S', bidirectional: false, route: ['Santa Mora','Brandywine','Cherrywood','Grant Park','Scottsdale','Ameryville','Scottsbury','Tyford Farms','New Halifax','Alpherst','Roxbury Landing','East Heights'] }
   ];
 
-  // Service windows
+  // ---------------------------
+  // PER-LINE SERVICE WINDOWS (unchanged from earlier where applicable)
+  // ---------------------------
   const LINE_SERVICE = {
     'Green': {
       weekday: [ { start: '05:00', end: '23:00', every: 10 } ],
-      weekend: [ { start: '06:00', end: '22:00', every: 12 } ],
-      lateNight: [ { start: '23:00', end: '04:59', every: 20 } ]
+      weekend: [ { start: '06:00', end: '22:00', every: 12 } ]
     },
     'Red': {
       weekday: [
@@ -265,45 +250,38 @@
         { start: '07:00', end: '09:59', every: 5 },
         { start: '10:00', end: '15:59', every: 7 },
         { start: '16:00', end: '18:59', every: 5 },
-        { start: '19:00', end: '23:00', every: 10 },
+        { start: '19:00', end: '23:30', every: 10 },
       ],
-      weekend: [ { start: '06:00', end: '23:00', every: 10 } ],
-      lateNight: [ { start: '23:00', end: '04:59', every: 15 } ]
+      weekend: [ { start: '06:00', end: '23:30', every: 10 } ]
     },
     'Gold': {
       weekday: [ { start: '05:30', end: '23:00', every: 12 } ],
-      weekend: [ { start: '06:00', end: '22:00', every: 12 } ],
-      lateNight: []
+      weekend: [ { start: '06:00', end: '22:00', every: 12 } ]
     },
-    'Orange': { 
-      weekday: [], 
-      weekend: [],
-      lateNight: []
-    },
+    'Orange': { weekday: [], weekend: [] },
     'Blue': {
       weekday: [
         { start: '05:00', end: '06:59', every: 10 },
         { start: '07:00', end: '09:59', every: 6 },
         { start: '10:00', end: '15:59', every: 8 },
         { start: '16:00', end: '18:59', every: 6 },
-        { start: '19:00', end: '23:00', every: 10 },
+        { start: '19:00', end: '23:30', every: 10 },
       ],
-      weekend: [ { start: '06:00', end: '23:00', every: 10 } ],
-      lateNight: [ { start: '23:00', end: '04:59', every: 18 } ]
+      weekend: [ { start: '06:00', end: '23:30', every: 10 } ]
     },
     'Pink': {
       weekday: [ { start: '05:30', end: '22:30', every: 8 } ],
-      weekend: [ { start: '06:00', end: '22:00', every: 10 } ],
-      lateNight: [ { start: '23:00', end: '04:59', every: 25 } ]
+      weekend: [ { start: '06:00', end: '22:00', every: 10 } ]
     },
     'Brown': {
-      weekday: [ { start: '05:00', end: '23:00', every: 10 } ],
-      weekend: [ { start: '06:00', end: '22:30', every: 12 } ],
-      lateNight: []
+      weekday: [ { start: '05:00', end: '23:30', every: 10 } ],
+      weekend: [ { start: '06:00', end: '22:30', every: 12 } ]
     }
   };
 
-  // Terminal rules
+  // ---------------------------
+  // TERMINAL-ONLY DESTINATION RULES (from your previous step)
+  // ---------------------------
   const TERMINAL_RULES = {
     'Mount River': ['Port Williamson', 'Newkirk'],
     'Leighton Castle': ['East Heights'],
@@ -323,23 +301,21 @@
     'Veridia Nexus': ['Wychwood - Oakville City Airport']
   };
 
-  // Late night terminal rules
-  const TERMINAL_RULES_LATE_NIGHT = {
-    'Mount River': ['Newkirk'],
-    'Leighton Castle': ['East Heights'],
-    'Oakville Plaza': ['Madisonboro'],
-    'East Heights': ['Leighton Castle'],
-    'Madisonboro': ['Oakville Plaza'],
-    'Newkirk': ['Mount River', 'Boylston'],
-    'Berwick Hall': ['Atkinson Junction'],
-    'Boylston': ['Newkirk'],
-    'Atkinson Junction': ['Newkirk', 'Berwick Hall']
+  // ---------------------------
+  // 2) ENGINE
+  // ---------------------------
+  const isWeekend = d => (d.getDay()===0 || d.getDay()===6);
+  const toMin = t => { const [h,m]=t.split(':').map(Number); return h*60+m; };
+  const expandDepartures = periods => {
+    const out=[]; periods.forEach(p=>{ let cur=toMin(p.start), end=toMin(p.end); while(cur<=end){ out.push(cur); cur+=p.every; } }); return out;
   };
+  const cumulative = (seg,i)=>{ let s=0; for(let k=0;k<i;k++) s+=seg[k]; return s; };
 
-  // Variant picker
+  // Deterministic picker so a given (line+minute) always maps to the same variant this session
   function pickVariant(lineName, minuteValue){
     const list = ROUTE_VARIANTS.filter(v=>v.line===lineName);
     if (!list.length) return null;
+    // FNV-1a like hash → index
     let h = 2166136261 >>> 0;
     const s = `${lineName}:${minuteValue}`;
     for (let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
@@ -347,46 +323,21 @@
     return list[idx];
   }
 
-  // Main arrival calculation
   function arrivalsForStation(stationId, now=new Date()){
     const weekend = isWeekend(now);
     const nowMin = now.getHours()*60 + now.getMinutes();
-    const lateNightMode = isLateNight(now);
     const results = [];
-
-    // Skip if station is suspended during late night
-    if (lateNightMode && LATE_NIGHT_SUSPENDED.has(stationId)) {
-      return results;
-    }
 
     const lines = Object.keys(LINE_SERVICE);
 
     for (const lineName of lines){
-      const service = LINE_SERVICE[lineName];
-      
-      // Skip lines that don't run during late night
-      if (lateNightMode && ['Gold', 'Orange', 'Brown'].includes(lineName)) {
-        continue;
-      }
-      
-      // Determine service pattern
-      let servicePattern;
-      if (lateNightMode && service.lateNight && service.lateNight.length > 0) {
-        servicePattern = service.lateNight;
-      } else if (lateNightMode) {
-        continue;
-      } else if (weekend) {
-        servicePattern = service.weekend;
-      } else {
-        servicePattern = service.weekday;
-      }
-
-      const dep = expandDepartures(servicePattern);
+      const service = LINE_SERVICE[lineName][weekend?'weekend':'weekday'];
+      const dep = expandDepartures(service);
 
       for (const t0 of dep){
-        // Brown Line special handling (regular hours only)
-        if (lineName === 'Brown' && !lateNightMode){
-          // Northbound
+        // Special Brown logic: direction-specific codes
+        if (lineName === 'Brown'){
+          // Northbound RW01N (East Heights → Santa Mora)
           const vN = ROUTE_VARIANTS.find(v=>v.code==='RW01N');
           const rN = vN.route, segN = segFor(rN);
           const idxN = rN.indexOf(stationId);
@@ -401,7 +352,7 @@
               }
             }
           }
-          // Southbound
+          // Southbound RW01S (Santa Mora → East Heights via Roxbury Landing)
           const vS = ROUTE_VARIANTS.find(v=>v.code==='RW01S');
           const rS = vS.route, segS = segFor(rS);
           const idxS = rS.indexOf(stationId);
@@ -416,50 +367,31 @@
               }
             }
           }
-          continue;
+          continue; // done with Brown for this t0
         }
 
-        // All other lines
+        // All other lines: pick a variant once per slot, use both directions if bidirectional
         const v = pickVariant(lineName, t0);
         if (!v) continue;
-        
-        let route = v.route;
-        
-        // Late night modifications
-        if (lateNightMode) {
-          // Blue Line: truncate at Madisonboro
-          if (lineName === 'Blue') {
-            const madIndex = route.indexOf('Madisonboro');
-            if (madIndex !== -1) {
-              route = route.slice(0, madIndex + 1);
-            }
-          }
-          
-          // Skip routes with suspended stations
-          if (route.some(station => LATE_NIGHT_SUSPENDED.has(station))) {
-            continue;
-          }
-        }
+        const r = v.route, seg = segFor(r);
 
-        const seg = segFor(route);
-
-        // Forward direction
-        const idxF = route.indexOf(stationId);
+        // forward (as listed)
+        const idxF = r.indexOf(stationId);
         if (idxF !== -1){
           const arr = t0 + cumulative(seg, idxF);
           for (let k=0;k<2;k++){
             const arrDay = arr + k*24*60; const minsAway = arrDay - nowMin;
             if (minsAway >= -1 && minsAway <= 360){
               results.push({ line: v.line, color: v.color, code: v.code,
-                destination: route[route.length-1], timeMin: arrDay, minsAway,
-                stops: route });
+                destination: r[r.length-1], timeMin: arrDay, minsAway,
+                stops: r });
             }
           }
         }
 
-        // Reverse direction (if bidirectional)
+        // reverse (only if bidirectional)
         if (v.bidirectional){
-          const rRev = [...route].reverse();
+          const rRev = [...r].reverse();
           const segRev = segFor(rRev);
           const idxR = rRev.indexOf(stationId);
           if (idxR !== -1){
@@ -477,14 +409,11 @@
       }
     }
 
-    // Filter results
+    // Filter: never show trains whose destination equals the selected station; apply terminal rules if present
     const selectedName = STATIONS.find(s=>s.id===stationId)?.name || stationId;
     let filtered = results.filter(r=> r.destination !== selectedName);
-    
-    // Apply terminal rules
-    const terminalRules = lateNightMode ? TERMINAL_RULES_LATE_NIGHT : TERMINAL_RULES;
-    if (terminalRules[selectedName]){
-      const allowed = new Set(terminalRules[selectedName]);
+    if (TERMINAL_RULES[selectedName]){
+      const allowed = new Set(TERMINAL_RULES[selectedName]);
       filtered = filtered.filter(r=> allowed.has(r.destination));
     }
 
@@ -492,88 +421,34 @@
     return filtered;
   }
 
-  // UI Functions
+  // ---------------------------
+  // 3) UI BINDINGS
+  // ---------------------------
   const stationSelect = document.getElementById('stationSelect');
   const arrivalsEl = document.getElementById('arrivals');
   const nowText = document.getElementById('nowText');
   const limitSelect = document.getElementById('limitSelect');
   const refreshBtn = document.getElementById('refreshBtn');
-  const serviceState = document.getElementById('serviceState');
 
-  function fmtMins(mins){ 
-    if (mins < -0.5) return 'departed'; 
-    if (mins <= 0.5) return 'now'; 
-    return `${Math.round(mins)} min`; 
-  }
+  function fmtMins(mins){ if (mins < -0.5) return 'departed'; if (mins <= 0.5) return 'now'; return `${Math.round(mins)} min`; }
 
   function renderClock(){
-    const d = new Date(); 
-    const opts = { hour:'numeric', minute:'2-digit' };
+    const d=new Date(); const opts={ hour:'numeric', minute:'2-digit' };
     nowText.textContent = new Intl.DateTimeFormat(undefined, opts).format(d) + ' • Local time';
-    
-    // Update service state
-    const lateNight = isLateNight(d);
-    if (lateNight) {
-      serviceState.textContent = 'Service: Late Night';
-      serviceState.className = 'pill late-night';
-    } else {
-      serviceState.textContent = 'Service: Normal';
-      serviceState.className = 'pill';
-    }
   }
 
   function renderStations(){
-    const lateNight = isLateNight(new Date());
-    
-    let availableStations = STATIONS;
-    if (lateNight) {
-      availableStations = STATIONS.filter(s => !LATE_NIGHT_SUSPENDED.has(s.id));
-    }
-    
-    const currentValue = stationSelect.value;
-    stationSelect.innerHTML = availableStations.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
-    
-    // Restore selection or set default
-    if (currentValue && availableStations.find(s => s.id === currentValue)) {
-      stationSelect.value = currentValue;
-    } else {
-      const def = availableStations.find(s=>s.id==='Mount Hindsboro') || availableStations[0];
-      if (def) stationSelect.value = def.id;
-    }
+    stationSelect.innerHTML = STATIONS.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+    const def = STATIONS.find(s=>s.id==='Mount Hindsboro') || STATIONS[0];
+    if (def) stationSelect.value = def.id;
   }
 
   function renderArrivals(){
     const sid = stationSelect.value;
     const cap = parseInt(limitSelect.value, 10);
-    const now = new Date();
-    const lateNight = isLateNight(now);
-    const list = arrivalsForStation(sid, now).slice(0, cap);
+    const list = arrivalsForStation(sid, new Date()).slice(0, cap);
 
-    let html = '';
-    
-    // Late night service notice
-    if (lateNight && LATE_NIGHT_SUSPENDED.has(sid)) {
-      html = `<div class="subtle" style="padding: 12px; border: 1px solid rgba(255, 157, 0, 0.3); border-radius: 14px; background: rgba(255, 157, 0, 0.1);">
-        <strong>Late Night Service (11PM-5AM)</strong><br>
-        This station is closed during late night hours.
-      </div>`;
-      arrivalsEl.innerHTML = html;
-      return;
-    } else if (lateNight && list.length === 0) {
-      html = `<div class="subtle" style="padding: 12px; border: 1px solid rgba(255, 157, 0, 0.3); border-radius: 14px; background: rgba(255, 157, 0, 0.1);">
-        <strong>Late Night Service (11PM-5AM)</strong><br>
-        No service available at this station during late night hours.
-      </div>`;
-      arrivalsEl.innerHTML = html;
-      return;
-    } else if (lateNight) {
-      html = `<div class="subtle" style="padding: 12px; border: 1px solid rgba(255, 157, 0, 0.3); border-radius: 14px; background: rgba(255, 157, 0, 0.1); margin-bottom: 12px;">
-        <strong>Late Night Service (11PM-5AM)</strong><br>
-        Limited service with reduced routes and frequencies.
-      </div>`;
-    }
-
-    html += list.map((item, i) => {
+    arrivalsEl.innerHTML = list.map((item, i) => {
       const stopsHtml = item.stops.map(s=>`<li>${s}</li>`).join('');
       return `
         <details class="row">
@@ -592,27 +467,21 @@
             </ul>
           </div>
         </details>`;
-    }).join('');
-
-    if (!html.includes('class="row"') && !lateNight) {
-      html += `<div class="subtle">No upcoming trains in the next 6 hours.</div>`;
-    }
-
-    arrivalsEl.innerHTML = html;
+    }).join('') || `<div class="subtle">No upcoming trains in the next 6 hours.</div>`;
   }
 
-  // Initialize
   renderStations();
   renderClock();
   renderArrivals();
 
-  // Event listeners
-  setInterval(()=>{ renderClock(); renderArrivals(); renderStations(); }, 20000);
+  setInterval(()=>{ renderClock(); renderArrivals(); }, 20000);
   stationSelect.addEventListener('change', renderArrivals);
   limitSelect.addEventListener('change', renderArrivals);
-  refreshBtn.addEventListener('click', ()=>{ renderClock(); renderArrivals(); renderStations(); });
+  refreshBtn.addEventListener('click', ()=>{ renderClock(); renderArrivals(); });
 
-  // Service worker for offline support
+  // ---------------------------
+  // 4) OPTIONAL: basic offline cache (works after first load)
+  // ---------------------------
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       const sw = URL.createObjectURL(new Blob([
