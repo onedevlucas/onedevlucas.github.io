@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>BORail System Map</title>
+  <style>
+    :root {
+      --bg: #0b0b10;
+      --card: #141421;
+      --muted: #a0a3ad;
+      --text: #f3f4f8;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Inter, Helvetica, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 50% -200px, #151528, #0a0a12) fixed;
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      padding-bottom: env(safe-area-inset-bottom);
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+    header {
+      position: sticky; top: 0; z-index: 10;
+      backdrop-filter: saturate(180%) blur(14px);
+      background: rgba(10,10,18,.65);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 12px 16px; }
+    .title { font-weight: 800; letter-spacing: .2px; font-size: 20px; }
+    .bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .btn {
+      display:inline-block;
+      padding:8px 16px;
+      font-size:14px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,0.2);
+      background:rgba(255,255,255,0.08);
+      color:#f3f4f8;
+      text-decoration:none;
+    }
+    .muted { color: var(--muted); font-size: 12px; }
+    .viewer {
+      height: 100%;
+      width: 100%;
+      border: 0;
+      background: var(--bg);
+    }
+    .fallback {
+      height: 100%;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 24px;
+      background: linear-gradient(180deg, rgba(255,255,255,.03), transparent), var(--card);
+      border-top: 1px solid rgba(255,255,255,.06);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="bar">
+        <a href="home.html" class="btn">← Home</a>
+        <!-- Opens PDF in its own tab (useful on iOS) -->
+        <a href="Official%20BORail%20Flatlands%20Map.pdf" class="btn" target="_blank" rel="noopener">Open PDF</a>
+        <div class="title">BORail System Map</div>
+      </div>
+      <div class="muted">Tip: you can pinch-zoom or use your browser’s zoom to inspect details.</div>
+    </div>
+  </header>
+
+  <!-- Inline PDF viewer -->
+  <object
+    class="viewer"
+    data="Official%20BORail%20Flatlands%20Map.pdf#view=FitH"
+    type="application/pdf">
+    <div class="fallback">
+      <p>It looks like your browser can’t display PDFs inline.</p>
+      <p><a class="btn" href="Official%20BORail%20Flatlands%20Map.pdf" target="_blank" rel="noopener">Open the map</a></p>
+    </div>
+  </object>
+</body>
+</html>
