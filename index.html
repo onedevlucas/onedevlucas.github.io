@@ -1,3 +1,449 @@
-<html>
-Hello world :)
-</html>  
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>BORail Live Timetable</title>
+  <!-- iOS add-to-home support -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="BORail" />
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Crect width='100%25' height='100%25' fill='%230a0a0a'/%3E%3Ccircle cx='90' cy='90' r='70' fill='%23ff3b30'/%3E%3Ctext x='50%25' y='58%25' text-anchor='middle' font-family='Arial' font-size='64' fill='white'%3EB%3C/text%3E%3C/svg%3E" />
+  <style>
+    :root {
+      --bg: #0b0b10;
+      --card: #141421;
+      --muted: #a0a3ad;
+      --text: #f3f4f8;
+      --accent: #8a8fff;
+      --success: #3ddc84;
+      --danger: #ff5a5f;
+      --line-Red: #ff3b30;
+      --line-Gold: #ffcc00;
+      --line-Green: #34c759;
+      --line-Orange: #ff9500;
+      --line-Blue: #007aff;
+      --line-Pink: #ff2d55;
+      --line-Brown: #a2845e;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Inter, Helvetica, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 50% -200px, #151528, #0a0a12) fixed;
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    header {
+      position: sticky; top: 0; z-index: 10;
+      backdrop-filter: saturate(180%) blur(14px);
+      background: rgba(10,10,18,.65);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .wrap { max-width: 860px; margin: 0 auto; padding: 12px 16px; }
+    .title { font-weight: 800; letter-spacing: .2px; font-size: 22px; }
+    .subtle { color: var(--muted); font-size: 12px; }
+
+    .controls { display: grid; gap: 10px; grid-template-columns: 1fr auto; align-items: center; margin-top: 10px; }
+    select, button, input[type="time"] {
+      width: 100%; appearance: none; border: 1px solid rgba(255,255,255,.12); background: var(--card);
+      color: var(--text); border-radius: 14px; padding: 12px 40px 12px 12px; font-size: 16px;
+    }
+    .seg { display: flex; gap: 10px; align-items: center; }
+    .pill { padding: 8px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); font-size: 12px; }
+
+    .grid { display: grid; gap: 12px; margin-top: 14px; }
+    .card { background: linear-gradient(180deg, rgba(255,255,255,.03), transparent), var(--card); border: 1px solid rgba(255,255,255,.06); border-radius: 18px; padding: 14px; }
+
+    .list { display: grid; gap: 10px; }
+    .row { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; padding: 10px 10px; border-radius: 14px; border: 1px solid rgba(255,255,255,.06); background: rgba(255,255,255,.02); }
+    .dot { width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 0 3px rgba(255,255,255,.08) inset; }
+    .lineTag { font-weight: 700; letter-spacing: .3px; }
+    .dest { color: var(--muted); font-size: 13px; }
+    .mins { font-weight: 800; font-variant-numeric: tabular-nums; }
+
+    .banner { display:flex; align-items:center; justify-content:space-between; gap: 10px; padding: 12px; border:1px dashed rgba(255,255,255,.10); border-radius:14px; background: rgba(255,255,255,.03); }
+    .adbox { height: 64px; border-radius: 12px; background: linear-gradient(90deg, rgba(255,255,255,.06), transparent), #0b0b10; border:1px solid rgba(255,255,255,.08); flex:1; display:flex; align-items:center; justify-content:center; color: var(--muted); font-size:12px; }
+
+    footer { color: var(--muted); font-size: 12px; padding: 40px 0 80px; text-align: center; }
+
+    @media (min-width: 700px) { .grid { grid-template-columns: 2fr 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="title">BORail Live Timetable</div>
+      <div class="subtle" id="nowText">—</div>
+      <div class="controls">
+        <select id="stationSelect" aria-label="Choose station"></select>
+        <div class="seg">
+          <span class="pill" id="serviceState">Service: Normal</span>
+          <button id="refreshBtn" title="Refresh">↻</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="grid">
+      <div class="card">
+        <div class="banner" style="margin-bottom:12px;">
+          <div>Upcoming trains</div>
+          <div class="seg">
+            <label class="subtle" for="limitSelect">Show</label>
+            <select id="limitSelect">
+              <option value="5">5</option>
+              <option value="8">8</option>
+              <option value="12">12</option>
+            </select>
+          </div>
+        </div>
+        <div id="arrivals" class="list"></div>
+      </div>
+
+      <aside class="card">
+        <div class="banner" style="margin-bottom:12px;">
+          <div class="subtle">Sponsored</div>
+          <div class="pill">Ad</div>
+        </div>
+        <div class="adbox">Your ad here • 320×64</div>
+        <div style="height:10px"></div>
+        <div class="adbox">Promote server • 320×64</div>
+      </aside>
+    </section>
+
+    <section class="card" style="margin-top:12px;">
+      <details>
+        <summary class="subtle">About this app</summary>
+        <p style="color:var(--muted); line-height:1.5">This is a fictional live timetable for a Minecraft metro with 62 stations across seven lines: Red, Gold, Green, Orange, Blue, Pink, and Brown. Times are computed on-device from the current time and line schedules. Add this site to your iPhone Home Screen to use it like a native app.</p>
+      </details>
+    </section>
+  </main>
+
+  <footer>© BORail • Built for iPhone • Works offline after first load</footer>
+
+  <script>
+  // ---------------------------
+  // 1) DATA MODEL (edit here)
+  // ---------------------------
+  // Minimal sample network shown; extend to all 62 stations.
+  // Strategy: define stations once, each line's ordered route, segment times, and service patterns.
+  const STATIONS = [
+    { id: 'Alpherst', name: 'Alpherst' },
+    { id: 'Ameryville', name: 'Ameryville' },
+    { id: 'Atkins Bridge', name: 'Atkins Bridge' },
+    { id: 'Atkinson Junction', name: 'Atkinson Junction' },
+    { id: 'Bayview Park', name: 'Bayview Park' },
+    { id: 'Berwick Hall', name: 'Berwick Hall' },
+    { id: 'Boylston', name: 'Boylston' },
+    { id: 'Bradford Bay', name: 'Bradford Bay' },
+    { id: 'Bradford Square', name: 'Bradford Square' },
+    { id: 'Brandywine', name: 'Brandywine' },
+    { id: 'Brookfield Lawn', name: 'Brookfield Lawn' },
+    { id: 'Burlington - University of NCU', name: 'Burlington - University of NCU' },
+    { id: 'Cambridge Central', name: 'Cambridge Central' },
+    { id: 'Cannon View', name: 'Cannon View' },
+    { id: 'Carrollton', name: 'Carrollton' },
+    { id: 'Chelsea Bay', name: 'Chelsea Bay' },
+    { id: 'Doverville', name: 'Doverville' },
+    { id: 'East Heights', name: 'East Heights' },
+    { id: 'Foxston', name: 'Foxston' },
+    { id: 'Garner', name: 'Garner' },
+    { id: 'Grant Park', name: 'Grant Park' },
+    { id: 'Greens Corner', name: 'Greens Corner' },
+    { id: 'Groveton', name: 'Groveton' },
+    { id: 'Hadleigh', name: 'Hadleigh' },
+    { id: 'Harrington City', name: 'Harrington City' },
+    { id: 'Hoganville', name: 'Hoganville' },
+    { id: 'Hutchinson Point', name: 'Hutchinson Point' },
+    { id: 'Kenilworth', name: 'Kenilworth' },
+    { id: 'La Vista', name: 'La Vista' },
+    { id: 'Leighton Castle', name: 'Leighton Castle' },
+    { id: 'Madisonboro', name: 'Madisonboro' },
+    { id: 'Millford Heights', name: 'Millford Heights' },
+    { id: 'Mount Hindsboro', name: 'Mount Hindsboro' },
+    { id: 'Mount River', name: 'Mount River' },
+    { id: 'New Cottage', name: 'New Cottage' },
+    { id: 'New Halifax', name: 'New Halifax' },
+    { id: 'New Salemview', name: 'New Salemview' },
+    { id: 'Newkirk', name: 'Newkirk' },
+    { id: 'Newkirk - Oak Street', name: 'Newkirk - Oak Street' },
+    { id: 'Oakville City Center', name: 'Oakville City Center' },
+    { id: 'Oakville Exchange', name: 'Oakville Exchange' },
+    { id: 'Oakville Plaza', name: 'Oakville Plaza' },
+    { id: 'Orchard Ridge', name: 'Orchard Ridge' },
+    { id: 'Perry Road', name: 'Perry Road' },
+    { id: 'Port Williamson', name: 'Port Williamson' },
+    { id: 'Radcliff Fields', name: 'Radcliff Fields' },
+    { id: 'Rockcastle', name: 'Rockcastle' },
+    { id: 'Roxbury Landing', name: 'Roxbury Landing' },
+    { id: 'Santa Mora', name: 'Santa Mora' },
+    { id: 'Scottsbury', name: 'Scottsbury' },
+    { id: 'Scottsdale', name: 'Scottsdale' },
+    { id: 'South Harrington', name: 'South Harrington' },
+    { id: 'Talmedge Hill', name: 'Talmedge Hill' },
+    { id: 'Tyford Farms', name: 'Tyford Farms' },
+    { id: 'Vanwood', name: 'Vanwood' },
+    { id: 'Veridia Nexus', name: 'Veridia Nexus' },
+    { id: 'Westpoint', name: 'Westpoint' },
+    { id: 'Whitebranch', name: 'Whitebranch' },
+    { id: 'Willow Springs', name: 'Willow Springs' },
+    { id: 'Wood-By-Hike', name: 'Wood-By-Hike' },
+    { id: 'Wychwood - Oakville City Airport', name: 'Wychwood - Oakville City Airport' }
+  ];
+
+  function segUniform(route, mins = 3) {
+    return Array(route.length - 1).fill(mins);
+  }
+
+
+  const LINES = [
+    line('Green', '#34c759', ['Mount River', 'Talmedge Hill', 'Oakville Plaza', 'Oakville Exchange', 'Wychwood - Oakville City Airport', 'Radcliff Fields', 'Atkins Bridge', 'Cannon View', 'Rockcastle', 'Willow Springs', 'Burlington - University of NCU', 'Newkirk'], segUniform(['Mount River', 'Talmedge Hill', 'Oakville Plaza', 'Oakville Exchange', 'Wychwood - Oakville City Airport', 'Radcliff Fields', 'Atkins Bridge', 'Cannon View', 'Rockcastle', 'Willow Springs', 'Burlington - University of NCU', 'Newkirk'], 3), serviceTemplate({
+      weekday: [ { start: '05:00', end: '23:00', every: 10 } ],
+      weekend: [ { start: '06:00', end: '22:00', every: 12 } ]
+    })),
+
+    line('Green', '#34c759', ['Mount River', 'Talmedge Hill', 'Oakville Plaza', 'Oakville Exchange', 'Wychwood - Oakville City Airport', 'Radcliff Fields', 'Atkins Bridge', 'Cannon View', 'Rockcastle', 'Willow Springs', 'Port Williamson'], segUniform(['Mount River', 'Talmedge Hill', 'Oakville Plaza', 'Oakville Exchange', 'Wychwood - Oakville City Airport', 'Radcliff Fields', 'Atkins Bridge', 'Cannon View', 'Rockcastle', 'Willow Springs', 'Port Williamson'], 3), serviceTemplate({
+      weekday: [ { start: '05:00', end: '23:00', every: 10 } ],
+      weekend: [ { start: '06:00', end: '22:00', every: 12 } ]
+    })),
+
+    line('Red', '#ff3b30', ['Newkirk', 'Newkirk - Oak Street', 'Hoganville', 'Bayview Park', 'Chelsea Bay', 'Berwick Hall', 'Cambridge Central', 'Atkinson Junction', 'La Vista', 'Brookfield Lawn', 'Boylston'], segUniform(['Newkirk', 'Newkirk - Oak Street', 'Hoganville', 'Bayview Park', 'Chelsea Bay', 'Berwick Hall', 'Cambridge Central', 'Atkinson Junction', 'La Vista', 'Brookfield Lawn', 'Boylston'], 3), serviceTemplate({
+      weekday: [
+        { start: '05:00', end: '06:59', every: 10 },
+        { start: '07:00', end: '09:59', every: 5 },
+        { start: '10:00', end: '15:59', every: 7 },
+        { start: '16:00', end: '18:59', every: 5 },
+        { start: '19:00', end: '23:30', every: 10 },
+      ],
+      weekend: [ { start: '06:00', end: '23:30', every: 10 } ]
+    })),
+
+    line('Red', '#ff3b30', ['Newkirk', 'Newkirk - Oak Street', 'Hoganville', 'Bayview Park', 'Chelsea Bay', 'Berwick Hall', 'Cambridge Central', 'Atkinson Junction', 'Garner', 'Kenilworth'], segUniform(['Newkirk', 'Newkirk - Oak Street', 'Hoganville', 'Bayview Park', 'Chelsea Bay', 'Berwick Hall', 'Cambridge Central', 'Atkinson Junction', 'Garner', 'Kenilworth'], 3), serviceTemplate({
+      weekday: [
+        { start: '05:00', end: '06:59', every: 10 },
+        { start: '07:00', end: '09:59', every: 5 },
+        { start: '10:00', end: '15:59', every: 7 },
+        { start: '16:00', end: '18:59', every: 5 },
+        { start: '19:00', end: '23:30', every: 10 },
+      ],
+      weekend: [ { start: '06:00', end: '23:30', every: 10 } ]
+    })),
+
+    line('Red', '#ff3b30', ['Newkirk', 'Newkirk - Oak Street', 'Hoganville', 'Bayview Park', 'Chelsea Bay', 'Berwick Hall', 'Cambridge Central', 'Atkinson Junction', 'La Vista', 'Brookfield Lawn', 'Foxston', 'New Cottage', 'Whitebranch'], segUniform(['Newkirk', 'Newkirk - Oak Street', 'Hoganville', 'Bayview Park', 'Chelsea Bay', 'Berwick Hall', 'Cambridge Central', 'Atkinson Junction', 'La Vista', 'Brookfield Lawn', 'Foxston', 'New Cottage', 'Whitebranch'], 3), serviceTemplate({
+      weekday: [
+        { start: '05:00', end: '06:59', every: 10 },
+        { start: '07:00', end: '09:59', every: 5 },
+        { start: '10:00', end: '15:59', every: 7 },
+        { start: '16:00', end: '18:59', every: 5 },
+        { start: '19:00', end: '23:30', every: 10 },
+      ],
+      weekend: [ { start: '06:00', end: '23:30', every: 10 } ]
+    })),
+
+    line('Gold', '#ffcc00', ['Berwick Hall', 'Westpoint', 'Bradford Square', 'Bradford Bay'], segUniform(['Berwick Hall', 'Westpoint', 'Bradford Square', 'Bradford Bay'], 3), serviceTemplate({
+      weekday: [ { start: '05:30', end: '23:00', every: 12 } ],
+      weekend: [ { start: '06:00', end: '22:00', every: 12 } ]
+    })),
+
+    line('Orange', '#ff9500', ['Wychwood - Oakville City Airport', 'Veridia Nexus'], segUniform(['Wychwood - Oakville City Airport', 'Veridia Nexus'], 3), serviceTemplate({ weekday: [], weekend: [] })),
+
+    line('Blue', '#007aff', ['Oakville Plaza', 'Oakville City Center', 'Oakville Exchange', 'Perry Road', 'Mount Hindsboro', 'Greens Corner', 'Doverville', 'Orchard Ridge', 'Groveton', 'Madisonboro', 'Hutchinson Point', 'Vanwood', 'South Harrington', 'Harrington City', 'Carrollton', 'Hadleigh'], segUniform(['Oakville Plaza', 'Oakville City Center', 'Oakville Exchange', 'Perry Road', 'Mount Hindsboro', 'Greens Corner', 'Doverville', 'Orchard Ridge', 'Groveton', 'Madisonboro', 'Hutchinson Point', 'Vanwood', 'South Harrington', 'Harrington City', 'Carrollton', 'Hadleigh'], 3), serviceTemplate({
+      weekday: [
+        { start: '05:00', end: '06:59', every: 10 },
+        { start: '07:00', end: '09:59', every: 6 },
+        { start: '10:00', end: '15:59', every: 8 },
+        { start: '16:00', end: '18:59', every: 6 },
+        { start: '19:00', end: '23:30', every: 10 },
+      ],
+      weekend: [ { start: '06:00', end: '23:30', every: 10 } ]
+    })),
+
+    line('Pink', '#ff2d55', ['Leighton Castle', 'Oakville Plaza', 'Oakville City Center', 'Oakville Exchange', 'Perry Road', 'Mount Hindsboro', 'Wood-By-Hike', 'New Salemview', 'Millford Heights', 'Roxbury Landing', 'East Heights'], segUniform(['Leighton Castle', 'Oakville Plaza', 'Oakville City Center', 'Oakville Exchange', 'Perry Road', 'Mount Hindsboro', 'Wood-By-Hike', 'New Salemview', 'Millford Heights', 'Roxbury Landing', 'East Heights'], 3), serviceTemplate({
+      weekday: [ { start: '05:30', end: '22:30', every: 8 } ],
+      weekend: [ { start: '06:00', end: '22:00', every: 10 } ]
+    })),
+
+    line('Pink', '#ff2d55', ['Perry Road', 'Wychwood - Oakville City Airport'], segUniform(['Perry Road', 'Wychwood - Oakville City Airport'], 3), serviceTemplate({
+      weekday: [ { start: '05:00', end: '23:00', every: 10 } ],
+      weekend: [ { start: '06:00', end: '22:00', every: 12 } ]
+    })),
+
+    line('Brown', '#a2845e', ['East Heights', 'Roxbury Landing', 'Alpherst', 'New Halifax', 'Tyford Farms', 'Scottsbury', 'Ameryville', 'Scottsdale', 'Grant Park', 'Cherrywood', 'Brandywine', 'Santa Mora'], segUniform(['East Heights', 'Roxbury Landing', 'Alpherst', 'New Halifax', 'Tyford Farms', 'Scottsbury', 'Ameryville', 'Scottsdale', 'Grant Park', 'Cherrywood', 'Brandywine', 'Santa Mora'], 3), serviceTemplate({
+      weekday: [ { start: '05:00', end: '23:30', every: 10 } ],
+      weekend: [ { start: '06:00', end: '22:30', every: 12 } ]
+    }))
+  ];
+
+  // ---------------------------
+  // 2) ENGINE
+  // ---------------------------
+  function line(name, color, routeStationIds, segmentMins, service) {
+    return { name, color, route: routeStationIds, seg: segmentMins, service };
+  }
+
+  function serviceTemplate({ weekday, weekend }) {
+    return { weekday, weekend };
+  }
+
+  const stationIndex = Object.fromEntries(STATIONS.map((s, i) => [s.id, i])); // not used yet but handy
+
+  function isWeekend(d) { const n=d.getDay(); return n===0 || n===6; }
+
+  function toMin(t) { // "HH:MM" -> minutes since midnight
+    const [h,m] = t.split(':').map(Number); return h*60+m;
+  }
+  function fromMin(min) {
+    min = ((min % (24*60)) + (24*60)) % (24*60); // wrap
+    const h = Math.floor(min/60), m=min%60;
+    return String(h).padStart(2,'0')+":"+String(m).padStart(2,'0');
+  }
+
+  function expandDepartures(periods) {
+    // periods: [{start,end,every}] -> array of departure mins from origin
+    const out=[];
+    periods.forEach(p => {
+      let cur = toMin(p.start);
+      const end = toMin(p.end);
+      while (cur <= end) { out.push(cur); cur += p.every; }
+    });
+    return out;
+  }
+
+  function cumulative(seg, i) { // sum seg[0..i-1]
+    let s=0; for(let k=0;k<i;k++) s+=seg[k]; return s;
+  }
+
+  function terminalsFor(line) {
+    const firstId = line.route[0];
+    const lastId  = line.route[line.route.length-1];
+    const first = STATIONS.find(s=>s.id===firstId)?.name || firstId;
+    const last  = STATIONS.find(s=>s.id===lastId)?.name || lastId;
+    return { first, last };
+  }
+
+  function arrivalsForStation(stationId, now=new Date()) {
+    const weekend = isWeekend(now);
+    const nowMin = now.getHours()*60+now.getMinutes();
+    const results = [];
+
+    for (const ln of LINES) {
+      const idx = ln.route.indexOf(stationId);
+      if (idx === -1) continue; // line doesn't serve station
+      const terms = terminalsFor(ln);
+
+      // FORWARD direction (towards last)
+      const depFwd = expandDepartures(ln.service[weekend?'weekend':'weekday']);
+      const offsetFwd = cumulative(ln.seg, idx); // time from origin to this station
+      depFwd.forEach(t0 => {
+        let arr = t0 + offsetFwd;
+        // add two days worth to cover wraparound look-ahead
+        for (let k=0;k<2;k++) {
+          const arrDay = arr + k*24*60;
+          const minsAway = arrDay - nowMin;
+          if (minsAway >= -1 && minsAway <= 6*60) { // within past 1min to next 6h
+            results.push({
+              line: ln.name, color: ln.color,
+              destination: terms.last,
+              timeMin: arrDay,
+              minsAway
+            });
+          }
+        }
+      });
+
+      // REVERSE direction (towards first)
+      const offsetRev = cumulative(ln.seg, ln.seg.length) - cumulative(ln.seg, idx);
+      depFwd.forEach(t0 => { // use same origins but counted from opposite terminal
+        let arr = t0 + offsetRev;
+        for (let k=0;k<2;k++) {
+          const arrDay = arr + k*24*60;
+          const minsAway = arrDay - nowMin;
+          if (minsAway >= -1 && minsAway <= 6*60) {
+            results.push({
+              line: ln.name, color: ln.color,
+              destination: terms.first,
+              timeMin: arrDay,
+              minsAway
+            });
+          }
+        }
+      });
+    }
+
+    results.sort((a,b)=>a.timeMin-b.timeMin);
+    return results;
+  }
+
+  // ---------------------------
+  // 3) UI BINDINGS
+  // ---------------------------
+  const stationSelect = document.getElementById('stationSelect');
+  const arrivalsEl = document.getElementById('arrivals');
+  const nowText = document.getElementById('nowText');
+  const limitSelect = document.getElementById('limitSelect');
+  const refreshBtn = document.getElementById('refreshBtn');
+
+  function fmtMins(mins) {
+    if (mins < -0.5) return 'departed';
+    if (mins <= 0.5) return 'now';
+    return `${Math.round(mins)} min`;
+  }
+
+  function renderClock() {
+    const d = new Date();
+    const opts = { hour: 'numeric', minute: '2-digit' };
+    nowText.textContent = new Intl.DateTimeFormat(undefined, opts).format(d) + ' • Local time';
+  }
+
+  function renderStations() {
+    stationSelect.innerHTML = STATIONS.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+    // Default to Mount Hindsboro if present
+    const def = STATIONS.find(s=>s.id==='Mount Hindsboro') || STATIONS[0];
+    if (def) stationSelect.value = def.id;
+  }
+
+  function renderArrivals() {
+    const sid = stationSelect.value;
+    const cap = parseInt(limitSelect.value, 10);
+    const list = arrivalsForStation(sid, new Date()).slice(0, cap);
+    arrivalsEl.innerHTML = list.map(item => `
+      <div class="row">
+        <div class="dot" style="background:${item.color}"></div>
+        <div>
+          <div class="lineTag">${item.line} Line</div>
+          <div class="dest">to ${item.destination}</div>
+        </div>
+        <div class="mins">${fmtMins(item.minsAway)}</div>
+      </div>
+    `).join('') || `<div class="subtle">No upcoming trains in the next 6 hours.</div>`;
+  }
+
+  renderStations();
+  renderClock();
+  renderArrivals();
+
+  // refresh every 20s
+  setInterval(()=>{ renderClock(); renderArrivals(); }, 20000);
+  stationSelect.addEventListener('change', renderArrivals);
+  limitSelect.addEventListener('change', renderArrivals);
+  refreshBtn.addEventListener('click', ()=>{ renderClock(); renderArrivals(); });
+
+  // ---------------------------
+  // 4) OPTIONAL: basic offline cache (works after first load)
+  // ---------------------------
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      const sw = URL.createObjectURL(new Blob([
+        `self.addEventListener('install', e=>{ e.waitUntil(caches.open('borail-v1').then(c=>c.addAll(['./']))); });\n`+
+        `self.addEventListener('fetch', e=>{ e.respondWith(caches.match(e.request).then(r=>r || fetch(e.request))); });`
+      ], { type: 'text/javascript' }));
+      navigator.serviceWorker.register(sw).catch(()=>{});
+    });
+  }
+  </script>
+</body>
+</html>
