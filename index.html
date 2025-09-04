@@ -209,9 +209,10 @@
   ]);
 
   // Helper to determine if it's late night (11PM-5AM)
+  // TESTING: Temporarily set to 9PM-5AM for testing purposes
   const isLateNight = (now = new Date()) => {
     const hour = now.getHours();
-    return hour >= 23 || hour < 5;
+    return hour >= 21 || hour < 5; // Changed from 23 to 21 for testing
   };
 
   // Helper to build uniform 3-min segments for any route
@@ -542,8 +543,15 @@
     
     stationSelect.innerHTML = availableStations.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
     
-    const def = availableStations.find(s=>s.id==='Mount Hindsboro') || availableStations[0];
-    if (def) stationSelect.value = def.id;
+    // If current selection is suspended, switch to a default
+    const currentValue = stationSelect.value;
+    if (lateNight && LATE_NIGHT_SUSPENDED.has(currentValue)) {
+      const def = availableStations.find(s=>s.id==='Mount Hindsboro') || availableStations[0];
+      if (def) stationSelect.value = def.id;
+    } else {
+      const def = availableStations.find(s=>s.id==='Mount Hindsboro') || availableStations[0];
+      if (def && !stationSelect.value) stationSelect.value = def.id;
+    }
   }
 
   function renderArrivals(){
