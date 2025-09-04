@@ -70,6 +70,8 @@
     footer { color: var(--muted); font-size: 12px; padding: 40px 0 80px; text-align: center; }
 
     @media (min-width: 700px) { .grid { grid-template-columns: 2fr 1fr; } }
+
+    .late-night { background: rgba(255, 157, 0, 0.1); border: 1px solid rgba(255, 157, 0, 0.3); }
   </style>
 </head>
 <body>
@@ -195,6 +197,23 @@
     { id: 'Wychwood - Oakville City Airport', name: 'Wychwood - Oakville City Airport' }
   ];
 
+  // Late night suspended stations (11PM-5AM)
+  const LATE_NIGHT_SUSPENDED = new Set([
+    'Port Williamson', 'Radcliff Fields', 'Veridia Nexus', 'Newkirk - Oak Street',
+    'Bayview Park', 'Westpoint', 'Bradford Square', 'Bradford Bay', 'Garner',
+    'Kenilworth', 'Foxston', 'New Cottage', 'Whitebranch', 'Hutchinson Point',
+    'Vanwood', 'South Harrington', 'Harrington City', 'Carrollton', 'Hadleigh',
+    // All Brown Line stations
+    'Alpherst', 'New Halifax', 'Tyford Farms', 'Scottsbury', 'Ameryville',
+    'Scottsdale', 'Grant Park', 'Brandywine', 'Santa Mora'
+  ]);
+
+  // Helper to determine if it's late night (11PM-5AM)
+  const isLateNight = (now = new Date()) => {
+    const hour = now.getHours();
+    return hour >= 23 || hour < 5;
+  };
+
   // Helper to build uniform 3-min segments for any route
   const segFor = (route, mins=3) => Array(route.length-1).fill(mins);
 
@@ -204,45 +223,56 @@
   // Brown Line is special: RW01N and RW01S are direction-specific.
   // ---------------------------
   const ROUTE_VARIANTS = [
-    // GREEN
-    { line: 'Green', color: '#34c759', code: 'RG01', bidirectional: true, route: ['Mount River','Talmedge Hill','Oakville Plaza','Oakville Exchange','Wychwood - Oakville City Airport','Atkins Bridge','Cannon View','Rockcastle','Willow Springs','Port Williamson'] },
-    { line: 'Green', color: '#34c759', code: 'RG02', bidirectional: true, route: ['Mount River','Talmedge Hill','Oakville Plaza','Oakville Exchange','Wychwood - Oakville City Airport','Atkins Bridge','Cannon View','Rockcastle','Willow Springs','Newkirk'] },
-    { line: 'Green', color: '#34c759', code: 'RG03', bidirectional: true, route: ['Mount River','Talmedge Hill','Oakville Plaza','Oakville Exchange','Wychwood - Oakville City Airport','Radcliff Fields','Atkins Bridge','Cannon View','Rockcastle','Willow Springs','Burlington - University of NCU','Newkirk'] },
+    // GREEN - Late night: no Port Williamson, no Radcliff Fields
+    { line: 'Green', color: '#34c759', code: 'RG01', bidirectional: true, route: ['Mount River','Talmedge Hill','Oakville Plaza','Oakville Exchange','Wychwood - Oakville City Airport','Atkins Bridge','Cannon View','Rockcastle','Willow Springs','Port Williamson'], lateNight: false },
+    { line: 'Green', color: '#34c759', code: 'RG01LN', bidirectional: true, route: ['Mount River','Talmedge Hill','Oakville Plaza','Oakville Exchange','Wychwood - Oakville City Airport','Atkins Bridge','Cannon View','Rockcastle','Willow Springs','Newkirk'], lateNight: true },
+    { line: 'Green', color: '#34c759', code: 'RG02', bidirectional: true, route: ['Mount River','Talmedge Hill','Oakville Plaza','Oakville Exchange','Wychwood - Oakville City Airport','Atkins Bridge','Cannon View','Rockcastle','Willow Springs','Newkirk'], lateNight: false },
+    { line: 'Green', color: '#34c759', code: 'RG03', bidirectional: true, route: ['Mount River','Talmedge Hill','Oakville Plaza','Oakville Exchange','Wychwood - Oakville City Airport','Radcliff Fields','Atkins Bridge','Cannon View','Rockcastle','Willow Springs','Burlington - University of NCU','Newkirk'], lateNight: false },
+    { line: 'Green', color: '#34c759', code: 'RG03LN', bidirectional: true, route: ['Mount River','Talmedge Hill','Oakville Plaza','Oakville Exchange','Wychwood - Oakville City Airport','Atkins Bridge','Cannon View','Rockcastle','Willow Springs','Burlington - University of NCU','Newkirk'], lateNight: true },
 
-    // RED
-    { line: 'Red', color: '#ff3b30', code: 'RR05', bidirectional: true, route: ['Newkirk','Newkirk - Oak Street','Hoganville','Bayview Park','Chelsea Bay','Berwick Hall','Cambridge Central','Atkinson Junction','La Vista','Brookfield Lawn','Boylston'] },
-    { line: 'Red', color: '#ff3b30', code: 'RR04', bidirectional: true, route: ['Newkirk','Hoganville','Chelsea Bay','Berwick Hall','Cambridge Central','Atkinson Junction','La Vista','Brookfield Lawn','Boylston'] },
-    { line: 'Red', color: '#ff3b30', code: 'RR03', bidirectional: true, route: ['Newkirk','Newkirk - Oak Street','Hoganville','Bayview Park','Chelsea Bay','Berwick Hall','Cambridge Central','Atkinson Junction','La Vista','Brookfield Lawn','Foxston','New Cottage','Whitebranch'] },
-    { line: 'Red', color: '#ff3b30', code: 'RR02', bidirectional: true, route: ['Newkirk','Berwick Hall','Cambridge Central','Atkinson Junction','La Vista','Brookfield Lawn','Foxston','New Cottage','Whitebranch'] },
-    { line: 'Red', color: '#ff3b30', code: 'RR01', bidirectional: true, route: ['Newkirk','Hoganville','Berwick Hall','Atkinson Junction','Garner','Kenilworth'] },
+    // RED - Late night: no suspended stations
+    { line: 'Red', color: '#ff3b30', code: 'RR05', bidirectional: true, route: ['Newkirk','Newkirk - Oak Street','Hoganville','Bayview Park','Chelsea Bay','Berwick Hall','Cambridge Central','Atkinson Junction','La Vista','Brookfield Lawn','Boylston'], lateNight: false },
+    { line: 'Red', color: '#ff3b30', code: 'RR05LN', bidirectional: true, route: ['Newkirk','Hoganville','Chelsea Bay','Berwick Hall','Cambridge Central','Atkinson Junction','La Vista','Brookfield Lawn','Boylston'], lateNight: true },
+    { line: 'Red', color: '#ff3b30', code: 'RR04', bidirectional: true, route: ['Newkirk','Hoganville','Chelsea Bay','Berwick Hall','Cambridge Central','Atkinson Junction','La Vista','Brookfield Lawn','Boylston'], lateNight: false },
+    { line: 'Red', color: '#ff3b30', code: 'RR03', bidirectional: true, route: ['Newkirk','Newkirk - Oak Street','Hoganville','Bayview Park','Chelsea Bay','Berwick Hall','Cambridge Central','Atkinson Junction','La Vista','Brookfield Lawn','Foxston','New Cottage','Whitebranch'], lateNight: false },
+    { line: 'Red', color: '#ff3b30', code: 'RR03LN', bidirectional: true, route: ['Newkirk','Hoganville','Chelsea Bay','Berwick Hall','Cambridge Central','Atkinson Junction','La Vista','Brookfield Lawn'], lateNight: true },
+    { line: 'Red', color: '#ff3b30', code: 'RR02', bidirectional: true, route: ['Newkirk','Berwick Hall','Cambridge Central','Atkinson Junction','La Vista','Brookfield Lawn','Foxston','New Cottage','Whitebranch'], lateNight: false },
+    { line: 'Red', color: '#ff3b30', code: 'RR02LN', bidirectional: true, route: ['Newkirk','Berwick Hall','Cambridge Central','Atkinson Junction','La Vista','Brookfield Lawn'], lateNight: true },
+    { line: 'Red', color: '#ff3b30', code: 'RR01', bidirectional: true, route: ['Newkirk','Hoganville','Berwick Hall','Atkinson Junction','Garner','Kenilworth'], lateNight: false },
+    { line: 'Red', color: '#ff3b30', code: 'RR01LN', bidirectional: true, route: ['Newkirk','Hoganville','Berwick Hall','Atkinson Junction'], lateNight: true },
 
-    // GOLD (only RG01)
-    { line: 'Gold', color: '#ffcc00', code: 'RG01', bidirectional: true, route: ['Berwick Hall','Westpoint','Bradford Square','Bradford Bay'] },
+    // GOLD - No late night service
+    { line: 'Gold', color: '#ffcc00', code: 'RG01', bidirectional: true, route: ['Berwick Hall','Westpoint','Bradford Square','Bradford Bay'], lateNight: false },
 
-    // ORANGE (only RO01)
-    { line: 'Orange', color: '#ff9500', code: 'RO01', bidirectional: true, route: ['Wychwood - Oakville City Airport','Veridia Nexus'] },
+    // ORANGE - No late night service
+    { line: 'Orange', color: '#ff9500', code: 'RO01', bidirectional: true, route: ['Wychwood - Oakville City Airport','Veridia Nexus'], lateNight: false },
 
-    // BLUE
-    { line: 'Blue', color: '#007aff', code: 'RB01', bidirectional: true, route: ['Oakville Plaza','Oakville City Center','Oakville Exchange','Perry Road','Mount Hindsboro','Greens Corner','Doverville','Orchard Ridge','Groveton','Madisonboro','Hutchinson Point','Vanwood','South Harrington','Harrington City','Carrollton','Hadleigh'] },
-    { line: 'Blue', color: '#007aff', code: 'RB02', bidirectional: true, route: ['Oakville Plaza','Oakville City Center','Oakville Exchange','Greens Corner','Doverville','Orchard Ridge','Groveton','Madisonboro','Hutchinson Point','Vanwood','South Harrington','Harrington City','Carrollton','Hadleigh'] },
-    { line: 'Blue', color: '#007aff', code: 'RB03', bidirectional: true, route: ['Oakville Plaza','Oakville City Center','Oakville Exchange','Perry Road','Mount Hindsboro','Greens Corner','Doverville','Orchard Ridge','Groveton','Madisonboro','Hutchinson Point','Vanwood','South Harrington','Harrington City'] },
+    // BLUE - Late night: terminate at Madisonboro
+    { line: 'Blue', color: '#007aff', code: 'RB01', bidirectional: true, route: ['Oakville Plaza','Oakville City Center','Oakville Exchange','Perry Road','Mount Hindsboro','Greens Corner','Doverville','Orchard Ridge','Groveton','Madisonboro','Hutchinson Point','Vanwood','South Harrington','Harrington City','Carrollton','Hadleigh'], lateNight: false },
+    { line: 'Blue', color: '#007aff', code: 'RB01LN', bidirectional: true, route: ['Oakville Plaza','Oakville City Center','Oakville Exchange','Perry Road','Mount Hindsboro','Greens Corner','Doverville','Orchard Ridge','Groveton','Madisonboro'], lateNight: true },
+    { line: 'Blue', color: '#007aff', code: 'RB02', bidirectional: true, route: ['Oakville Plaza','Oakville City Center','Oakville Exchange','Greens Corner','Doverville','Orchard Ridge','Groveton','Madisonboro','Hutchinson Point','Vanwood','South Harrington','Harrington City','Carrollton','Hadleigh'], lateNight: false },
+    { line: 'Blue', color: '#007aff', code: 'RB02LN', bidirectional: true, route: ['Oakville Plaza','Oakville City Center','Oakville Exchange','Greens Corner','Doverville','Orchard Ridge','Groveton','Madisonboro'], lateNight: true },
+    { line: 'Blue', color: '#007aff', code: 'RB03', bidirectional: true, route: ['Oakville Plaza','Oakville City Center','Oakville Exchange','Perry Road','Mount Hindsboro','Greens Corner','Doverville','Orchard Ridge','Groveton','Madisonboro','Hutchinson Point','Vanwood','South Harrington','Harrington City'], lateNight: false },
+    { line: 'Blue', color: '#007aff', code: 'RB03LN', bidirectional: true, route: ['Oakville Plaza','Oakville City Center','Oakville Exchange','Perry Road','Mount Hindsboro','Greens Corner','Doverville','Orchard Ridge','Groveton','Madisonboro'], lateNight: true },
 
-    // PINK
-    { line: 'Pink', color: '#ff2d55', code: 'RP01', bidirectional: true, route: ['Leighton Castle','Oakville Plaza','Oakville City Center','Oakville Exchange','Perry Road','Mount Hindsboro','Wood-By-Hike','New Salemview','Millford Heights','Roxbury Landing','East Heights'] },
-    { line: 'Pink', color: '#ff2d55', code: 'RP02', bidirectional: true, route: ['Wychwood - Oakville City Airport','Perry Road','Mount Hindsboro','Wood-By-Hike','New Salemview','Millford Heights','Roxbury Landing','East Heights'] },
+    // PINK - Late night service continues (Roxbury Landing and East Heights served by Pink only)
+    { line: 'Pink', color: '#ff2d55', code: 'RP01', bidirectional: true, route: ['Leighton Castle','Oakville Plaza','Oakville City Center','Oakville Exchange','Perry Road','Mount Hindsboro','Wood-By-Hike','New Salemview','Millford Heights','Roxbury Landing','East Heights'], lateNight: false },
+    { line: 'Pink', color: '#ff2d55', code: 'RP02', bidirectional: true, route: ['Wychwood - Oakville City Airport','Perry Road','Mount Hindsboro','Wood-By-Hike','New Salemview','Millford Heights','Roxbury Landing','East Heights'], lateNight: false },
+    { line: 'Pink', color: '#ff2d55', code: 'RP02LN', bidirectional: true, route: ['Oakville Plaza','Oakville City Center','Oakville Exchange','Perry Road','Mount Hindsboro','Wood-By-Hike','New Salemview','Millford Heights','Roxbury Landing','East Heights'], lateNight: true },
 
-    // BROWN (direction-specific)
-    { line: 'Brown', color: '#a2845e', code: 'RW01N', bidirectional: false, route: ['East Heights','Alpherst','New Halifax','Tyford Farms','Scottsbury','Ameryville','Scottsdale','Grant Park','Cherrywood','Brandywine','Santa Mora'] },
-    { line: 'Brown', color: '#a2845e', code: 'RW01S', bidirectional: false, route: ['Santa Mora','Brandywine','Cherrywood','Grant Park','Scottsdale','Ameryville','Scottsbury','Tyford Farms','New Halifax','Alpherst','Roxbury Landing','East Heights'] }
+    // BROWN - No late night service (completely suspended)
+    { line: 'Brown', color: '#a2845e', code: 'RW01N', bidirectional: false, route: ['East Heights','Alpherst','New Halifax','Tyford Farms','Scottsbury','Ameryville','Scottsdale','Grant Park','Brandywine','Santa Mora'], lateNight: false },
+    { line: 'Brown', color: '#a2845e', code: 'RW01S', bidirectional: false, route: ['Santa Mora','Brandywine','Grant Park','Scottsdale','Ameryville','Scottsbury','Tyford Farms','New Halifax','Alpherst','Roxbury Landing','East Heights'], lateNight: false }
   ];
 
   // ---------------------------
-  // PER-LINE SERVICE WINDOWS (unchanged from earlier where applicable)
+  // PER-LINE SERVICE WINDOWS
   // ---------------------------
   const LINE_SERVICE = {
     'Green': {
       weekday: [ { start: '05:00', end: '23:00', every: 10 } ],
-      weekend: [ { start: '06:00', end: '22:00', every: 12 } ]
+      weekend: [ { start: '06:00', end: '22:00', every: 12 } ],
+      lateNight: [ { start: '23:00', end: '04:59', every: 20 } ]
     },
     'Red': {
       weekday: [
@@ -250,55 +280,80 @@
         { start: '07:00', end: '09:59', every: 5 },
         { start: '10:00', end: '15:59', every: 7 },
         { start: '16:00', end: '18:59', every: 5 },
-        { start: '19:00', end: '23:30', every: 10 },
+        { start: '19:00', end: '23:00', every: 10 },
       ],
-      weekend: [ { start: '06:00', end: '23:30', every: 10 } ]
+      weekend: [ { start: '06:00', end: '23:00', every: 10 } ],
+      lateNight: [ { start: '23:00', end: '04:59', every: 15 } ]
     },
     'Gold': {
       weekday: [ { start: '05:30', end: '23:00', every: 12 } ],
-      weekend: [ { start: '06:00', end: '22:00', every: 12 } ]
+      weekend: [ { start: '06:00', end: '22:00', every: 12 } ],
+      lateNight: [] // No late night service
     },
-    'Orange': { weekday: [], weekend: [] },
+    'Orange': { 
+      weekday: [], 
+      weekend: [],
+      lateNight: [] // No late night service
+    },
     'Blue': {
       weekday: [
         { start: '05:00', end: '06:59', every: 10 },
         { start: '07:00', end: '09:59', every: 6 },
         { start: '10:00', end: '15:59', every: 8 },
         { start: '16:00', end: '18:59', every: 6 },
-        { start: '19:00', end: '23:30', every: 10 },
+        { start: '19:00', end: '23:00', every: 10 },
       ],
-      weekend: [ { start: '06:00', end: '23:30', every: 10 } ]
+      weekend: [ { start: '06:00', end: '23:00', every: 10 } ],
+      lateNight: [ { start: '23:00', end: '04:59', every: 18 } ]
     },
     'Pink': {
       weekday: [ { start: '05:30', end: '22:30', every: 8 } ],
-      weekend: [ { start: '06:00', end: '22:00', every: 10 } ]
+      weekend: [ { start: '06:00', end: '22:00', every: 10 } ],
+      lateNight: [ { start: '23:00', end: '04:59', every: 25 } ]
     },
     'Brown': {
-      weekday: [ { start: '05:00', end: '23:30', every: 10 } ],
-      weekend: [ { start: '06:00', end: '22:30', every: 12 } ]
+      weekday: [ { start: '05:00', end: '23:00', every: 10 } ],
+      weekend: [ { start: '06:00', end: '22:30', every: 12 } ],
+      lateNight: [] // No late night service
     }
   };
 
   // ---------------------------
-  // TERMINAL-ONLY DESTINATION RULES (from your previous step)
+  // TERMINAL-ONLY DESTINATION RULES
   // ---------------------------
   const TERMINAL_RULES = {
     'Mount River': ['Port Williamson', 'Newkirk'],
     'Leighton Castle': ['East Heights'],
-    'Oakville Plaza': ['Harrington City', 'Hadleigh'],
+    'Oakville Plaza': ['Harrington City', 'Hadleigh', 'Madisonboro'],
     'East Heights': ['Leighton Castle', 'Santa Mora'],
     'Santa Mora': ['East Heights'],
     'Harrington City': ['Oakville Plaza'],
     'Hadleigh': ['Oakville Plaza'],
+    'Madisonboro': ['Oakville Plaza'],
     'Wychwood - Oakville City Airport': ['East Heights', 'Veridia Nexus'],
     'Port Williamson': ['Mount River'],
-    'Newkirk': ['Mount River', 'Kenilworth', 'Boylston', 'Whitebranch'],
-    'Berwick Hall': ['Bradford Bay'],
+    'Newkirk': ['Mount River', 'Kenilworth', 'Boylston', 'Whitebranch', 'Atkinson Junction'],
+    'Berwick Hall': ['Bradford Bay', 'Atkinson Junction'],
     'Bradford Bay': ['Berwick Hall'],
     'Kenilworth': ['Newkirk'],
     'Boylston': ['Newkirk'],
     'Whitebranch': ['Newkirk'],
+    'Atkinson Junction': ['Newkirk', 'Berwick Hall'],
     'Veridia Nexus': ['Wychwood - Oakville City Airport']
+  };
+
+  // Late night terminal rules (modified)
+  const TERMINAL_RULES_LATE_NIGHT = {
+    'Mount River': ['Newkirk'],
+    'Leighton Castle': ['East Heights'],
+    'Oakville Plaza': ['Madisonboro'],
+    'East Heights': ['Leighton Castle'],
+    'Madisonboro': ['Oakville Plaza'],
+    'Wychwood - Oakville City Airport': ['East Heights'],
+    'Newkirk': ['Mount River', 'Boylston', 'Atkinson Junction'],
+    'Berwick Hall': ['Atkinson Junction'],
+    'Boylston': ['Newkirk'],
+    'Atkinson Junction': ['Newkirk', 'Berwick Hall']
   };
 
   // ---------------------------
@@ -312,12 +367,12 @@
   const cumulative = (seg,i)=>{ let s=0; for(let k=0;k<i;k++) s+=seg[k]; return s; };
 
   // Deterministic picker so a given (line+minute) always maps to the same variant this session
-  function pickVariant(lineName, minuteValue){
-    const list = ROUTE_VARIANTS.filter(v=>v.line===lineName);
+  function pickVariant(lineName, minuteValue, lateNightMode = false){
+    const list = ROUTE_VARIANTS.filter(v=>v.line===lineName && v.lateNight === lateNightMode);
     if (!list.length) return null;
     // FNV-1a like hash → index
     let h = 2166136261 >>> 0;
-    const s = `${lineName}:${minuteValue}`;
+    const s = `${lineName}:${minuteValue}:${lateNightMode}`;
     for (let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
     const idx = h % list.length;
     return list[idx];
@@ -326,17 +381,37 @@
   function arrivalsForStation(stationId, now=new Date()){
     const weekend = isWeekend(now);
     const nowMin = now.getHours()*60 + now.getMinutes();
+    const lateNightMode = isLateNight(now);
     const results = [];
+
+    // Skip if station is suspended during late night
+    if (lateNightMode && LATE_NIGHT_SUSPENDED.has(stationId)) {
+      return results;
+    }
 
     const lines = Object.keys(LINE_SERVICE);
 
     for (const lineName of lines){
-      const service = LINE_SERVICE[lineName][weekend?'weekend':'weekday'];
-      const dep = expandDepartures(service);
+      const service = LINE_SERVICE[lineName];
+      
+      // Determine which service pattern to use
+      let servicePattern;
+      if (lateNightMode && service.lateNight && service.lateNight.length > 0) {
+        servicePattern = service.lateNight;
+      } else if (lateNightMode) {
+        // No late night service for this line
+        continue;
+      } else if (weekend) {
+        servicePattern = service.weekend;
+      } else {
+        servicePattern = service.weekday;
+      }
+
+      const dep = expandDepartures(servicePattern);
 
       for (const t0 of dep){
-        // Special Brown logic: direction-specific codes
-        if (lineName === 'Brown'){
+        // Special Brown logic: direction-specific codes (only during regular hours)
+        if (lineName === 'Brown' && !lateNightMode){
           // Northbound RW01N (East Heights → Santa Mora)
           const vN = ROUTE_VARIANTS.find(v=>v.code==='RW01N');
           const rN = vN.route, segN = segFor(rN);
@@ -371,9 +446,14 @@
         }
 
         // All other lines: pick a variant once per slot, use both directions if bidirectional
-        const v = pickVariant(lineName, t0);
+        const v = pickVariant(lineName, t0, lateNightMode);
         if (!v) continue;
         const r = v.route, seg = segFor(r);
+
+        // Skip routes that contain suspended stations during late night
+        if (lateNightMode && r.some(station => LATE_NIGHT_SUSPENDED.has(station))) {
+          continue;
+        }
 
         // forward (as listed)
         const idxF = r.indexOf(stationId);
@@ -412,8 +492,11 @@
     // Filter: never show trains whose destination equals the selected station; apply terminal rules if present
     const selectedName = STATIONS.find(s=>s.id===stationId)?.name || stationId;
     let filtered = results.filter(r=> r.destination !== selectedName);
-    if (TERMINAL_RULES[selectedName]){
-      const allowed = new Set(TERMINAL_RULES[selectedName]);
+    
+    // Apply appropriate terminal rules based on late night mode
+    const terminalRules = lateNightMode ? TERMINAL_RULES_LATE_NIGHT : TERMINAL_RULES;
+    if (terminalRules[selectedName]){
+      const allowed = new Set(terminalRules[selectedName]);
       filtered = filtered.filter(r=> allowed.has(r.destination));
     }
 
@@ -429,26 +512,68 @@
   const nowText = document.getElementById('nowText');
   const limitSelect = document.getElementById('limitSelect');
   const refreshBtn = document.getElementById('refreshBtn');
+  const serviceState = document.getElementById('serviceState');
 
   function fmtMins(mins){ if (mins < -0.5) return 'departed'; if (mins <= 0.5) return 'now'; return `${Math.round(mins)} min`; }
 
   function renderClock(){
     const d=new Date(); const opts={ hour:'numeric', minute:'2-digit' };
     nowText.textContent = new Intl.DateTimeFormat(undefined, opts).format(d) + ' • Local time';
+    
+    // Update service state indicator
+    const lateNight = isLateNight(d);
+    if (lateNight) {
+      serviceState.textContent = 'Service: Late Night';
+      serviceState.className = 'pill late-night';
+    } else {
+      serviceState.textContent = 'Service: Normal';
+      serviceState.className = 'pill';
+    }
   }
 
   function renderStations(){
-    stationSelect.innerHTML = STATIONS.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
-    const def = STATIONS.find(s=>s.id==='Mount Hindsboro') || STATIONS[0];
+    const lateNight = isLateNight(new Date());
+    
+    // Filter out suspended stations during late night
+    let availableStations = STATIONS;
+    if (lateNight) {
+      availableStations = STATIONS.filter(s => !LATE_NIGHT_SUSPENDED.has(s.id));
+    }
+    
+    stationSelect.innerHTML = availableStations.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+    
+    const def = availableStations.find(s=>s.id==='Mount Hindsboro') || availableStations[0];
     if (def) stationSelect.value = def.id;
   }
 
   function renderArrivals(){
     const sid = stationSelect.value;
     const cap = parseInt(limitSelect.value, 10);
-    const list = arrivalsForStation(sid, new Date()).slice(0, cap);
+    const now = new Date();
+    const lateNight = isLateNight(now);
+    const list = arrivalsForStation(sid, now).slice(0, cap);
 
-    arrivalsEl.innerHTML = list.map((item, i) => {
+    let html = '';
+    
+    // Show late night service notice if applicable
+    if (lateNight && LATE_NIGHT_SUSPENDED.has(sid)) {
+      html = `<div class="subtle" style="padding: 12px; border: 1px solid rgba(255, 157, 0, 0.3); border-radius: 14px; background: rgba(255, 157, 0, 0.1);">
+        <strong>Late Night Service (11PM-5AM)</strong><br>
+        This station is closed during late night hours.
+      </div>`;
+    } else if (lateNight && list.length === 0) {
+      html = `<div class="subtle" style="padding: 12px; border: 1px solid rgba(255, 157, 0, 0.3); border-radius: 14px; background: rgba(255, 157, 0, 0.1);">
+        <strong>Late Night Service (11PM-5AM)</strong><br>
+        Limited service with reduced routes and frequencies. Some lines suspended.
+      </div>`;
+    } else if (lateNight) {
+      html = `<div class="subtle" style="padding: 12px; border: 1px solid rgba(255, 157, 0, 0.3); border-radius: 14px; background: rgba(255, 157, 0, 0.1); margin-bottom: 12px;">
+        <strong>Late Night Service (11PM-5AM)</strong><br>
+        Limited service with reduced routes and frequencies.
+      </div>`;
+    }
+
+    html += list.map((item, i) => {
       const stopsHtml = item.stops.map(s=>`<li>${s}</li>`).join('');
       return `
         <details class="row">
@@ -467,17 +592,23 @@
             </ul>
           </div>
         </details>`;
-    }).join('') || `<div class="subtle">No upcoming trains in the next 6 hours.</div>`;
+    }).join('');
+
+    if (!html.includes('class="row"') && !lateNight) {
+      html += `<div class="subtle">No upcoming trains in the next 6 hours.</div>`;
+    }
+
+    arrivalsEl.innerHTML = html;
   }
 
   renderStations();
   renderClock();
   renderArrivals();
 
-  setInterval(()=>{ renderClock(); renderArrivals(); }, 20000);
+  setInterval(()=>{ renderClock(); renderArrivals(); renderStations(); }, 20000);
   stationSelect.addEventListener('change', renderArrivals);
   limitSelect.addEventListener('change', renderArrivals);
-  refreshBtn.addEventListener('click', ()=>{ renderClock(); renderArrivals(); });
+  refreshBtn.addEventListener('click', ()=>{ renderClock(); renderArrivals(); renderStations(); });
 
   // ---------------------------
   // 4) OPTIONAL: basic offline cache (works after first load)
