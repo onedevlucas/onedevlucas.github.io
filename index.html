@@ -54,6 +54,11 @@
     }
     .seg { display: flex; gap: 10px; align-items: center; }
     .pill { padding: 8px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); font-size: 12px; }
+    .pill.late-night {
+  border-color: var(--line-Gold);
+  color: var(--line-Gold);
+  box-shadow: 0 0 0 2px rgba(255, 204, 0, 0.20) inset; /* subtle highlight */
+}
 
     .grid { display: grid; gap: 12px; margin-top: 14px; }
     .card { background: linear-gradient(180deg, rgba(255,255,255,.03), transparent), var(--card); border: 1px solid rgba(255,255,255,.06); border-radius: 18px; padding: 14px; }
@@ -306,7 +311,9 @@
       weekend: [ { start: '06:00', end: '23:30', every: 10 } ]
     },
     'Gold': {
-      weekday: [ { start: '05:30', end: '23:00', every: 12 } ],
+      weekday: [
+          { start: '05:30', end: '23:00', every: 12 } 
+      ],
       weekend: [ { start: '06:00', end: '22:00', every: 12 } ]
     },
     'Orange': { weekday: [], weekend: [] },
@@ -480,13 +487,27 @@
   const nowText = document.getElementById('nowText');
   const limitSelect = document.getElementById('limitSelect');
   const refreshBtn = document.getElementById('refreshBtn');
+  const serviceState = document.getElementById('serviceState');
 
   function fmtMins(mins){ if (mins < -0.5) return 'departed'; if (mins <= 0.5) return 'now'; return `${Math.round(mins)} min`; }
+  
+  const isLateNight = d => { const h = d.getHours(); return h >= 23 || h < 5; };
 
   function renderClock(){
-    const d=new Date(); const opts={ hour:'numeric', minute:'2-digit' };
-    nowText.textContent = new Intl.DateTimeFormat(undefined, opts).format(d) + ' • Local time';
+  const d = new Date();
+  const opts = { hour:'numeric', minute:'2-digit' };
+  nowText.textContent = new Intl.DateTimeFormat(undefined, opts).format(d) + ' • Local time';
+
+  // NEW: toggle service pill based on time (11PM–5AM)
+  const late = isLateNight(d);
+  if (late) {
+    serviceState.textContent = 'Service: Late Night';
+    serviceState.className = 'pill late-night';
+  } else {
+    serviceState.textContent = 'Service: Normal';
+    serviceState.className = 'pill';
   }
+}
 
   function renderStations(){
     stationSelect.innerHTML = STATIONS.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
