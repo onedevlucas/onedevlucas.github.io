@@ -71,6 +71,44 @@
     footer { color: var(--muted); font-size: 12px; padding: 40px 0 80px; text-align: center; }
 
     @media (min-width: 700px) { .grid { grid-template-columns: 2fr 1fr; } }
+
+    /* Route stops list: pin icons + connecting line */
+.stops { 
+  list-style: none; 
+  margin: 0; 
+  padding-left: 0; 
+  line-height: 1.6;
+  color: #fff; /* text + pin always white */
+}
+.stops li {
+  position: relative;
+  margin: 6px 0 10px 0;
+  padding-left: 28px; /* room for pin */
+}
+/* the pin */
+.stops li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 18px;
+  height: 18px;
+  background: no-repeat center / contain
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 22s-7-4.5-7-11a7 7 0 1 1 14 0c0 6.5-7 11-7 11z' fill='none' stroke='currentColor' stroke-width='2'/><circle cx='12' cy='11' r='2.5' fill='currentColor'/></svg>");
+  /* uses the element's text color as pin color (currentColor) */
+}
+/* the vertical connecting line (hidden on the last item) */
+.stops li::after {
+  content: "";
+  position: absolute;
+  left: 10px;          /* centers under the pin */
+  top: 22px;           /* start just below the pin */
+  bottom: -8px;        /* extend a bit below the item */
+  width: 2px;
+  background: rgba(255,255,255,0.14);
+}
+.stops li:last-child::after { display: none; }
+
   </style>
 </head>
 <body>
@@ -475,7 +513,7 @@
           </summary>
           <div style="margin:10px 0 2px 26px;">
             <div class="subtle" style="margin-bottom:6px;">Making stops at…</div>
-            <ul style="margin:0; padding-left:16px; line-height:1.6;">
+            <ul class="stops" style="color:#ffffff">
               ${stopsHtml}
             </ul>
           </div>
