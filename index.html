@@ -187,6 +187,7 @@
   <footer>© BORail • Built for iPhone • Works offline after first load</footer>
 
   <script>
+      let ORANGE_ENABLED = false; // flip to true to enable the Orange Line event shuttle
   // ---------------------------
   // 1) DATA MODEL (edit here)
   // ---------------------------
@@ -422,6 +423,46 @@ function goldShuttleTrips(now=new Date()){
   return trips;
 }
 
+// Custom Orange Line shuttle definition (event-only)
+const ORANGE_ROUTE = ['Wychwood - Oakville City Airport','Veridia Nexus'];
+// forward segment times (minutes)
+const ORANGE_FORWARD = [3];   // Airport → Veridia Nexus = 3
+// reverse segment times (minutes)
+const ORANGE_REVERSE = [3];   // Veridia Nexus → Airport = 3
+
+function orangeShuttleTrips(now=new Date()){
+  const trips = [];
+  if (!ORANGE_ENABLED) return trips;  // disabled unless flag is true
+
+  const startMin = 5*60;   // 05:00
+  const endMin = 23*60;    // 23:00
+  let t = startMin;
+  let dir = 'forward';
+
+  while (t <= endMin){
+    if (dir === 'forward'){
+      let cur = t;
+      // Airport to Veridia Nexus
+      trips.push({ station: ORANGE_ROUTE[0], time: cur, dest: 'Veridia Nexus', line:'Orange', code:'RO01', color:'#ff9500', stops: ORANGE_ROUTE });
+      cur += ORANGE_FORWARD[0];
+      trips.push({ station: ORANGE_ROUTE[1], time: cur, dest: 'Veridia Nexus', line:'Orange', code:'RO01', color:'#ff9500', stops: ORANGE_ROUTE });
+      // dwell 1.5 min at Veridia
+      t = cur + 1.5;
+      dir = 'reverse';
+    } else {
+      let cur = t;
+      // Veridia Nexus to Airport
+      trips.push({ station: ORANGE_ROUTE[1], time: cur, dest: 'Wychwood - Oakville City Airport', line:'Orange', code:'RO01', color:'#ff9500', stops:[...ORANGE_ROUTE].reverse() });
+      cur += ORANGE_REVERSE[0];
+      trips.push({ station: ORANGE_ROUTE[0], time: cur, dest: 'Wychwood - Oakville City Airport', line:'Orange', code:'RO01', color:'#ff9500', stops:[...ORANGE_ROUTE].reverse() });
+      // dwell 5 min at Airport
+      t = cur + 5;
+      dir = 'forward';
+    }
+  }
+  return trips;
+}
+
   function arrivalsForStation(stationId, now=new Date()){
     const weekend = isWeekend(now);
     const nowMin = now.getHours()*60 + now.getMinutes();
@@ -509,6 +550,25 @@ function goldShuttleTrips(now=new Date()){
     }
     
         // Inject custom Gold Line shuttle
+        
+            // Inject custom Orange Line shuttle (if enabled)
+    if (stationId && ORANGE_ENABLED){
+      const orangeTrips = orangeShuttleTrips(now);
+      const nowMin = now.getHours()*60 + now.getMinutes();
+      for (const g of orangeTrips){
+        if (g.station === stationId){
+          const minsAway = g.time - nowMin;
+          if (minsAway >= -1 && minsAway <= 360){
+            results.push({
+              line: g.line, color: g.color, code: g.code,
+              destination: g.dest, timeMin: g.time, minsAway,
+              stops: g.stops
+            });
+          }
+        }
+      }
+    }
+    
     if (stationId){
       const goldTrips = goldShuttleTrips(now);
       const nowMin = now.getHours()*60 + now.getMinutes();
