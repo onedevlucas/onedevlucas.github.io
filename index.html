@@ -316,12 +316,7 @@
       ],
       weekend: [ { start: '06:00', end: '23:30', every: 10 } ]
     },
-    'Gold': {
-      weekday: [
-          { start: '05:30', end: '23:00', every: 12 } 
-      ],
-      weekend: [ { start: '06:00', end: '22:00', every: 12 } ]
-    },
+    'Gold': { weekday: [], weekend: [] },
     'Orange': { weekday: [], weekend: [] },
     'Blue': {
       weekday: [
@@ -386,6 +381,46 @@
     const idx = h % list.length;
     return list[idx];
   }
+  
+  // Custom Gold Line shuttle definition
+const GOLD_ROUTE = ['Berwick Hall','Westpoint','Bradford Square','Bradford Bay'];
+// forward segment times (minutes)
+const GOLD_FORWARD = [1.5, 1.5, 2];   // BH→W =1.5, W→BSq=1.5, BSq→BBay=2
+// reverse segment times (minutes)
+const GOLD_REVERSE = [2, 1.5, 2.5];   // BBay→BSq=2, BSq→W=1.5, W→BH=2.5
+
+function goldShuttleTrips(now=new Date()){
+  const trips = [];
+  const startMin = 5*60;   // 05:00
+  const endMin = 23*60;    // 23:00
+  let t = startMin;
+  let dir = 'forward';
+
+  while (t <= endMin){
+    if (dir === 'forward'){
+      let cur = t;
+      // through forward route
+      for (let i=0;i<GOLD_ROUTE.length;i++){
+        trips.push({ station:GOLD_ROUTE[i], time:cur, dest:'Bradford Bay', line:'Gold', code:'RG01', color:'#ffcc00', stops:GOLD_ROUTE });
+        if (i < GOLD_FORWARD.length) cur += GOLD_FORWARD[i];
+      }
+      // dwell 3 min at Bradford Bay
+      t = cur + 3;
+      dir = 'reverse';
+    } else {
+      let cur = t;
+      // through reverse route
+      for (let i=GOLD_ROUTE.length-1;i>=0;i--){
+        trips.push({ station:GOLD_ROUTE[i], time:cur, dest:'Berwick Hall', line:'Gold', code:'RG01', color:'#ffcc00', stops:[...GOLD_ROUTE].reverse() });
+        if (i > 0) cur += GOLD_REVERSE[GOLD_ROUTE.length-1 - i];
+      }
+      // dwell 5 min at Berwick Hall
+      t = cur + 5;
+      dir = 'forward';
+    }
+  }
+  return trips;
+}
 
   function arrivalsForStation(stationId, now=new Date()){
     const weekend = isWeekend(now);
@@ -468,6 +503,24 @@
                   stops: rRev });
               }
             }
+          }
+        }
+      }
+    }
+    
+        // Inject custom Gold Line shuttle
+    if (stationId){
+      const goldTrips = goldShuttleTrips(now);
+      const nowMin = now.getHours()*60 + now.getMinutes();
+      for (const g of goldTrips){
+        if (g.station === stationId){
+          const minsAway = g.time - nowMin;
+          if (minsAway >= -1 && minsAway <= 360){
+            results.push({
+              line: g.line, color: g.color, code: g.code,
+              destination: g.dest, timeMin: g.time, minsAway,
+              stops: g.stops
+            });
           }
         }
       }
