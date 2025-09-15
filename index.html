@@ -114,6 +114,22 @@
 }
 .stops li:last-child::after { display: none; }
 
+.linklike { 
+  background: none; border: 0; padding: 0; 
+  color: var(--accent); font: inherit; cursor: pointer;
+}
+
+/* Slide animation for the full stop list */
+.slide {
+  overflow: hidden;
+  max-height: 0;         /* collapsed */
+  opacity: 0;
+  transition: max-height 320ms ease, opacity 220ms ease;
+}
+.slide.open {
+  opacity: 1;
+}
+
   </style>
 </head>
 <body>
@@ -255,7 +271,7 @@
     { id: 'Whitebranch', name: 'Whitebranch' },
     { id: 'Willow Springs', name: 'Willow Springs' },
     { id: 'Wood-By-Hike', name: 'Wood-By-Hike' },
-    { id: 'Wychwood - Oakville City Airport', name: 'Wychwood - Oakville City Airport' }
+    { id: 'Oakville City Airport', name: 'Oakville City Airport' }
   ];
 
   // Helper to build uniform 3-min segments for any route
@@ -268,9 +284,9 @@
   // ---------------------------
   const ROUTE_VARIANTS = [
     // GREEN
-    { line: 'Green', color: '#34c759', code: 'RG01', bidirectional: true, route: ['Mount River','Talmedge Hill','Oakville Plaza','Oakville Exchange','Wychwood - Oakville City Airport','Atkins Bridge','Cannon View','Rockcastle','Willow Springs','Port Williamson'] },
-    { line: 'Green', color: '#34c759', code: 'RG02', bidirectional: true, route: ['Mount River','Talmedge Hill','Oakville Plaza','Oakville Exchange','Wychwood - Oakville City Airport','Atkins Bridge','Cannon View','Rockcastle','Willow Springs','Newkirk'] },
-    { line: 'Green', color: '#34c759', code: 'RG03', bidirectional: true, route: ['Mount River','Talmedge Hill','Oakville Plaza','Oakville Exchange','Wychwood - Oakville City Airport','Radcliff Fields','Atkins Bridge','Cannon View','Rockcastle','Willow Springs','Burlington - University of NCU','Newkirk'] },
+    { line: 'Green', color: '#34c759', code: 'RG01', bidirectional: true, route: ['Mount River','Talmedge Hill','Oakville Plaza','Oakville Exchange','Oakville City Airport','Atkins Bridge','Cannon View','Rockcastle','Willow Springs','Port Williamson'] },
+    { line: 'Green', color: '#34c759', code: 'RG02', bidirectional: true, route: ['Mount River','Talmedge Hill','Oakville Plaza','Oakville Exchange','Oakville City Airport','Atkins Bridge','Cannon View','Rockcastle','Willow Springs','Newkirk'] },
+    { line: 'Green', color: '#34c759', code: 'RG03', bidirectional: true, route: ['Mount River','Talmedge Hill','Oakville Plaza','Oakville Exchange','Oakville City Airport','Radcliff Fields','Atkins Bridge','Cannon View','Rockcastle','Willow Springs','Burlington - University of NCU','Newkirk'] },
 
     // RED
     { line: 'Red', color: '#ff3b30', code: 'RR05', bidirectional: true, route: ['Newkirk','Newkirk - Oak Street','Hoganville','Bayview Park','Chelsea Bay','Berwick Hall','Cambridge Central','Atkinson Junction','La Vista','Brookfield Lawn','Boylston'] },
@@ -283,7 +299,7 @@
     { line: 'Gold', color: '#ffcc00', code: 'RG01', bidirectional: true, route: ['Berwick Hall','Westpoint','Bradford Square','Bradford Bay'] },
 
     // ORANGE (only RO01)
-    { line: 'Orange', color: '#ff9500', code: 'RO01', bidirectional: true, route: ['Wychwood - Oakville City Airport','Veridia Nexus'] },
+    { line: 'Orange', color: '#ff9500', code: 'RO01', bidirectional: true, route: ['Oakville City Airport','Veridia Nexus'] },
 
     // BLUE
     { line: 'Blue', color: '#007aff', code: 'RB01', bidirectional: true, route: ['Oakville Plaza','Oakville City Center','Oakville Exchange','Perry Road','Mount Hindsboro','Greens Corner','Doverville','Orchard Ridge','Groveton','Madisonboro','Hutchinson Point','Vanwood','South Harrington','Harrington City','Carrollton','Hadleigh'] },
@@ -292,7 +308,7 @@
 
     // PINK
     { line: 'Pink', color: '#ff2d55', code: 'RP01', bidirectional: true, route: ['Leighton Castle','Oakville Plaza','Oakville City Center','Oakville Exchange','Perry Road','Mount Hindsboro','Wood-By-Hike','New Salemview','Millford Heights','Roxbury Landing','East Heights'] },
-    { line: 'Pink', color: '#ff2d55', code: 'RP02', bidirectional: true, route: ['Wychwood - Oakville City Airport','Perry Road','Mount Hindsboro','Wood-By-Hike','New Salemview','Millford Heights','Roxbury Landing','East Heights'] },
+    { line: 'Pink', color: '#ff2d55', code: 'RP02', bidirectional: true, route: ['Oakville City Airport','Perry Road','Mount Hindsboro','Wood-By-Hike','New Salemview','Millford Heights','Roxbury Landing','East Heights'] },
 
     // BROWN (direction-specific)
     { line: 'Brown', color: '#a2845e', code: 'RW01N', bidirectional: false, route: ['East Heights','Alpherst','New Halifax','Tyford Farms','Scottsbury','Ameryville','Scottsdale','Grant Park','Cherrywood','Brandywine','Santa Mora'] },
@@ -350,7 +366,7 @@
     'Santa Mora': ['East Heights'],
     'Harrington City': ['Oakville Plaza'],
     'Hadleigh': ['Oakville Plaza'],
-    'Wychwood - Oakville City Airport': ['East Heights', 'Veridia Nexus', 'Port Williamson', 'Newkirk', 'Mount River'],
+    'Oakville City Airport': ['East Heights', 'Veridia Nexus', 'Port Williamson', 'Newkirk', 'Mount River'],
     'Port Williamson': ['Mount River'],
     'Newkirk': ['Mount River', 'Kenilworth', 'Boylston', 'Whitebranch'],
     'Berwick Hall': ['Bradford Bay', 'Boylston', 'Newkirk', 'Whitebranch', 'Kenilworth'],
@@ -358,7 +374,7 @@
     'Kenilworth': ['Newkirk'],
     'Boylston': ['Newkirk'],
     'Whitebranch': ['Newkirk'],
-    'Veridia Nexus': ['Wychwood - Oakville City Airport']
+    'Veridia Nexus': ['Oakville City Airport']
   };
 
   // ---------------------------
@@ -424,7 +440,7 @@ function goldShuttleTrips(now=new Date()){
 }
 
 // Custom Orange Line shuttle definition (event-only)
-const ORANGE_ROUTE = ['Wychwood - Oakville City Airport','Veridia Nexus'];
+const ORANGE_ROUTE = ['Oakville City Airport','Veridia Nexus'];
 // forward segment times (minutes)
 const ORANGE_FORWARD = [3];   // Airport → Veridia Nexus = 3
 // reverse segment times (minutes)
@@ -452,9 +468,9 @@ function orangeShuttleTrips(now=new Date()){
     } else {
       let cur = t;
       // Veridia Nexus to Airport
-      trips.push({ station: ORANGE_ROUTE[1], time: cur, dest: 'Wychwood - Oakville City Airport', line:'Orange', code:'RO01', color:'#ff9500', stops:[...ORANGE_ROUTE].reverse() });
+      trips.push({ station: ORANGE_ROUTE[1], time: cur, dest: 'Oakville City Airport', line:'Orange', code:'RO01', color:'#ff9500', stops:[...ORANGE_ROUTE].reverse() });
       cur += ORANGE_REVERSE[0];
-      trips.push({ station: ORANGE_ROUTE[0], time: cur, dest: 'Wychwood - Oakville City Airport', line:'Orange', code:'RO01', color:'#ff9500', stops:[...ORANGE_ROUTE].reverse() });
+      trips.push({ station: ORANGE_ROUTE[0], time: cur, dest: 'Oakville City Airport', line:'Orange', code:'RO01', color:'#ff9500', stops:[...ORANGE_ROUTE].reverse() });
       // dwell 5 min at Airport
       t = cur + 5;
       dir = 'forward';
@@ -633,33 +649,113 @@ function orangeShuttleTrips(now=new Date()){
     const def = STATIONS.find(s=>s.id==='Mount Hindsboro') || STATIONS[0];
     if (def) stationSelect.value = def.id;
   }
+  
+  // --- slide helpers ---
+function slideDown(el){
+  // prepare to measure the natural height
+  el.classList.add('open');
+  el.style.maxHeight = el.scrollHeight + 'px';
+  // after the transition ends, let it grow/shrink naturally
+  const clear = () => {
+    el.style.maxHeight = 'none';
+    el.removeEventListener('transitionend', clear);
+  };
+  el.addEventListener('transitionend', clear);
+}
+
+function slideUp(el){
+  // lock the current height, then transition to 0
+  el.style.maxHeight = el.scrollHeight + 'px';
+  requestAnimationFrame(() => {
+    el.classList.remove('open');
+    el.style.maxHeight = '0px';
+  });
+}
 
   function renderArrivals(){
-    const sid = stationSelect.value;
-    const cap = parseInt(limitSelect.value, 10);
-    const list = arrivalsForStation(sid, new Date()).slice(0, cap);
+  const sid = stationSelect.value;
+  const cap = parseInt(limitSelect.value, 10);
+  const list = arrivalsForStation(sid, new Date()).slice(0, cap);
 
-    arrivalsEl.innerHTML = list.map((item, i) => {
-      const stopsHtml = item.stops.map(s=>`<li>${s}</li>`).join('');
-      return `
-        <details class="row">
-          <summary style="list-style:none; display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center; cursor:pointer;">
-            <div class="dot" style="background:${item.color}"></div>
-            <div>
-              <div class="lineTag">${item.line} Line</div>
-              <div class="dest">to ${item.destination} <span class="pill" style="margin-left:6px;">${item.code}</span></div>
+  arrivalsEl.innerHTML = list.map((item, i) => {
+    // Build pieces we need for compact + full views
+    const stopsHtml = item.stops.map(s=>`<li>${s}</li>`).join('');
+    const origin = item.stops[0];
+    const dest   = item.stops[item.stops.length - 1];
+    const midCount = Math.max(0, item.stops.length - 2);
+    const midLabel = `Making ${midCount} ${midCount===1 ? 'stop' : 'stops'}`;
+
+    return `
+      <details class="row" data-index="${i}">
+        <summary style="list-style:none; display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center; cursor:pointer;">
+          <div class="dot" style="background:${item.color}"></div>
+          <div>
+            <div class="lineTag">${item.line} Line</div>
+            <div class="dest">to ${item.destination} <span class="pill" style="margin-left:6px;">${item.code}</span></div>
+          </div>
+          <div class="mins">${fmtMins(item.minsAway)}</div>
+        </summary>
+
+        <!-- Content area: starts compact (origin + mid-count + destination) -->
+        <div style="margin:10px 0 2px 26px;">
+          <!-- Compact view -->
+            <div class="compact" id="compact-${i}">
+                <ul class="stops" style="color:#ffffff">
+                    <li><strong>${origin}</strong></li>
+                </ul>
+
+            <div style="padding-left:1px; margin:1px 0;">
+                <button class="linklike" data-action="expand" data-i="${i}">${midLabel}</button>
             </div>
-            <div class="mins">${fmtMins(item.minsAway)}</div>
-          </summary>
-          <div style="margin:10px 0 2px 26px;">
+
+            <ul class="stops" style="color:#ffffff">
+                <li><strong>${dest}</strong></li>
+            </ul>
+            </div>
+
+          <!-- Full list view (hidden until user taps the mid-count text) -->
+          <div class="full slide" id="full-${i}">
             <div class="subtle" style="margin-bottom:6px;">Making stops at…</div>
             <ul class="stops" style="color:#ffffff">
               ${stopsHtml}
             </ul>
           </div>
-        </details>`;
-    }).join('') || `<div class="subtle">No upcoming trains in the next 6 hours.</div>`;
-  }
+        </div>
+      </details>`;
+  }).join('') || `<div class="subtle">No upcoming trains in the next 6 hours.</div>`;
+
+  // Wire up expand buttons: switch from compact → full (with slide)
+arrivalsEl.querySelectorAll('[data-action="expand"]').forEach(btn=>{
+  btn.addEventListener('click', (e)=>{
+    e.stopPropagation(); // keep the <details> open
+    const i = btn.dataset.i;
+    const comp = document.getElementById(`compact-${i}`);
+    const full = document.getElementById(`full-${i}`);
+    if (comp && full){
+      comp.style.display = 'none';
+      // ensure we're at a known collapsed state
+      full.hidden = false;            // ← ADD THIS LINE
+      full.style.maxHeight = '0px';
+      slideDown(full);
+    }
+  });
+});
+
+  // When the user closes the details, reset to compact view so the mid-count returns
+  arrivalsEl.querySelectorAll('details.row').forEach(d=>{
+    d.addEventListener('toggle', ()=>{
+      if (!d.open){
+        const comp = d.querySelector('.compact');
+        const full = d.querySelector('.full');
+        if (comp && full){ 
+            comp.hidden = false; 
+            full.hidden = true; 
+            comp.style.display = '';
+        }
+      }
+    });
+  });
+}
 
   renderStations();
   renderClock();
