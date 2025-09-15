@@ -29,13 +29,14 @@
     * { box-sizing: border-box; }
     html, body { height: 100%; }
     body {
-      margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Inter, Helvetica, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 50% -200px, #151528, #0a0a12) fixed;
-      color: var(--text);
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      padding-bottom: env(safe-area-inset-bottom);
-    }
+        margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Inter, Helvetica, Arial, sans-serif;
+        background: radial-gradient(1200px 600px at 50% -200px, #151528, #0a0a12) fixed;
+        color: var(--text);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        /* space for fixed tab bar */
+        padding-bottom: calc(78px + env(safe-area-inset-bottom));
+}
     header {
       position: sticky; top: 0; z-index: 10;
       backdrop-filter: saturate(180%) blur(14px);
@@ -129,22 +130,55 @@
   opacity: 1;
 }
 
+/* --- Bottom tab bar (iOS style) --- */
+.tabbar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: end;
+  gap: 6px;
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(255,255,255,.08);
+  background: rgba(180,180,180,0.20); /* ✅ grayish background */
+  backdrop-filter: saturate(180%) blur(14px);
+}
+
+.tabbar a {
+  text-decoration: none;
+  color: var(--muted);
+  text-align: center;
+}
+
+.tabbar .item {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  font-size: 12px;
+}
+
+.tabbar .item img {
+  width: 26px; height: 26px;
+  display: block;
+  opacity: .8;
+  filter: grayscale(100%);
+}
+
+.tabbar a.active {
+  color: var(--accent);
+}
+
+.tabbar a.active img {
+  opacity: 1;
+  filter: none;
+}
+
   </style>
 </head>
 <body>
   <header>
     <div class="wrap">
-      <a href="home.html" style="
-        display:inline-block;
-        margin:10px;
-        padding:8px 16px;
-        font-size:14px;
-        border-radius:10px;
-        border:1px solid rgba(255,255,255,0.2);
-        background:rgba(255,255,255,0.08);
-        color:#f3f4f8;
-        text-decoration:none;
-        ">← Home</a>
       <div class="title">BORail Live Timetable</div>
       <div class="subtle" id="nowText">—</div>
       <div class="controls">
@@ -200,6 +234,32 @@
   </main>
 
   <footer>© BORail • Built for iPhone • Works offline after first load</footer>
+  
+  <nav class="tabbar" role="navigation" aria-label="Primary">
+  <!-- Timetable (current page) -->
+  <a class="active" href="index.html">
+    <div class="item">
+      <img src="timetableicon.png" alt="" width="26" height="26" />
+      <span>Timetable</span>
+    </div>
+  </a>
+
+  <!-- Map -->
+  <a href="map.html">
+    <div class="item">
+      <img src="map%20icon.png" alt="" width="26" height="26" />
+      <span>Map</span>
+    </div>
+  </a>
+
+  <!-- Status (placeholder for now) -->
+  <a href="#">
+    <div class="item">
+      <img src="statusicon.png" alt="" width="26" height="26" />
+      <span>Status</span>
+    </div>
+  </a>
+</nav>
 
   <script>
       let ORANGE_ENABLED = false; // flip to true to enable the Orange Line event shuttle
