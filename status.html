@@ -190,43 +190,105 @@
       return list[Math.floor(Math.random()*list.length)];
     }
 
-    function renderStatus(){
-      const host = document.getElementById('statusList');
-      host.innerHTML = LINES.map((ln, i) => {
-        const st = pickStatus(ln.probs);
-        const dot = `<div class="dot" style="background:${ln.color}"></div>`;
-        const left = `<div class="name">${ln.name}</div>`;
-        if (st === 'ok'){
-          // plain row (not clickable)
-          return `
-            <div class="row">
-              ${dot}
-              ${left}
-              <span class="pill ok">No Disruptions</span>
-            </div>`;
-        } else {
-          // details row (clickable)
-          const cls = st==='minor' ? 'warn' : (st==='major' ? 'bad' : 'nosvc');
-          const label =
-            st==='minor' ? 'Minor Disruptions' :
-            st==='major' ? 'Major Disruptions' : 'NO SERVICE';
-          const reason =
-            st==='minor' ? reasonFor('minor') :
-            st==='major' ? reasonFor('major') : reasonFor('none');
-          return `
-            <details class="srow">
-              <summary>
-                ${dot}
-                ${left}
-                <span class="pill ${cls}">${label}<span class="arrow">▸</span></span>
-              </summary>
-              <div class="reason">${reason}</div>
-            </details>`;
-        }
-      }).join('');
-    }
+    function renderStatus(state){
+  const host = document.getElementById('statusList');
+  host.innerHTML = state.statuses.map((stObj) => {
+    const lnName = stObj.name;
+    const lnColor = stObj.color;
+    const st = stObj.type; // 'ok' | 'minor' | 'major' | 'none'
+    const dot = `<div class="dot" style="background:${lnColor}"></div>`;
+    const left = `<div class="name">${lnName}</div>`;
 
-    renderStatus();
+    if (st === 'ok'){
+      // plain row (not clickable)
+      return `
+        <div class="row">
+          ${dot}
+          ${left}
+          <span class="pill ok">No Disruptions</span>
+        </div>`;
+    } else {
+      // details row (clickable)
+      const cls = st==='minor' ? 'warn' : (st==='major' ? 'bad' : 'nosvc');
+      const label =
+        st==='minor' ? 'Minor Disruptions' :
+        st==='major' ? 'Major Disruptions' : 'NO SERVICE';
+
+      // fixed reason pulled from the stored reasonIndex
+      const pool =
+        st==='minor' ? REASONS.minor :
+        st==='major' ? REASONS.major : REASONS.none;
+      const reasonText = pool[stObj.reasonIndex] || pool[0];
+
+      return `
+        <details class="srow">
+          <summary>
+            ${dot}
+            ${left}
+            <span class="pill ${cls}">${label}<span class="arrow">▸</span></span>
+          </summary>
+          <div class="reason">${reasonText}</div>
+        </details>`;
+    }
+  }).join('');
+}
+
+// --- 12-hour persistence (per device) ---
+const WINDOW_MS = 12 * 60 * 60 * 1000; // 12 hours
+const STORAGE_KEY = 'borail_status_window_v1';
+
+// Load previously saved state, or null
+function loadStatusState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+// Save state { start:number (ms epoch), statuses:Array }
+function saveStatusState(state) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+}
+
+// Create a fresh state starting now, using your probabilities
+function createNewStatusState() {
+  return {
+    start: Date.now(),
+    statuses: LINES.map(ln => {
+      // pick disruption type from probabilities
+      const type = pickStatus(ln.probs); // 'ok' | 'minor' | 'major' | 'none'
+      // fix a specific reason so it doesn't change on refresh
+      let reasonIndex = -1;
+      if (type !== 'ok') {
+        const pool =
+          type === 'minor' ? REASONS.minor :
+          type === 'major' ? REASONS.major : REASONS.none;
+        reasonIndex = Math.floor(Math.random() * pool.length);
+      }
+      return { name: ln.name, color: ln.color, type, reasonIndex };
+    })
+  };
+}
+
+// Get state: reuse if under 12h, otherwise create/replace
+function getOrCreateStatusState() {
+  const cur = loadStatusState();
+  if (!cur) {
+    const fresh = createNewStatusState();
+    saveStatusState(fresh);
+    return fresh;
+  }
+  const age = Date.now() - cur.start;
+  if (age >= WINDOW_MS) {
+    const fresh = createNewStatusState();
+    saveStatusState(fresh);
+    return fresh;
+  }
+  return cur;
+}
+
+    const STATUS_STATE = getOrCreateStatusState();
+    renderStatus(STATUS_STATE);
   </script>
 </body>
 </html>
