@@ -382,6 +382,59 @@
     { line: 'Brown', color: '#a2845e', code: 'RW01N', bidirectional: false, route: ['East Heights','Alpherst','New Halifax','Tyford Farms','Scottsbury','Ameryville','Scottsdale','Grant Park','Cherrywood','Brandywine','Santa Mora'] },
     { line: 'Brown', color: '#a2845e', code: 'RW01S', bidirectional: false, route: ['Santa Mora','Brandywine','Cherrywood','Grant Park','Scottsdale','Ameryville','Scottsbury','Tyford Farms','New Halifax','Alpherst','Roxbury Landing','East Heights'] }
   ];
+  
+  // ---------------------------
+// LATE NIGHT: single variants per line (11pm–5am local)
+// ---------------------------
+const LATE_NIGHT_ROUTES = {
+  // RED RR01NS (Newkirk → Boylston)
+  RR01NS: {
+    line: 'Red', color: '#ff3b30', bidirectional: true,
+    route: ['Newkirk','Hoganville','Chelsea Bay','Berwick Hall','Cambridge Central','Atkinson Junction','La Vista','Brookfield Lawn','Boylston']
+  },
+
+  // GREEN RG01NS (Newkirk → Mount River)
+  RG01NS: {
+    line: 'Green', color: '#34c759', bidirectional: true,
+    route: ['Newkirk','Burlington - University of NCU','Willow Springs','Rockcastle','Cannon View','Atkins Bridge','Oakville City Airport','Oakville Exchange','Oakville Plaza','Talmedge Hill','Mount River']
+  },
+
+  // BLUE RB01NS (Leighton Castle → Madisonboro)
+  // NOTE: at night Blue extends to Leighton Castle instead of Oakville Plaza.
+  RB01NS: {
+    line: 'Blue', color: '#007aff', bidirectional: true,
+    route: ['Leighton Castle','Oakville Plaza','Oakville City Center','Oakville Exchange','Perry Road','Mount Hindsboro','Greens Corner','Doverville','Orchard Ridge','Groveton','Madisonboro']
+  },
+
+  // PINK RP01NS (Mount Hindsboro → East Heights)
+  // NOTE: at night Pink is only Mount Hindsboro ↔ East Heights (no Leighton Castle).
+  RP01NS: {
+    line: 'Pink', color: '#ff2d55', bidirectional: true,
+    route: ['Mount Hindsboro','Wood-By-Hike','New Salemview','Millford Heights','Roxbury Landing','East Heights']
+  },
+
+  // BROWN (direction-specific)
+  // SOUTH RB01NSS: Scottsbury → East Heights
+  RB01NSS: {
+    line: 'Brown', color: '#a2845e', bidirectional: false,
+    route: ['Scottsbury','Tyford Farms','New Halifax','Alpherst','Roxbury Landing','East Heights']
+  },
+  // NORTH RB01NSN: East Heights → Scottsbury
+  RB01NSN: {
+    line: 'Brown', color: '#a2845e', bidirectional: false,
+    route: ['East Heights','Alpherst','New Halifax','Tyford Farms','Scottsbury']
+  }
+};
+
+// Counts of departures for the entire late-night window (11pm→5am), total per code.
+const LATE_NIGHT_COUNTS = {
+  RR01NS: 8,   // Red
+  RG01NS: 8,   // Green
+  RB01NS: 4,   // Blue
+  RP01NS: 2,   // Pink
+  RB01NSS: 1,  // Brown south (direction-specific)
+  RB01NSN: 1   // Brown north (direction-specific)
+};
 
   // ---------------------------
   // PER-LINE SERVICE WINDOWS (unchanged from earlier where applicable)
@@ -448,6 +501,64 @@
   // ---------------------------
   // 2) ENGINE
   // ---------------------------
+  
+  // Helper: spread N departure minutes uniformly over [startMin, endMin)
+function spreadUniform(startMin, endMin, count){
+  if (count <= 0) return [];
+  const span = endMin - startMin;
+  const step = span / count; // not including the end point
+  const times = [];
+  for (let i=0; i<count; i++){
+    times.push(Math.round(startMin + step*i));
+  }
+  return times;
+}
+
+// Build arrivals for a station under Late Night Service
+function nightArrivalsForStation(stationId, now=new Date()){
+  // Treat clock minutes after midnight as 24h+ to keep ordering sane
+  const nowMinRaw = now.getHours()*60 + now.getMinutes();
+  const clockMin = (nowMinRaw < 5*60) ? nowMinRaw + 1440 : nowMinRaw; // 00:00–04:59 → 1440–1739
+
+  // Late night window: [23:00, 05:00 next day)
+  const start = 23*60;          // 1380
+  const end   = 24*60 + 5*60;   // 1740
+
+  const out = [];
+
+  for (const [code, def] of Object.entries(LATE_NIGHT_ROUTES)){
+    const count = LATE_NIGHT_COUNTS[code] || 0;
+    const deps = spreadUniform(start, end, count);
+
+    deps.forEach((t, i)=>{
+      const forward = def.bidirectional ? (i % 2 === 0) : true; // alternate direction if allowed
+      const route = forward ? def.route : [...def.route].reverse();
+      const seg   = segFor(route);
+      const idx   = route.indexOf(stationId);
+      if (idx === -1) return;
+
+      const arr = t + cumulative(seg, idx);
+      // normalize arrivals also into the 23:00→29:00 band
+      const arrNorm = (arr < start) ? arr + 1440 : arr; // should not happen, but safe
+      const minsAway = arrNorm - clockMin;
+
+      if (minsAway >= -1 && minsAway <= 360){
+        out.push({
+          line: def.line, color: def.color, code,
+          destination: route[route.length-1],
+          timeMin: arrNorm, minsAway,
+          stops: route
+        });
+      }
+    });
+  }
+
+  // IMPORTANT: at night we DO NOT apply the daytime Terminal Rules filter,
+  // because night variants introduce different terminal pairings (e.g., Blue ↔ Leighton Castle).
+  out.sort((a,b)=> a.timeMin - b.timeMin);
+  return out;
+}
+
   const isWeekend = d => (d.getDay()===0 || d.getDay()===6);
   const toMin = t => { const [h,m]=t.split(':').map(Number); return h*60+m; };
   const expandDepartures = periods => {
@@ -548,6 +659,15 @@ function orangeShuttleTrips(now=new Date()){
 }
 
   function arrivalsForStation(stationId, now=new Date()){
+      
+       // Late Night branch (11pm–5am local)
+  {
+    const h = now.getHours();
+    const late = (h >= 23 || h < 5);
+    if (late) {
+      return nightArrivalsForStation(stationId, now);
+    }
+  } 
     const weekend = isWeekend(now);
     const nowMin = now.getHours()*60 + now.getMinutes();
     const results = [];
@@ -707,7 +827,7 @@ function orangeShuttleTrips(now=new Date()){
     serviceState.textContent = 'Service: Late Night';
     serviceState.className = 'pill late-night';
   } else {
-    serviceState.textContent = 'Service: Normal';
+    serviceState.textContent = 'Service: Day';
     serviceState.className = 'pill';
   }
 }
