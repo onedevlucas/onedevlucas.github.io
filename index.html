@@ -234,7 +234,7 @@
     </section>
   </main>
 
-  <footer>© BORail • Built for iPhone • Works offline after first load | Version 32</footer>
+  <footer>© BORail • Built for iPhone • Works offline after first load | Version 33</footer>
   
   <nav class="tabbar" role="navigation" aria-label="Primary">
   <!-- Timetable (current page) -->
@@ -424,6 +424,34 @@ const LATE_NIGHT_ROUTES = {
     line: 'Brown', color: '#a2845e', bidirectional: false,
     route: ['East Heights','Alpherst','New Halifax','Tyford Farms','Scottsbury']
   }
+};
+
+// ---------------------------
+// LATE NIGHT: per-station terminal rules (allowed destinations only)
+// ---------------------------
+const LATE_NIGHT_TERMINAL_RULES = {
+  // What you asked for, verbatim:
+
+  // Newkirk should only say Boylston (Red) and Mount River (Green)
+  'Newkirk': new Set(['Boylston', 'Mount River']),
+
+  // Mount River should only say Newkirk (Green)
+  'Mount River': new Set(['Newkirk']),
+
+  // Leighton Castle should only say Madisonboro (Blue)
+  'Leighton Castle': new Set(['Madisonboro']),
+
+  // Mount Hindsboro should only say Madisonboro (Blue), Leighton Castle (Blue), East Heights (Pink)
+  'Mount Hindsboro': new Set(['Madisonboro', 'Leighton Castle', 'East Heights']),
+
+  // East Heights should only say Mount Hindsboro (Pink) and Scottsbury (Brown)
+  'East Heights': new Set(['Mount Hindsboro', 'Scottsbury']),
+
+  // Scottsbury should only say East Heights (Brown)
+  'Scottsbury': new Set(['East Heights']),
+
+  // Madisonboro should only say Leighton Castle (Blue)
+  'Madisonboro': new Set(['Leighton Castle']),
 };
 
 // Counts of departures for the entire late-night window (11pm→5am), total per code.
@@ -669,8 +697,21 @@ function nightArrivalsForStation(stationId, now=new Date()){
     }
   })();
 
-  out.sort((a,b)=> a.timeMin - b.timeMin);
-  return out;
+  // Night-only filter: (1) never show trains whose destination == selected station
+// and (2) apply Late Night per-station terminal rules if defined.
+const selectedName = STATIONS.find(s=>s.id===stationId)?.name || stationId;
+
+// 1) drop any trains terminating at the selected station (e.g., Madisonboro showing “to Madisonboro”)
+let filtered = out.filter(r => r.destination !== selectedName);
+
+// 2) if we have per-station rules for Late Night, enforce them
+const lnRules = LATE_NIGHT_TERMINAL_RULES[selectedName];
+if (lnRules) {
+  filtered = filtered.filter(r => lnRules.has(r.destination));
+}
+
+filtered.sort((a,b)=> a.timeMin - b.timeMin);
+return filtered;
 }
 
   const isWeekend = d => (d.getDay()===0 || d.getDay()===6);
