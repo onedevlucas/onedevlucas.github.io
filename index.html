@@ -234,7 +234,7 @@
     </section>
   </main>
 
-  <footer>© BORail • Built for iPhone • Works offline after first load</footer>
+  <footer>© BORail • Built for iPhone • Works offline after first load | Version 32</footer>
   
   <nav class="tabbar" role="navigation" aria-label="Primary">
   <!-- Timetable (current page) -->
@@ -514,9 +514,9 @@ function spreadUniform(startMin, endMin, count){
   return times;
 }
 
-// Build arrivals for a station under Late Night Service
+// Build arrivals for a station under Late Night Service (bounce with terminal dwells)
 function nightArrivalsForStation(stationId, now=new Date()){
-  // Treat clock minutes after midnight as 24h+ to keep ordering sane
+  // Treat minutes after midnight as 24h+ to keep ordering sane
   const nowMinRaw = now.getHours()*60 + now.getMinutes();
   const clockMin = (nowMinRaw < 5*60) ? nowMinRaw + 1440 : nowMinRaw; // 00:00–04:59 → 1440–1739
 
@@ -524,37 +524,151 @@ function nightArrivalsForStation(stationId, now=new Date()){
   const start = 23*60;          // 1380
   const end   = 24*60 + 5*60;   // 1740
 
-  const out = [];
+  // small helpers
+  const sum = arr => arr.reduce((a,b)=>a+b,0);
 
-  for (const [code, def] of Object.entries(LATE_NIGHT_ROUTES)){
-    const count = LATE_NIGHT_COUNTS[code] || 0;
-    const deps = spreadUniform(start, end, count);
+  // generic “bounce” generator for a single route that runs both ways
+  // dwellA applies at route[0] terminal, dwellB at route[route.length-1].
+  // codeF applies on forward leg (route[0]→last), codeR on reverse leg (last→route[0])
+  function arrivalsFromBounce(route, line, color, trains, dwellA, dwellB, codeF, codeR){
+    const out = [];
+    const segF = segFor(route);
+    const segR = segFor([...route].reverse());
+    const idxF = route.indexOf(stationId);
+    const rev  = [...route].reverse();
+    const idxR = rev.indexOf(stationId);
 
-    deps.forEach((t, i)=>{
-      const forward = def.bidirectional ? (i % 2 === 0) : true; // alternate direction if allowed
-      const route = forward ? def.route : [...def.route].reverse();
-      const seg   = segFor(route);
-      const idx   = route.indexOf(stationId);
-      if (idx === -1) return;
+    const T_f = sum(segF);
+    const T_r = sum(segR);
+    const cycle = T_f + dwellB + T_r + dwellA;            // full out-and-back with dwells
+    if (trains <= 0) return out;
+    const headway = cycle / trains;                        // spacing between train threads
 
-      const arr = t + cumulative(seg, idx);
-      // normalize arrivals also into the 23:00→29:00 band
-      const arrNorm = (arr < start) ? arr + 1440 : arr; // should not happen, but safe
-      const minsAway = arrNorm - clockMin;
+    // seed each physical train at the start terminal, spaced evenly
+    for (let i=0; i<trains; i++){
+      let t0 = Math.round(start + i*headway);             // first forward departure from route[0]
+      // run legs until outside the window
+      while (t0 < end + Math.max(T_f, T_r)){
+        // forward leg: route[0] -> last
+        if (idxF !== -1){
+          const arr = t0 + cumulative(segF, idxF);
+          const arrNorm = (arr < start) ? arr + 1440 : arr;
+          const minsAway = arrNorm - clockMin;
+          if (minsAway >= -1 && minsAway <= 360){
+            out.push({ line, color, code: codeF, destination: route[route.length-1], timeMin: arrNorm, minsAway, stops: route });
+          }
+        }
+        // time at end of forward leg + dwellB at far terminal
+        const afterForward = t0 + T_f + dwellB;
 
-      if (minsAway >= -1 && minsAway <= 360){
-        out.push({
-          line: def.line, color: def.color, code,
-          destination: route[route.length-1],
-          timeMin: arrNorm, minsAway,
-          stops: route
-        });
+        // reverse leg: last -> route[0]
+        if (idxR !== -1){
+          const arrR = afterForward + cumulative(segR, idxR);
+          const arrNormR = (arrR < start) ? arrR + 1440 : arrR;
+          const minsAwayR = arrNormR - clockMin;
+          if (minsAwayR >= -1 && minsAwayR <= 360){
+            out.push({ line, color, code: codeR, destination: route[0], timeMin: arrNormR, minsAway: minsAwayR, stops: rev });
+          }
+        }
+        // next cycle start: back at origin after reverse leg + dwellA
+        t0 = afterForward + T_r + dwellA;
       }
-    });
+    }
+    return out;
   }
 
-  // IMPORTANT: at night we DO NOT apply the daytime Terminal Rules filter,
-  // because night variants introduce different terminal pairings (e.g., Blue ↔ Leighton Castle).
+  const out = [];
+
+  // === RED (RR01NS) ===
+  // dwell at Newkirk (origin) 5 min; at Boylston (far end) 3 min; 8 trains bouncing
+  {
+    const def = LATE_NIGHT_ROUTES.RR01NS;
+    out.push(...arrivalsFromBounce(def.route, def.line, def.color, 8, /*dwellA*/5, /*dwellB*/3, 'RR01NS', 'RR01NS'));
+  }
+
+  // === GREEN (RG01NS) ===
+  // dwell 5 min at both Newkirk and Mount River; 8 trains bouncing
+  {
+    const def = LATE_NIGHT_ROUTES.RG01NS;
+    out.push(...arrivalsFromBounce(def.route, def.line, def.color, 8, /*dwellA*/5, /*dwellB*/5, 'RG01NS', 'RG01NS'));
+  }
+
+  // === BLUE (RB01NS) ===
+  // route is Leighton Castle → Madisonboro
+  // dwell at Leighton Castle 5 min; at Madisonboro 3 min; 4 trains bouncing
+  {
+    const def = LATE_NIGHT_ROUTES.RB01NS;
+    out.push(...arrivalsFromBounce(def.route, def.line, def.color, 4, /*dwellA(Leighton)*/5, /*dwellB(Madisonboro)*/3, 'RB01NS', 'RB01NS'));
+  }
+
+  // === PINK (RP01NS) ===
+  // route is Mount Hindsboro → East Heights
+  // dwell at Mount Hindsboro 2 min; at East Heights 5 min; 2 trains bouncing
+  {
+    const def = LATE_NIGHT_ROUTES.RP01NS;
+    out.push(...arrivalsFromBounce(def.route, def.line, def.color, 2, /*dwellA(Mt Hindsboro)*/2, /*dwellB(East Heights)*/5, 'RP01NS', 'RP01NS'));
+  }
+
+  // === BROWN (direction-specific) ===
+  // 2 trains total, continuous bounce; southbound includes Roxbury Landing, northbound skips it.
+  // Train 1 starts Scottsbury → East Heights (RB01NSS), 5-min dwell, returns East Heights → Scottsbury (RB01NSN), 5-min dwell, repeat.
+  // Train 2 starts East Heights → Scottsbury (RB01NSN), 5-min dwell, returns Scottsbury → East Heights (RB01NSS), 5-min dwell, repeat.
+  (function(){
+    const southDef = LATE_NIGHT_ROUTES.RB01NSS; // Scottsbury → East Heights (via Roxbury Landing)
+    const northDef = LATE_NIGHT_ROUTES.RB01NSN; // East Heights → Scottsbury (no Roxbury)
+    const line = southDef.line, color = southDef.color;
+
+    const southRoute = southDef.route;
+    const northRoute = northDef.route;
+    const segS = segFor(southRoute);
+    const segN = segFor(northRoute);
+    const sum = arr => arr.reduce((a,b)=>a+b,0);
+    const T_s = sum(segS);  // Scottsbury→East Heights travel time
+    const T_n = sum(segN);  // East Heights→Scottsbury travel time
+    const dwellEach = 5;    // 5-minute dwell at both ends
+
+    // full cycle time for one Brown train:
+    const cycle = T_s + dwellEach + T_n + dwellEach;
+    const trains = 2;
+    const headway = cycle / trains;
+
+    // helper to push arrivals for either leg
+    function pushLeg(route, code, departT){
+      const seg = segFor(route);
+      const idx = route.indexOf(stationId);
+      if (idx === -1) return;
+      const arr = departT + cumulative(seg, idx);
+      const arrNorm = (arr < start) ? arr + 1440 : arr;
+      const minsAway = arrNorm - clockMin;
+      if (minsAway >= -1 && minsAway <= 360){
+        out.push({ line, color, code, destination: route[route.length-1], timeMin: arrNorm, minsAway, stops: route });
+      }
+    }
+
+    // Train A: start southbound at Scottsbury at start + 0*headway
+    for (let seed=0; seed<trains; seed++){
+      let t0 = Math.round(start + seed*headway);
+      // decide which direction this seed starts: seed=0 → southbound; seed=1 → northbound
+      let dir = (seed % 2 === 0) ? 'south' : 'north';
+
+      while (t0 < end + Math.max(T_s, T_n)){
+        if (dir === 'south'){
+          // Scottsbury → East Heights as RB01NSS
+          pushLeg(southRoute, 'RB01NSS', t0);
+          // dwell at East Heights
+          t0 = t0 + T_s + dwellEach;
+          dir = 'north';
+        } else {
+          // East Heights → Scottsbury as RB01NSN
+          pushLeg(northRoute, 'RB01NSN', t0);
+          // dwell at Scottsbury
+          t0 = t0 + T_n + dwellEach;
+          dir = 'south';
+        }
+      }
+    }
+  })();
+
   out.sort((a,b)=> a.timeMin - b.timeMin);
   return out;
 }
