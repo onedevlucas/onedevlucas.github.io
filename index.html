@@ -19,6 +19,7 @@
       --accent: #8a8fff;
       --success: #3ddc84;
       --danger: #ff5a5f;
+      --warning: #ff9500;
       --line-Red: #ff3b30;
       --line-Gold: #ffcc00;
       --line-Green: #34c759;
@@ -35,15 +36,14 @@
         color: var(--text);
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
-        /* space for fixed tab bar */
         padding-bottom: calc(78px + env(safe-area-inset-bottom));
-}
+    }
     header {
       position: sticky; top: 0; z-index: 10;
       backdrop-filter: saturate(180%) blur(14px);
       background: rgba(10,10,18,.65);
       border-bottom: 1px solid rgba(255,255,255,.08);
-      padding-top: env(safe-area-inset-top); /* ✅ NEW LINE */
+      padding-top: env(safe-area-inset-top);
     }
     .wrap { max-width: 860px; margin: 0 auto; padding: 12px 16px; }
     .title { font-weight: 800; letter-spacing: .2px; font-size: 22px; }
@@ -57,10 +57,10 @@
     .seg { display: flex; gap: 10px; align-items: center; }
     .pill { padding: 8px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); font-size: 12px; }
     .pill.late-night {
-  border-color: var(--line-Gold);
-  color: var(--line-Gold);
-  box-shadow: 0 0 0 2px rgba(255, 204, 0, 0.20) inset; /* subtle highlight */
-}
+      border-color: var(--line-Gold);
+      color: var(--line-Gold);
+      box-shadow: 0 0 0 2px rgba(255, 204, 0, 0.20) inset;
+    }
 
     .grid { display: grid; gap: 12px; margin-top: 14px; }
     .card { background: linear-gradient(180deg, rgba(255,255,255,.03), transparent), var(--card); border: 5px solid rgba(255,255,255,.06); border-radius: 18px; padding: 14px; }
@@ -79,101 +79,165 @@
 
     @media (min-width: 700px) { .grid { grid-template-columns: 2fr 1fr; } }
 
-    /* Route stops list: pin icons + connecting line */
-.stops { 
-  list-style: none; 
-  margin: 0; 
-  padding-left: 0; 
-  line-height: 1.6;
-  color: #fff; /* text + pin always white */
-}
-.stops li {
-  position: relative;
-  margin: 6px 0 10px 0;
-  padding-left: 28px; /* room for pin */
-}
-/* the pin */
-.stops li::before {
-  content: "";
-  position: absolute;
-  left: 2px;
-  top: 2px;
-  width: 18px;
-  height: 18px;
-  background: no-repeat center / contain
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 22s-7-4.5-7-11a7 7 0 1 1 14 0c0 6.5-7 11-7 11z' fill='none' stroke='white' stroke-width='2'/><circle cx='12' cy='11' r='2.5' fill='white'/></svg>");
-}
-/* the vertical connecting line (hidden on the last item) */
-.stops li::after {
-  content: "";
-  position: absolute;
-  left: 10px;          /* centers under the pin */
-  top: 22px;           /* start just below the pin */
-  bottom: -8px;        /* extend a bit below the item */
-  width: 2px;
-  background: rgba(255,255,255,0.14);
-}
-.stops li:last-child::after { display: none; }
+    /* Route stops list styling */
+    .stops-list { 
+      list-style: none; 
+      margin: 0; 
+      padding-left: 0; 
+      line-height: 1.4;
+    }
+    .stop-item {
+      position: relative;
+      margin: 0;
+      padding: 8px 0 8px 32px;
+      border-left: 2px solid rgba(255,255,255,0.14);
+      margin-left: 8px;
+    }
+    .stop-item:last-child {
+      border-left-color: transparent;
+    }
+    .stop-item .stop-icon {
+      position: absolute;
+      left: -9px;
+      top: 8px;
+      width: 18px;
+      height: 18px;
+    }
+    .stop-item .stop-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+    .stop-item.current {
+      /* current station highlight */
+    }
+    .stop-item.current .stop-name {
+      color: var(--success);
+      font-weight: 600;
+    }
+    .stop-item.current.delayed .stop-name {
+      color: var(--warning);
+    }
+    .stop-item.past {
+      opacity: 0.5;
+    }
+    .stop-item.en-route .stop-name {
+      color: var(--accent);
+    }
+    
+    .stop-time-main {
+      font-size: 13px;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      margin-bottom: 2px;
+    }
+    .stop-time-main.delayed .scheduled {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+    .stop-time-main .new-time {
+      color: var(--warning);
+      margin-left: 6px;
+    }
+    .stop-name {
+      font-size: 14px;
+      color: var(--text);
+    }
+    .stop-details {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 3px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .stop-details .clock-icon {
+      width: 12px;
+      height: 12px;
+      vertical-align: middle;
+      margin-right: 3px;
+      opacity: 0.7;
+    }
+    .stop-details .detail-item {
+      display: inline-flex;
+      align-items: center;
+    }
+    
+    .en-route-banner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      background: rgba(138, 143, 255, 0.1);
+      border: 1px solid rgba(138, 143, 255, 0.3);
+      border-radius: 8px;
+      margin: 6px 0 6px 32px;
+      font-size: 12px;
+      color: var(--accent);
+    }
+    .en-route-banner svg {
+      width: 16px;
+      height: 16px;
+    }
 
-.linklike { 
-  background: none; border: 0; padding: 0; 
-  color: var(--accent); font: inherit; cursor: pointer;
-}
+    .linklike { 
+      background: none; border: 0; padding: 0; 
+      color: var(--accent); font: inherit; cursor: pointer;
+    }
 
-/* Slide animation for the full stop list */
-.slide {
-  overflow: hidden;
-  max-height: 0;         /* collapsed */
-  opacity: 0;
-  transition: max-height 320ms ease, opacity 220ms ease;
-}
-.slide.open {
-  opacity: 1;
-}
+    .slide {
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: max-height 320ms ease, opacity 220ms ease;
+    }
+    .slide.open {
+      opacity: 1;
+    }
 
-/* --- Bottom tab bar (iOS style) --- */
-.tabbar {
-  position: fixed;
-  left: 0; right: 0; bottom: 0;
-  z-index: 20;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  align-items: end;
-  gap: 6px;
-  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-  border-top: 1px solid rgba(255,255,255,.08);
-  background: rgba(180,180,180,0.20); /* ✅ grayish background */
-  backdrop-filter: saturate(180%) blur(14px);
-}
+    /* Bottom tab bar */
+    .tabbar {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      z-index: 20;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      align-items: end;
+      gap: 6px;
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+      border-top: 1px solid rgba(255,255,255,.08);
+      background: rgba(180,180,180,0.20);
+      backdrop-filter: saturate(180%) blur(14px);
+    }
 
-.tabbar a {
-  text-decoration: none;
-  color: var(--muted);
-  text-align: center;
-}
+    .tabbar a {
+      text-decoration: none;
+      color: var(--muted);
+      text-align: center;
+    }
 
-.tabbar .item {
-  display: grid;
-  gap: 6px;
-  justify-items: center;
-  font-size: 12px;
-}
+    .tabbar .item {
+      display: grid;
+      gap: 6px;
+      justify-items: center;
+      font-size: 12px;
+    }
 
-.tabbar .item img {
-  width: 26px; height: 26px;
-  display: block;
-  opacity: .8;
-  filter: grayscale(100%);
-}
+    .tabbar .item img {
+      width: 26px; height: 26px;
+      display: block;
+      opacity: .8;
+      filter: grayscale(100%);
+    }
 
-.tabbar a.active {
-  color: var(--accent);
-}
+    .tabbar a.active {
+      color: var(--accent);
+    }
 
-.tabbar a.active img {
-  opacity: 1;
-  filter: none;
-}
+    .tabbar a.active img {
+      opacity: 1;
+      filter: none;
+    }
 
   </style>
 </head>
@@ -215,14 +279,14 @@
           <div class="pill">Ad</div>
         </div>
         <div class="adbox">
-  <img src="ad2.png" alt="Advertisement" style="max-width:100%; max-height:64px; border-radius:10px;">
-</div>
+          <img src="ad2.png" alt="Advertisement" style="max-width:100%; max-height:64px; border-radius:10px;">
+        </div>
         <div style="height:10px"></div>
         <div class="adbox">
-  <a href="https://youtube.com/theemfanner" target="_blank" rel="noopener">
-    <img src="ad1.png" alt="Promote YouTube Channel" style="max-width:100%; max-height:64px; border-radius:10px;">
-  </a>
-</div>
+          <a href="https://youtube.com/theemfanner" target="_blank" rel="noopener">
+            <img src="ad1.png" alt="Promote YouTube Channel" style="max-width:100%; max-height:64px; border-radius:10px;">
+          </a>
+        </div>
       </aside>
     </section>
 
@@ -234,49 +298,129 @@
     </section>
   </main>
 
-  <footer>© BORail • Built for iPhone • Works offline after first load | Version 33</footer>
+  <footer>© BORail • Built for iPhone • Works offline after first load | Version 34</footer>
   
   <nav class="tabbar" role="navigation" aria-label="Primary">
-  <!-- Timetable (current page) -->
-  <a class="active" href="index.html">
-    <div class="item">
-      <img src="timetableicon.png" alt="" width="26" height="26" />
-      <span>Timetable</span>
-    </div>
-  </a>
-
-  <!-- Map -->
-  <a href="map.html">
-    <div class="item">
-      <img src="mapicon.png" alt="" width="26" height="26" />
-      <span>Map</span>
-    </div>
-  </a>
-  
-  <!-- Information -->
-  <a href="https://sites.google.com/view/borail-mc/home" target="_blank" rel="noopener">
-    <div class="item">
-      <img src="websiteicon.png" alt="" width="26" height="26" />
-      <span>Information</span>
-    </div>
-  </a>
-
-  <!-- Status (placeholder for now) -->
-  <a href="status.html">
-    <div class="item">
-      <img src="statusicon.png" alt="" width="26" height="26" />
-      <span>Status</span>
-    </div>
-  </a>
-</nav>
+    <a class="active" href="index.html">
+      <div class="item">
+        <img src="timetableicon.png" alt="" width="26" height="26" />
+        <span>Timetable</span>
+      </div>
+    </a>
+    <a href="map.html">
+      <div class="item">
+        <img src="mapicon.png" alt="" width="26" height="26" />
+        <span>Map</span>
+      </div>
+    </a>
+    <a href="https://sites.google.com/view/borail-mc/home" target="_blank" rel="noopener">
+      <div class="item">
+        <img src="websiteicon.png" alt="" width="26" height="26" />
+        <span>Information</span>
+      </div>
+    </a>
+    <a href="status.html">
+      <div class="item">
+        <img src="statusicon.png" alt="" width="26" height="26" />
+        <span>Status</span>
+      </div>
+    </a>
+  </nav>
 
   <script>
-      let ORANGE_ENABLED = false; // flip to true to enable the Orange Line event shuttle
   // ---------------------------
-  // 1) DATA MODEL (edit here)
+  // SVG ICONS (inline)
   // ---------------------------
-  // Minimal sample network shown; extend to all 62 stations.
-  // Strategy: define stations once, each line's ordered route, segment times, and service patterns.
+  const ICONS = {
+    // Clock icon for arrived/departed times
+    clock: `<svg class="clock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M12 6v6l4 2"/>
+    </svg>`,
+    
+    // Location pin (default - white/gray)
+    pin: (color = 'currentColor') => `<svg viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2">
+      <path d="M12 22s-7-4.5-7-11a7 7 0 1 1 14 0c0 6.5-7 11-7 11z"/>
+      <circle cx="12" cy="11" r="2.5" fill="${color}"/>
+    </svg>`,
+    
+    // Train icon for en-route
+    train: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="4" y="3" width="16" height="14" rx="2"/>
+      <path d="M9 21l3-3 3 3"/>
+      <path d="M9 3v4"/>
+      <path d="M15 3v4"/>
+      <circle cx="9" cy="13" r="1" fill="currentColor"/>
+      <circle cx="15" cy="13" r="1" fill="currentColor"/>
+      <path d="M4 9h16"/>
+    </svg>`,
+    
+    // Green checkmark pin for arrived/at station on time
+    pinGreen: `<svg viewBox="0 0 24 24" fill="none">
+      <path d="M12 22s-7-4.5-7-11a7 7 0 1 1 14 0c0 6.5-7 11-7 11z" stroke="#3ddc84" stroke-width="2"/>
+      <circle cx="12" cy="11" r="2.5" fill="#3ddc84"/>
+    </svg>`,
+    
+    // Orange pin for delayed
+    pinOrange: `<svg viewBox="0 0 24 24" fill="none">
+      <path d="M12 22s-7-4.5-7-11a7 7 0 1 1 14 0c0 6.5-7 11-7 11z" stroke="#ff9500" stroke-width="2"/>
+      <circle cx="12" cy="11" r="2.5" fill="#ff9500"/>
+    </svg>`,
+    
+    // Gray pin for future stops
+    pinGray: `<svg viewBox="0 0 24 24" fill="none">
+      <path d="M12 22s-7-4.5-7-11a7 7 0 1 1 14 0c0 6.5-7 11-7 11z" stroke="#a0a3ad" stroke-width="2"/>
+      <circle cx="12" cy="11" r="2.5" fill="#a0a3ad"/>
+    </svg>`,
+    
+    // Dimmed pin for past stops  
+    pinDim: `<svg viewBox="0 0 24 24" fill="none" opacity="0.4">
+      <path d="M12 22s-7-4.5-7-11a7 7 0 1 1 14 0c0 6.5-7 11-7 11z" stroke="#a0a3ad" stroke-width="2"/>
+      <circle cx="12" cy="11" r="2.5" fill="#a0a3ad"/>
+    </svg>`
+  };
+
+  // ---------------------------
+  // SEEDED RANDOM NUMBER GENERATOR
+  // ---------------------------
+  function seededRandom(seed) {
+    let h = 2166136261 >>> 0;
+    const s = String(seed);
+    for (let i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return function() {
+      h = Math.imul(h ^ (h >>> 16), 2246822507);
+      h = Math.imul(h ^ (h >>> 13), 3266489909);
+      return ((h ^= h >>> 16) >>> 0) / 4294967296;
+    };
+  }
+
+  // ---------------------------
+  // TIME FORMATTING HELPERS
+  // ---------------------------
+  function formatTime24(totalMinutes) {
+    const h = Math.floor(totalMinutes / 60) % 24;
+    const m = Math.floor(totalMinutes % 60);
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  }
+
+  function formatTime24Full(totalSeconds) {
+    let secs = totalSeconds;
+    if (secs < 0) secs += 24 * 3600;
+    secs = secs % (24 * 3600);
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    const s = Math.floor(secs % 60);
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  }
+
+  // ---------------------------
+  // 1) DATA MODEL
+  // ---------------------------
+  let ORANGE_ENABLED = false;
+
   const STATIONS = [
     { id: 'Alpherst', name: 'Alpherst' },
     { id: 'Ameryville', name: 'Ameryville' },
@@ -342,14 +486,11 @@
     { id: 'Oakville City Airport', name: 'Oakville City Airport' }
   ];
 
-  // Helper to build uniform 3-min segments for any route
-  const segFor = (route, mins=3) => Array(route.length-1).fill(mins);
+  // NEW: 1.5 minutes (90 seconds) between each station
+  const SEGMENT_TIME = 1.5; // minutes between stations
+  const segFor = (route) => Array(route.length - 1).fill(SEGMENT_TIME);
 
-  // ---------------------------
-  // ROUTE VARIANTS (with codes)
-  // bidirectional=true means we can run this code both ways (reverse the route for the opposite direction)
-  // Brown Line is special: RW01N and RW01S are direction-specific.
-  // ---------------------------
+  // Route variants
   const ROUTE_VARIANTS = [
     // GREEN
     { line: 'Green', color: '#34c759', code: 'RG01', bidirectional: true, route: ['Mount River','Talmedge Hill','Oakville Plaza','Oakville Exchange','Oakville City Airport','Atkins Bridge','Cannon View','Rockcastle','Willow Springs','Port Williamson'] },
@@ -363,10 +504,10 @@
     { line: 'Red', color: '#ff3b30', code: 'RR02', bidirectional: true, route: ['Newkirk','Berwick Hall','Cambridge Central','Atkinson Junction','La Vista','Brookfield Lawn','Foxston','New Cottage','Whitebranch'] },
     { line: 'Red', color: '#ff3b30', code: 'RR01', bidirectional: true, route: ['Newkirk','Hoganville','Berwick Hall','Atkinson Junction','Garner','Kenilworth'] },
 
-    // GOLD (only RG01)
+    // GOLD
     { line: 'Gold', color: '#ffcc00', code: 'RG01', bidirectional: true, route: ['Berwick Hall','Westpoint','Bradford Square','Bradford Bay'] },
 
-    // ORANGE (only RO01)
+    // ORANGE
     { line: 'Orange', color: '#ff9500', code: 'RO01', bidirectional: true, route: ['Oakville City Airport','Veridia Nexus'] },
 
     // BLUE
@@ -378,95 +519,31 @@
     { line: 'Pink', color: '#ff2d55', code: 'RP01', bidirectional: true, route: ['Leighton Castle','Oakville Plaza','Oakville City Center','Oakville Exchange','Perry Road','Mount Hindsboro','Wood-By-Hike','New Salemview','Millford Heights','Roxbury Landing','East Heights'] },
     { line: 'Pink', color: '#ff2d55', code: 'RP02', bidirectional: true, route: ['Oakville City Airport','Perry Road','Mount Hindsboro','Wood-By-Hike','New Salemview','Millford Heights','Roxbury Landing','East Heights'] },
 
-    // BROWN (direction-specific)
+    // BROWN
     { line: 'Brown', color: '#a2845e', code: 'RW01N', bidirectional: false, route: ['East Heights','Alpherst','New Halifax','Tyford Farms','Scottsbury','Ameryville','Scottsdale','Grant Park','Cherrywood','Brandywine','Santa Mora'] },
     { line: 'Brown', color: '#a2845e', code: 'RW01S', bidirectional: false, route: ['Santa Mora','Brandywine','Cherrywood','Grant Park','Scottsdale','Ameryville','Scottsbury','Tyford Farms','New Halifax','Alpherst','Roxbury Landing','East Heights'] }
   ];
-  
-  // ---------------------------
-// LATE NIGHT: single variants per line (11pm–5am local)
-// ---------------------------
-const LATE_NIGHT_ROUTES = {
-  // RED RR01NS (Newkirk → Boylston)
-  RR01NS: {
-    line: 'Red', color: '#ff3b30', bidirectional: true,
-    route: ['Newkirk','Hoganville','Chelsea Bay','Berwick Hall','Cambridge Central','Atkinson Junction','La Vista','Brookfield Lawn','Boylston']
-  },
 
-  // GREEN RG01NS (Newkirk → Mount River)
-  RG01NS: {
-    line: 'Green', color: '#34c759', bidirectional: true,
-    route: ['Newkirk','Burlington - University of NCU','Willow Springs','Rockcastle','Cannon View','Atkins Bridge','Oakville City Airport','Oakville Exchange','Oakville Plaza','Talmedge Hill','Mount River']
-  },
+  // Late night routes
+  const LATE_NIGHT_ROUTES = {
+    RR01NS: { line: 'Red', color: '#ff3b30', bidirectional: true, route: ['Newkirk','Hoganville','Chelsea Bay','Berwick Hall','Cambridge Central','Atkinson Junction','La Vista','Brookfield Lawn','Boylston'] },
+    RG01NS: { line: 'Green', color: '#34c759', bidirectional: true, route: ['Newkirk','Burlington - University of NCU','Willow Springs','Rockcastle','Cannon View','Atkins Bridge','Oakville City Airport','Oakville Exchange','Oakville Plaza','Talmedge Hill','Mount River'] },
+    RB01NS: { line: 'Blue', color: '#007aff', bidirectional: true, route: ['Leighton Castle','Oakville Plaza','Oakville City Center','Oakville Exchange','Perry Road','Mount Hindsboro','Greens Corner','Doverville','Orchard Ridge','Groveton','Madisonboro'] },
+    RP01NS: { line: 'Pink', color: '#ff2d55', bidirectional: true, route: ['Mount Hindsboro','Wood-By-Hike','New Salemview','Millford Heights','Roxbury Landing','East Heights'] },
+    RB01NSS: { line: 'Brown', color: '#a2845e', bidirectional: false, route: ['Scottsbury','Tyford Farms','New Halifax','Alpherst','Roxbury Landing','East Heights'] },
+    RB01NSN: { line: 'Brown', color: '#a2845e', bidirectional: false, route: ['East Heights','Alpherst','New Halifax','Tyford Farms','Scottsbury'] }
+  };
 
-  // BLUE RB01NS (Leighton Castle → Madisonboro)
-  // NOTE: at night Blue extends to Leighton Castle instead of Oakville Plaza.
-  RB01NS: {
-    line: 'Blue', color: '#007aff', bidirectional: true,
-    route: ['Leighton Castle','Oakville Plaza','Oakville City Center','Oakville Exchange','Perry Road','Mount Hindsboro','Greens Corner','Doverville','Orchard Ridge','Groveton','Madisonboro']
-  },
+  const LATE_NIGHT_TERMINAL_RULES = {
+    'Newkirk': new Set(['Boylston', 'Mount River']),
+    'Mount River': new Set(['Newkirk']),
+    'Leighton Castle': new Set(['Madisonboro']),
+    'Mount Hindsboro': new Set(['Madisonboro', 'Leighton Castle', 'East Heights']),
+    'East Heights': new Set(['Mount Hindsboro', 'Scottsbury']),
+    'Scottsbury': new Set(['East Heights']),
+    'Madisonboro': new Set(['Leighton Castle']),
+  };
 
-  // PINK RP01NS (Mount Hindsboro → East Heights)
-  // NOTE: at night Pink is only Mount Hindsboro ↔ East Heights (no Leighton Castle).
-  RP01NS: {
-    line: 'Pink', color: '#ff2d55', bidirectional: true,
-    route: ['Mount Hindsboro','Wood-By-Hike','New Salemview','Millford Heights','Roxbury Landing','East Heights']
-  },
-
-  // BROWN (direction-specific)
-  // SOUTH RB01NSS: Scottsbury → East Heights
-  RB01NSS: {
-    line: 'Brown', color: '#a2845e', bidirectional: false,
-    route: ['Scottsbury','Tyford Farms','New Halifax','Alpherst','Roxbury Landing','East Heights']
-  },
-  // NORTH RB01NSN: East Heights → Scottsbury
-  RB01NSN: {
-    line: 'Brown', color: '#a2845e', bidirectional: false,
-    route: ['East Heights','Alpherst','New Halifax','Tyford Farms','Scottsbury']
-  }
-};
-
-// ---------------------------
-// LATE NIGHT: per-station terminal rules (allowed destinations only)
-// ---------------------------
-const LATE_NIGHT_TERMINAL_RULES = {
-  // What you asked for, verbatim:
-
-  // Newkirk should only say Boylston (Red) and Mount River (Green)
-  'Newkirk': new Set(['Boylston', 'Mount River']),
-
-  // Mount River should only say Newkirk (Green)
-  'Mount River': new Set(['Newkirk']),
-
-  // Leighton Castle should only say Madisonboro (Blue)
-  'Leighton Castle': new Set(['Madisonboro']),
-
-  // Mount Hindsboro should only say Madisonboro (Blue), Leighton Castle (Blue), East Heights (Pink)
-  'Mount Hindsboro': new Set(['Madisonboro', 'Leighton Castle', 'East Heights']),
-
-  // East Heights should only say Mount Hindsboro (Pink) and Scottsbury (Brown)
-  'East Heights': new Set(['Mount Hindsboro', 'Scottsbury']),
-
-  // Scottsbury should only say East Heights (Brown)
-  'Scottsbury': new Set(['East Heights']),
-
-  // Madisonboro should only say Leighton Castle (Blue)
-  'Madisonboro': new Set(['Leighton Castle']),
-};
-
-// Counts of departures for the entire late-night window (11pm→5am), total per code.
-const LATE_NIGHT_COUNTS = {
-  RR01NS: 8,   // Red
-  RG01NS: 8,   // Green
-  RB01NS: 4,   // Blue
-  RP01NS: 2,   // Pink
-  RB01NSS: 1,  // Brown south (direction-specific)
-  RB01NSN: 1   // Brown north (direction-specific)
-};
-
-  // ---------------------------
-  // PER-LINE SERVICE WINDOWS (unchanged from earlier where applicable)
-  // ---------------------------
   const LINE_SERVICE = {
     'Green': {
       weekday: [ { start: '05:00', end: '23:00', every: 10 } ],
@@ -504,9 +581,6 @@ const LATE_NIGHT_COUNTS = {
     }
   };
 
-  // ---------------------------
-  // TERMINAL-ONLY DESTINATION RULES (from your previous step)
-  // ---------------------------
   const TERMINAL_RULES = {
     'Mount River': ['Port Williamson', 'Newkirk'],
     'Leighton Castle': ['East Heights'],
@@ -527,433 +601,469 @@ const LATE_NIGHT_COUNTS = {
   };
 
   // ---------------------------
+  // DELAY SYSTEM
+  // ---------------------------
+  function getTrainDelayInfo(trainSeed) {
+    const rng = seededRandom(trainSeed + '-delay');
+    const roll = rng();
+    
+    if (roll < 0.90) {
+      // 90%: On time
+      return { isDelayed: false, delaySeconds: 0, delayStartStop: -1 };
+    } else if (roll < 0.98) {
+      // 8%: 1 minute delay
+      const startStop = Math.floor(rng() * 2) + 2; // delay starts at stop 2 or 3
+      return { isDelayed: true, delaySeconds: 60, delayStartStop: startStop };
+    } else {
+      // 2%: 2-3 minute delay
+      const delayMins = Math.floor(rng() * 2) + 2; // 2 or 3 minutes
+      const startStop = Math.floor(rng() * 2) + 2;
+      return { isDelayed: true, delaySeconds: delayMins * 60, delayStartStop: startStop };
+    }
+  }
+
+  // ---------------------------
+  // CALCULATE DETAILED STOP TIMES
+  // ---------------------------
+  function calculateStopTimes(trainSeed, stops, departureMinutes) {
+    const rng = seededRandom(trainSeed);
+    const delayInfo = getTrainDelayInfo(trainSeed);
+    
+    const result = [];
+    const segmentSeconds = SEGMENT_TIME * 60; // 90 seconds between stations
+    
+    for (let i = 0; i < stops.length; i++) {
+      // Base scheduled arrival in seconds from midnight
+      const scheduledArrivalSec = departureMinutes * 60 + (i * segmentSeconds);
+      
+      // Random offset for "realism" (±5-25 seconds, but always positive small variance)
+      const arrivalOffset = Math.floor(rng() * 21) + 5; // 5-25 seconds
+      
+      // Dwell time at station (25-45 seconds)
+      const dwellTime = Math.floor(rng() * 21) + 25; // 25-45 seconds
+      
+      // Apply delay if this stop is at or after the delay start point
+      let delaySec = 0;
+      let isStopDelayed = false;
+      if (delayInfo.isDelayed && i >= delayInfo.delayStartStop) {
+        delaySec = delayInfo.delaySeconds;
+        isStopDelayed = true;
+      }
+      
+      const actualArrivalSec = scheduledArrivalSec + arrivalOffset + delaySec;
+      const actualDepartureSec = actualArrivalSec + dwellTime;
+      
+      result.push({
+        name: stops[i],
+        stopIndex: i,
+        scheduledArrivalSec: scheduledArrivalSec,
+        actualArrivalSec: actualArrivalSec,
+        actualDepartureSec: actualDepartureSec,
+        isDelayed: isStopDelayed,
+        delaySeconds: isStopDelayed ? delayInfo.delaySeconds : 0
+      });
+    }
+    
+    return {
+      stops: result,
+      hasDelay: delayInfo.isDelayed,
+      delaySeconds: delayInfo.delaySeconds
+    };
+  }
+
+  // ---------------------------
+  // DETERMINE TRAIN POSITION
+  // ---------------------------
+  function getTrainPosition(stopTimes, nowSeconds) {
+    // nowSeconds = seconds from midnight
+    const stops = stopTimes.stops;
+    
+    // Check if train hasn't started yet
+    if (nowSeconds < stops[0].actualArrivalSec) {
+      return { status: 'not-started', nextStop: stops[0].name };
+    }
+    
+    // Check if train has finished
+    if (nowSeconds >= stops[stops.length - 1].actualDepartureSec) {
+      return { status: 'completed' };
+    }
+    
+    // Find current position
+    for (let i = 0; i < stops.length; i++) {
+      const stop = stops[i];
+      
+      // At this station (between arrival and departure)
+      if (nowSeconds >= stop.actualArrivalSec && nowSeconds < stop.actualDepartureSec) {
+        return {
+          status: 'at-station',
+          currentStop: stop.name,
+          currentIndex: i,
+          isDelayed: stop.isDelayed
+        };
+      }
+      
+      // En route to next station
+      if (i < stops.length - 1) {
+        const nextStop = stops[i + 1];
+        if (nowSeconds >= stop.actualDepartureSec && nowSeconds < nextStop.actualArrivalSec) {
+          return {
+            status: 'en-route',
+            fromStop: stop.name,
+            toStop: nextStop.name,
+            fromIndex: i,
+            toIndex: i + 1
+          };
+        }
+      }
+    }
+    
+    return { status: 'unknown' };
+  }
+
+  // ---------------------------
   // 2) ENGINE
   // ---------------------------
-  
-  // Helper: spread N departure minutes uniformly over [startMin, endMin)
-function spreadUniform(startMin, endMin, count){
-  if (count <= 0) return [];
-  const span = endMin - startMin;
-  const step = span / count; // not including the end point
-  const times = [];
-  for (let i=0; i<count; i++){
-    times.push(Math.round(startMin + step*i));
-  }
-  return times;
-}
-
-// Build arrivals for a station under Late Night Service (bounce with terminal dwells)
-function nightArrivalsForStation(stationId, now=new Date()){
-  // Treat minutes after midnight as 24h+ to keep ordering sane
-  const nowMinRaw = now.getHours()*60 + now.getMinutes();
-  const clockMin = (nowMinRaw < 5*60) ? nowMinRaw + 1440 : nowMinRaw; // 00:00–04:59 → 1440–1739
-
-  // Late night window: [23:00, 05:00 next day)
-  const start = 23*60;          // 1380
-  const end   = 24*60 + 5*60;   // 1740
-
-  // small helpers
-  const sum = arr => arr.reduce((a,b)=>a+b,0);
-
-  // generic “bounce” generator for a single route that runs both ways
-  // dwellA applies at route[0] terminal, dwellB at route[route.length-1].
-  // codeF applies on forward leg (route[0]→last), codeR on reverse leg (last→route[0])
-  function arrivalsFromBounce(route, line, color, trains, dwellA, dwellB, codeF, codeR){
-    const out = [];
-    const segF = segFor(route);
-    const segR = segFor([...route].reverse());
-    const idxF = route.indexOf(stationId);
-    const rev  = [...route].reverse();
-    const idxR = rev.indexOf(stationId);
-
-    const T_f = sum(segF);
-    const T_r = sum(segR);
-    const cycle = T_f + dwellB + T_r + dwellA;            // full out-and-back with dwells
-    if (trains <= 0) return out;
-    const headway = cycle / trains;                        // spacing between train threads
-
-    // seed each physical train at the start terminal, spaced evenly
-    for (let i=0; i<trains; i++){
-      let t0 = Math.round(start + i*headway);             // first forward departure from route[0]
-      // run legs until outside the window
-      while (t0 < end + Math.max(T_f, T_r)){
-        // forward leg: route[0] -> last
-        if (idxF !== -1){
-          const arr = t0 + cumulative(segF, idxF);
-          const arrNorm = (arr < start) ? arr + 1440 : arr;
-          const minsAway = arrNorm - clockMin;
-          if (minsAway >= -1 && minsAway <= 360){
-            out.push({ line, color, code: codeF, destination: route[route.length-1], timeMin: arrNorm, minsAway, stops: route });
-          }
-        }
-        // time at end of forward leg + dwellB at far terminal
-        const afterForward = t0 + T_f + dwellB;
-
-        // reverse leg: last -> route[0]
-        if (idxR !== -1){
-          const arrR = afterForward + cumulative(segR, idxR);
-          const arrNormR = (arrR < start) ? arrR + 1440 : arrR;
-          const minsAwayR = arrNormR - clockMin;
-          if (minsAwayR >= -1 && minsAwayR <= 360){
-            out.push({ line, color, code: codeR, destination: route[0], timeMin: arrNormR, minsAway: minsAwayR, stops: rev });
-          }
-        }
-        // next cycle start: back at origin after reverse leg + dwellA
-        t0 = afterForward + T_r + dwellA;
-      }
-    }
-    return out;
-  }
-
-  const out = [];
-
-  // === RED (RR01NS) ===
-  // dwell at Newkirk (origin) 5 min; at Boylston (far end) 3 min; 8 trains bouncing
-  {
-    const def = LATE_NIGHT_ROUTES.RR01NS;
-    out.push(...arrivalsFromBounce(def.route, def.line, def.color, 8, /*dwellA*/5, /*dwellB*/3, 'RR01NS', 'RR01NS'));
-  }
-
-  // === GREEN (RG01NS) ===
-  // dwell 5 min at both Newkirk and Mount River; 8 trains bouncing
-  {
-    const def = LATE_NIGHT_ROUTES.RG01NS;
-    out.push(...arrivalsFromBounce(def.route, def.line, def.color, 8, /*dwellA*/5, /*dwellB*/5, 'RG01NS', 'RG01NS'));
-  }
-
-  // === BLUE (RB01NS) ===
-  // route is Leighton Castle → Madisonboro
-  // dwell at Leighton Castle 5 min; at Madisonboro 3 min; 4 trains bouncing
-  {
-    const def = LATE_NIGHT_ROUTES.RB01NS;
-    out.push(...arrivalsFromBounce(def.route, def.line, def.color, 4, /*dwellA(Leighton)*/5, /*dwellB(Madisonboro)*/3, 'RB01NS', 'RB01NS'));
-  }
-
-  // === PINK (RP01NS) ===
-  // route is Mount Hindsboro → East Heights
-  // dwell at Mount Hindsboro 2 min; at East Heights 5 min; 2 trains bouncing
-  {
-    const def = LATE_NIGHT_ROUTES.RP01NS;
-    out.push(...arrivalsFromBounce(def.route, def.line, def.color, 2, /*dwellA(Mt Hindsboro)*/2, /*dwellB(East Heights)*/5, 'RP01NS', 'RP01NS'));
-  }
-
-  // === BROWN (direction-specific) ===
-  // 2 trains total, continuous bounce; southbound includes Roxbury Landing, northbound skips it.
-  // Train 1 starts Scottsbury → East Heights (RB01NSS), 5-min dwell, returns East Heights → Scottsbury (RB01NSN), 5-min dwell, repeat.
-  // Train 2 starts East Heights → Scottsbury (RB01NSN), 5-min dwell, returns Scottsbury → East Heights (RB01NSS), 5-min dwell, repeat.
-  (function(){
-    const southDef = LATE_NIGHT_ROUTES.RB01NSS; // Scottsbury → East Heights (via Roxbury Landing)
-    const northDef = LATE_NIGHT_ROUTES.RB01NSN; // East Heights → Scottsbury (no Roxbury)
-    const line = southDef.line, color = southDef.color;
-
-    const southRoute = southDef.route;
-    const northRoute = northDef.route;
-    const segS = segFor(southRoute);
-    const segN = segFor(northRoute);
-    const sum = arr => arr.reduce((a,b)=>a+b,0);
-    const T_s = sum(segS);  // Scottsbury→East Heights travel time
-    const T_n = sum(segN);  // East Heights→Scottsbury travel time
-    const dwellEach = 5;    // 5-minute dwell at both ends
-
-    // full cycle time for one Brown train:
-    const cycle = T_s + dwellEach + T_n + dwellEach;
-    const trains = 2;
-    const headway = cycle / trains;
-
-    // helper to push arrivals for either leg
-    function pushLeg(route, code, departT){
-      const seg = segFor(route);
-      const idx = route.indexOf(stationId);
-      if (idx === -1) return;
-      const arr = departT + cumulative(seg, idx);
-      const arrNorm = (arr < start) ? arr + 1440 : arr;
-      const minsAway = arrNorm - clockMin;
-      if (minsAway >= -1 && minsAway <= 360){
-        out.push({ line, color, code, destination: route[route.length-1], timeMin: arrNorm, minsAway, stops: route });
-      }
-    }
-
-    // Train A: start southbound at Scottsbury at start + 0*headway
-    for (let seed=0; seed<trains; seed++){
-      let t0 = Math.round(start + seed*headway);
-      // decide which direction this seed starts: seed=0 → southbound; seed=1 → northbound
-      let dir = (seed % 2 === 0) ? 'south' : 'north';
-
-      while (t0 < end + Math.max(T_s, T_n)){
-        if (dir === 'south'){
-          // Scottsbury → East Heights as RB01NSS
-          pushLeg(southRoute, 'RB01NSS', t0);
-          // dwell at East Heights
-          t0 = t0 + T_s + dwellEach;
-          dir = 'north';
-        } else {
-          // East Heights → Scottsbury as RB01NSN
-          pushLeg(northRoute, 'RB01NSN', t0);
-          // dwell at Scottsbury
-          t0 = t0 + T_n + dwellEach;
-          dir = 'south';
-        }
-      }
-    }
-  })();
-
-  // Night-only filter: (1) never show trains whose destination == selected station
-// and (2) apply Late Night per-station terminal rules if defined.
-const selectedName = STATIONS.find(s=>s.id===stationId)?.name || stationId;
-
-// 1) drop any trains terminating at the selected station (e.g., Madisonboro showing “to Madisonboro”)
-let filtered = out.filter(r => r.destination !== selectedName);
-
-// 2) if we have per-station rules for Late Night, enforce them
-const lnRules = LATE_NIGHT_TERMINAL_RULES[selectedName];
-if (lnRules) {
-  filtered = filtered.filter(r => lnRules.has(r.destination));
-}
-
-filtered.sort((a,b)=> a.timeMin - b.timeMin);
-return filtered;
-}
-
-  const isWeekend = d => (d.getDay()===0 || d.getDay()===6);
-  const toMin = t => { const [h,m]=t.split(':').map(Number); return h*60+m; };
+  const isWeekend = d => (d.getDay() === 0 || d.getDay() === 6);
+  const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
   const expandDepartures = periods => {
-    const out=[]; periods.forEach(p=>{ let cur=toMin(p.start), end=toMin(p.end); while(cur<=end){ out.push(cur); cur+=p.every; } }); return out;
+    const out = [];
+    periods.forEach(p => {
+      let cur = toMin(p.start), end = toMin(p.end);
+      while (cur <= end) { out.push(cur); cur += p.every; }
+    });
+    return out;
   };
-  const cumulative = (seg,i)=>{ let s=0; for(let k=0;k<i;k++) s+=seg[k]; return s; };
+  const cumulative = (seg, i) => { let s = 0; for (let k = 0; k < i; k++) s += seg[k]; return s; };
 
-  // Deterministic picker so a given (line+minute) always maps to the same variant this session
-  function pickVariant(lineName, minuteValue){
-    const list = ROUTE_VARIANTS.filter(v=>v.line===lineName);
+  function pickVariant(lineName, minuteValue) {
+    const list = ROUTE_VARIANTS.filter(v => v.line === lineName);
     if (!list.length) return null;
-    // FNV-1a like hash → index
     let h = 2166136261 >>> 0;
     const s = `${lineName}:${minuteValue}`;
-    for (let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
-    const idx = h % list.length;
-    return list[idx];
+    for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return list[h % list.length];
   }
-  
-  // Custom Gold Line shuttle definition
-const GOLD_ROUTE = ['Berwick Hall','Westpoint','Bradford Square','Bradford Bay'];
-// forward segment times (minutes)
-const GOLD_FORWARD = [1.5, 1.5, 2];   // BH→W =1.5, W→BSq=1.5, BSq→BBay=2
-// reverse segment times (minutes)
-const GOLD_REVERSE = [2, 1.5, 2.5];   // BBay→BSq=2, BSq→W=1.5, W→BH=2.5
 
-function goldShuttleTrips(now=new Date()){
-  const trips = [];
-  const startMin = 5*60;   // 05:00
-  const endMin = 23*60;    // 23:00
-  let t = startMin;
-  let dir = 'forward';
+  // Gold shuttle
+  const GOLD_ROUTE = ['Berwick Hall', 'Westpoint', 'Bradford Square', 'Bradford Bay'];
+  const GOLD_FORWARD = [1.5, 1.5, 1.5];
+  const GOLD_REVERSE = [1.5, 1.5, 1.5];
 
-  while (t <= endMin){
-    if (dir === 'forward'){
-      let cur = t;
-      // through forward route
-      for (let i=0;i<GOLD_ROUTE.length;i++){
-        trips.push({ station:GOLD_ROUTE[i], time:cur, dest:'Bradford Bay', line:'Gold', code:'RG01', color:'#ffcc00', stops:GOLD_ROUTE });
-        if (i < GOLD_FORWARD.length) cur += GOLD_FORWARD[i];
+  function goldShuttleTrips(now = new Date()) {
+    const trips = [];
+    const startMin = 5 * 60;
+    const endMin = 23 * 60;
+    let t = startMin;
+    let dir = 'forward';
+
+    while (t <= endMin) {
+      if (dir === 'forward') {
+        let cur = t;
+        for (let i = 0; i < GOLD_ROUTE.length; i++) {
+          trips.push({ station: GOLD_ROUTE[i], time: cur, dest: 'Bradford Bay', line: 'Gold', code: 'RG01', color: '#ffcc00', stops: GOLD_ROUTE });
+          if (i < GOLD_FORWARD.length) cur += GOLD_FORWARD[i];
+        }
+        t = cur + 3;
+        dir = 'reverse';
+      } else {
+        let cur = t;
+        for (let i = GOLD_ROUTE.length - 1; i >= 0; i--) {
+          trips.push({ station: GOLD_ROUTE[i], time: cur, dest: 'Berwick Hall', line: 'Gold', code: 'RG01', color: '#ffcc00', stops: [...GOLD_ROUTE].reverse() });
+          if (i > 0) cur += GOLD_REVERSE[GOLD_ROUTE.length - 1 - i];
+        }
+        t = cur + 5;
+        dir = 'forward';
       }
-      // dwell 3 min at Bradford Bay
-      t = cur + 3;
-      dir = 'reverse';
-    } else {
-      let cur = t;
-      // through reverse route
-      for (let i=GOLD_ROUTE.length-1;i>=0;i--){
-        trips.push({ station:GOLD_ROUTE[i], time:cur, dest:'Berwick Hall', line:'Gold', code:'RG01', color:'#ffcc00', stops:[...GOLD_ROUTE].reverse() });
-        if (i > 0) cur += GOLD_REVERSE[GOLD_ROUTE.length-1 - i];
+    }
+    return trips;
+  }
+
+  // Orange shuttle
+  const ORANGE_ROUTE = ['Oakville City Airport', 'Veridia Nexus'];
+  const ORANGE_FORWARD = [1.5];
+  const ORANGE_REVERSE = [1.5];
+
+  function orangeShuttleTrips(now = new Date()) {
+    const trips = [];
+    if (!ORANGE_ENABLED) return trips;
+
+    const startMin = 5 * 60;
+    const endMin = 23 * 60;
+    let t = startMin;
+    let dir = 'forward';
+
+    while (t <= endMin) {
+      if (dir === 'forward') {
+        let cur = t;
+        trips.push({ station: ORANGE_ROUTE[0], time: cur, dest: 'Veridia Nexus', line: 'Orange', code: 'RO01', color: '#ff9500', stops: ORANGE_ROUTE });
+        cur += ORANGE_FORWARD[0];
+        trips.push({ station: ORANGE_ROUTE[1], time: cur, dest: 'Veridia Nexus', line: 'Orange', code: 'RO01', color: '#ff9500', stops: ORANGE_ROUTE });
+        t = cur + 1.5;
+        dir = 'reverse';
+      } else {
+        let cur = t;
+        trips.push({ station: ORANGE_ROUTE[1], time: cur, dest: 'Oakville City Airport', line: 'Orange', code: 'RO01', color: '#ff9500', stops: [...ORANGE_ROUTE].reverse() });
+        cur += ORANGE_REVERSE[0];
+        trips.push({ station: ORANGE_ROUTE[0], time: cur, dest: 'Oakville City Airport', line: 'Orange', code: 'RO01', color: '#ff9500', stops: [...ORANGE_ROUTE].reverse() });
+        t = cur + 5;
+        dir = 'forward';
       }
-      // dwell 5 min at Berwick Hall
-      t = cur + 5;
-      dir = 'forward';
     }
+    return trips;
   }
-  return trips;
-}
 
-// Custom Orange Line shuttle definition (event-only)
-const ORANGE_ROUTE = ['Oakville City Airport','Veridia Nexus'];
-// forward segment times (minutes)
-const ORANGE_FORWARD = [3];   // Airport → Veridia Nexus = 3
-// reverse segment times (minutes)
-const ORANGE_REVERSE = [3];   // Veridia Nexus → Airport = 3
+  // Late night arrivals
+  function nightArrivalsForStation(stationId, now = new Date()) {
+    const nowMinRaw = now.getHours() * 60 + now.getMinutes();
+    const clockMin = (nowMinRaw < 5 * 60) ? nowMinRaw + 1440 : nowMinRaw;
 
-function orangeShuttleTrips(now=new Date()){
-  const trips = [];
-  if (!ORANGE_ENABLED) return trips;  // disabled unless flag is true
+    const start = 23 * 60;
+    const end = 24 * 60 + 5 * 60;
 
-  const startMin = 5*60;   // 05:00
-  const endMin = 23*60;    // 23:00
-  let t = startMin;
-  let dir = 'forward';
+    const sum = arr => arr.reduce((a, b) => a + b, 0);
 
-  while (t <= endMin){
-    if (dir === 'forward'){
-      let cur = t;
-      // Airport to Veridia Nexus
-      trips.push({ station: ORANGE_ROUTE[0], time: cur, dest: 'Veridia Nexus', line:'Orange', code:'RO01', color:'#ff9500', stops: ORANGE_ROUTE });
-      cur += ORANGE_FORWARD[0];
-      trips.push({ station: ORANGE_ROUTE[1], time: cur, dest: 'Veridia Nexus', line:'Orange', code:'RO01', color:'#ff9500', stops: ORANGE_ROUTE });
-      // dwell 1.5 min at Veridia
-      t = cur + 1.5;
-      dir = 'reverse';
-    } else {
-      let cur = t;
-      // Veridia Nexus to Airport
-      trips.push({ station: ORANGE_ROUTE[1], time: cur, dest: 'Oakville City Airport', line:'Orange', code:'RO01', color:'#ff9500', stops:[...ORANGE_ROUTE].reverse() });
-      cur += ORANGE_REVERSE[0];
-      trips.push({ station: ORANGE_ROUTE[0], time: cur, dest: 'Oakville City Airport', line:'Orange', code:'RO01', color:'#ff9500', stops:[...ORANGE_ROUTE].reverse() });
-      // dwell 5 min at Airport
-      t = cur + 5;
-      dir = 'forward';
+    function arrivalsFromBounce(route, line, color, trains, dwellA, dwellB, codeF, codeR) {
+      const out = [];
+      const segF = segFor(route);
+      const segR = segFor([...route].reverse());
+      const idxF = route.indexOf(stationId);
+      const rev = [...route].reverse();
+      const idxR = rev.indexOf(stationId);
+
+      const T_f = sum(segF);
+      const T_r = sum(segR);
+      const cycle = T_f + dwellB + T_r + dwellA;
+      if (trains <= 0) return out;
+      const headway = cycle / trains;
+
+      for (let i = 0; i < trains; i++) {
+        let t0 = Math.round(start + i * headway);
+        while (t0 < end + Math.max(T_f, T_r)) {
+          if (idxF !== -1) {
+            const arr = t0 + cumulative(segF, idxF);
+            const arrNorm = (arr < start) ? arr + 1440 : arr;
+            const minsAway = arrNorm - clockMin;
+            if (minsAway >= -1 && minsAway <= 360) {
+              out.push({ line, color, code: codeF, destination: route[route.length - 1], timeMin: arrNorm, minsAway, stops: route, departureMin: t0 });
+            }
+          }
+          const afterForward = t0 + T_f + dwellB;
+          if (idxR !== -1) {
+            const arrR = afterForward + cumulative(segR, idxR);
+            const arrNormR = (arrR < start) ? arrR + 1440 : arrR;
+            const minsAwayR = arrNormR - clockMin;
+            if (minsAwayR >= -1 && minsAwayR <= 360) {
+              out.push({ line, color, code: codeR, destination: route[0], timeMin: arrNormR, minsAway: minsAwayR, stops: rev, departureMin: afterForward });
+            }
+          }
+          t0 = afterForward + T_r + dwellA;
+        }
+      }
+      return out;
     }
-  }
-  return trips;
-}
 
-  function arrivalsForStation(stationId, now=new Date()){
-      
-       // Late Night branch (11pm–5am local)
-  {
+    const out = [];
+
+    // RED
+    {
+      const def = LATE_NIGHT_ROUTES.RR01NS;
+      out.push(...arrivalsFromBounce(def.route, def.line, def.color, 8, 5, 3, 'RR01NS', 'RR01NS'));
+    }
+
+    // GREEN
+    {
+      const def = LATE_NIGHT_ROUTES.RG01NS;
+      out.push(...arrivalsFromBounce(def.route, def.line, def.color, 8, 5, 5, 'RG01NS', 'RG01NS'));
+    }
+
+    // BLUE
+    {
+      const def = LATE_NIGHT_ROUTES.RB01NS;
+      out.push(...arrivalsFromBounce(def.route, def.line, def.color, 4, 5, 3, 'RB01NS', 'RB01NS'));
+    }
+
+    // PINK
+    {
+      const def = LATE_NIGHT_ROUTES.RP01NS;
+      out.push(...arrivalsFromBounce(def.route, def.line, def.color, 2, 2, 5, 'RP01NS', 'RP01NS'));
+    }
+
+    // BROWN
+    (function() {
+      const southDef = LATE_NIGHT_ROUTES.RB01NSS;
+      const northDef = LATE_NIGHT_ROUTES.RB01NSN;
+      const line = southDef.line, color = southDef.color;
+
+      const southRoute = southDef.route;
+      const northRoute = northDef.route;
+      const segS = segFor(southRoute);
+      const segN = segFor(northRoute);
+      const T_s = sum(segS);
+      const T_n = sum(segN);
+      const dwellEach = 5;
+      const cycle = T_s + dwellEach + T_n + dwellEach;
+      const trains = 2;
+      const headway = cycle / trains;
+
+      function pushLeg(route, code, departT) {
+        const seg = segFor(route);
+        const idx = route.indexOf(stationId);
+        if (idx === -1) return;
+        const arr = departT + cumulative(seg, idx);
+        const arrNorm = (arr < start) ? arr + 1440 : arr;
+        const minsAway = arrNorm - clockMin;
+        if (minsAway >= -1 && minsAway <= 360) {
+          out.push({ line, color, code, destination: route[route.length - 1], timeMin: arrNorm, minsAway, stops: route, departureMin: departT });
+        }
+      }
+
+      for (let seed = 0; seed < trains; seed++) {
+        let t0 = Math.round(start + seed * headway);
+        let dir = (seed % 2 === 0) ? 'south' : 'north';
+
+        while (t0 < end + Math.max(T_s, T_n)) {
+          if (dir === 'south') {
+            pushLeg(southRoute, 'RB01NSS', t0);
+            t0 = t0 + T_s + dwellEach;
+            dir = 'north';
+          } else {
+            pushLeg(northRoute, 'RB01NSN', t0);
+            t0 = t0 + T_n + dwellEach;
+            dir = 'south';
+          }
+        }
+      }
+    })();
+
+    const selectedName = STATIONS.find(s => s.id === stationId)?.name || stationId;
+    let filtered = out.filter(r => r.destination !== selectedName);
+    const lnRules = LATE_NIGHT_TERMINAL_RULES[selectedName];
+    if (lnRules) {
+      filtered = filtered.filter(r => lnRules.has(r.destination));
+    }
+
+    filtered.sort((a, b) => a.timeMin - b.timeMin);
+    return filtered;
+  }
+
+  // Main arrivals function
+  function arrivalsForStation(stationId, now = new Date()) {
     const h = now.getHours();
     const late = (h >= 23 || h < 5);
     if (late) {
       return nightArrivalsForStation(stationId, now);
     }
-  } 
-    const weekend = isWeekend(now);
-    const nowMin = now.getHours()*60 + now.getMinutes();
-    const results = [];
 
+    const weekend = isWeekend(now);
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const results = [];
     const lines = Object.keys(LINE_SERVICE);
 
-    for (const lineName of lines){
-      const service = LINE_SERVICE[lineName][weekend?'weekend':'weekday'];
+    for (const lineName of lines) {
+      const service = LINE_SERVICE[lineName][weekend ? 'weekend' : 'weekday'];
       const dep = expandDepartures(service);
 
-      for (const t0 of dep){
-        // Special Brown logic: direction-specific codes
-        if (lineName === 'Brown'){
-          // Northbound RW01N (East Heights → Santa Mora)
-          const vN = ROUTE_VARIANTS.find(v=>v.code==='RW01N');
+      for (const t0 of dep) {
+        if (lineName === 'Brown') {
+          const vN = ROUTE_VARIANTS.find(v => v.code === 'RW01N');
           const rN = vN.route, segN = segFor(rN);
           const idxN = rN.indexOf(stationId);
-          if (idxN !== -1){
+          if (idxN !== -1) {
             const arr = t0 + cumulative(segN, idxN);
-            for (let k=0;k<2;k++){
-              const arrDay = arr + k*24*60; const minsAway = arrDay - nowMin;
-              if (minsAway >= -1 && minsAway <= 360){
-                results.push({ line: vN.line, color: vN.color, code: vN.code,
-                  destination: rN[rN.length-1], timeMin: arrDay, minsAway,
-                  stops: rN });
+            for (let k = 0; k < 2; k++) {
+              const arrDay = arr + k * 24 * 60;
+              const minsAway = arrDay - nowMin;
+              if (minsAway >= -1 && minsAway <= 360) {
+                results.push({ line: vN.line, color: vN.color, code: vN.code, destination: rN[rN.length - 1], timeMin: arrDay, minsAway, stops: rN, departureMin: t0 });
               }
             }
           }
-          // Southbound RW01S (Santa Mora → East Heights via Roxbury Landing)
-          const vS = ROUTE_VARIANTS.find(v=>v.code==='RW01S');
+          const vS = ROUTE_VARIANTS.find(v => v.code === 'RW01S');
           const rS = vS.route, segS = segFor(rS);
           const idxS = rS.indexOf(stationId);
-          if (idxS !== -1){
+          if (idxS !== -1) {
             const arr = t0 + cumulative(segS, idxS);
-            for (let k=0;k<2;k++){
-              const arrDay = arr + k*24*60; const minsAway = arrDay - nowMin;
-              if (minsAway >= -1 && minsAway <= 360){
-                results.push({ line: vS.line, color: vS.color, code: vS.code,
-                  destination: rS[rS.length-1], timeMin: arrDay, minsAway,
-                  stops: rS });
+            for (let k = 0; k < 2; k++) {
+              const arrDay = arr + k * 24 * 60;
+              const minsAway = arrDay - nowMin;
+              if (minsAway >= -1 && minsAway <= 360) {
+                results.push({ line: vS.line, color: vS.color, code: vS.code, destination: rS[rS.length - 1], timeMin: arrDay, minsAway, stops: rS, departureMin: t0 });
               }
             }
           }
-          continue; // done with Brown for this t0
+          continue;
         }
 
-        // All other lines: pick a variant once per slot, use both directions if bidirectional
         const v = pickVariant(lineName, t0);
         if (!v) continue;
         const r = v.route, seg = segFor(r);
 
-        // forward (as listed)
         const idxF = r.indexOf(stationId);
-        if (idxF !== -1){
+        if (idxF !== -1) {
           const arr = t0 + cumulative(seg, idxF);
-          for (let k=0;k<2;k++){
-            const arrDay = arr + k*24*60; const minsAway = arrDay - nowMin;
-            if (minsAway >= -1 && minsAway <= 360){
-              results.push({ line: v.line, color: v.color, code: v.code,
-                destination: r[r.length-1], timeMin: arrDay, minsAway,
-                stops: r });
+          for (let k = 0; k < 2; k++) {
+            const arrDay = arr + k * 24 * 60;
+            const minsAway = arrDay - nowMin;
+            if (minsAway >= -1 && minsAway <= 360) {
+              results.push({ line: v.line, color: v.color, code: v.code, destination: r[r.length - 1], timeMin: arrDay, minsAway, stops: r, departureMin: t0 });
             }
           }
         }
 
-        // reverse (only if bidirectional)
-        if (v.bidirectional){
+        if (v.bidirectional) {
           const rRev = [...r].reverse();
           const segRev = segFor(rRev);
           const idxR = rRev.indexOf(stationId);
-          if (idxR !== -1){
+          if (idxR !== -1) {
             const arr = t0 + cumulative(segRev, idxR);
-            for (let k=0;k<2;k++){
-              const arrDay = arr + k*24*60; const minsAway = arrDay - nowMin;
-              if (minsAway >= -1 && minsAway <= 360){
-                results.push({ line: v.line, color: v.color, code: v.code,
-                  destination: rRev[rRev.length-1], timeMin: arrDay, minsAway,
-                  stops: rRev });
+            for (let k = 0; k < 2; k++) {
+              const arrDay = arr + k * 24 * 60;
+              const minsAway = arrDay - nowMin;
+              if (minsAway >= -1 && minsAway <= 360) {
+                results.push({ line: v.line, color: v.color, code: v.code, destination: rRev[rRev.length - 1], timeMin: arrDay, minsAway, stops: rRev, departureMin: t0 });
               }
             }
           }
         }
       }
     }
-    
-        // Inject custom Gold Line shuttle
-        
-            // Inject custom Orange Line shuttle (if enabled)
-    if (stationId && ORANGE_ENABLED){
-      const orangeTrips = orangeShuttleTrips(now);
-      const nowMin = now.getHours()*60 + now.getMinutes();
-      for (const g of orangeTrips){
-        if (g.station === stationId){
-          const minsAway = g.time - nowMin;
-          if (minsAway >= -1 && minsAway <= 360){
-            results.push({
-              line: g.line, color: g.color, code: g.code,
-              destination: g.dest, timeMin: g.time, minsAway,
-              stops: g.stops
-            });
-          }
-        }
-      }
-    }
-    
-    if (stationId){
+
+    // Gold shuttle
+    if (stationId) {
       const goldTrips = goldShuttleTrips(now);
-      const nowMin = now.getHours()*60 + now.getMinutes();
-      for (const g of goldTrips){
-        if (g.station === stationId){
+      const nowMin = now.getHours() * 60 + now.getMinutes();
+      for (const g of goldTrips) {
+        if (g.station === stationId) {
           const minsAway = g.time - nowMin;
-          if (minsAway >= -1 && minsAway <= 360){
-            results.push({
-              line: g.line, color: g.color, code: g.code,
-              destination: g.dest, timeMin: g.time, minsAway,
-              stops: g.stops
-            });
+          if (minsAway >= -1 && minsAway <= 360) {
+            results.push({ line: g.line, color: g.color, code: g.code, destination: g.dest, timeMin: g.time, minsAway, stops: g.stops, departureMin: g.time - (g.stops.indexOf(g.station) * SEGMENT_TIME) });
           }
         }
       }
     }
 
-    // Filter: never show trains whose destination equals the selected station; apply terminal rules if present
-    const selectedName = STATIONS.find(s=>s.id===stationId)?.name || stationId;
-    let filtered = results.filter(r=> r.destination !== selectedName);
-    if (TERMINAL_RULES[selectedName]){
-      const allowed = new Set(TERMINAL_RULES[selectedName]);
-      filtered = filtered.filter(r=> allowed.has(r.destination));
+    // Orange shuttle
+    if (stationId && ORANGE_ENABLED) {
+      const orangeTrips = orangeShuttleTrips(now);
+      const nowMin = now.getHours() * 60 + now.getMinutes();
+      for (const g of orangeTrips) {
+        if (g.station === stationId) {
+          const minsAway = g.time - nowMin;
+          if (minsAway >= -1 && minsAway <= 360) {
+            results.push({ line: g.line, color: g.color, code: g.code, destination: g.dest, timeMin: g.time, minsAway, stops: g.stops, departureMin: g.time - (g.stops.indexOf(g.station) * SEGMENT_TIME) });
+          }
+        }
+      }
     }
 
-    filtered.sort((a,b)=> a.timeMin - b.timeMin);
+    const selectedName = STATIONS.find(s => s.id === stationId)?.name || stationId;
+    let filtered = results.filter(r => r.destination !== selectedName);
+    if (TERMINAL_RULES[selectedName]) {
+      const allowed = new Set(TERMINAL_RULES[selectedName]);
+      filtered = filtered.filter(r => allowed.has(r.destination));
+    }
+
+    filtered.sort((a, b) => a.timeMin - b.timeMin);
     return filtered;
   }
 
@@ -967,159 +1077,203 @@ function orangeShuttleTrips(now=new Date()){
   const refreshBtn = document.getElementById('refreshBtn');
   const serviceState = document.getElementById('serviceState');
 
-  function fmtMins(mins){ if (mins < -0.5) return 'departed'; if (mins <= 0.5) return 'now'; return `${Math.round(mins)} min`; }
-  
+  function fmtMins(mins) {
+    if (mins < -0.5) return 'departed';
+    if (mins <= 0.5) return 'now';
+    return `${Math.round(mins)} min`;
+  }
+
   const isLateNight = d => { const h = d.getHours(); return h >= 23 || h < 5; };
 
-  function renderClock(){
-  const d = new Date();
-  const opts = { hour:'numeric', minute:'2-digit' };
-  nowText.textContent = new Intl.DateTimeFormat(undefined, opts).format(d) + ' • Local time';
+  function renderClock() {
+    const d = new Date();
+    const opts = { hour: 'numeric', minute: '2-digit', hour12: false };
+    nowText.textContent = new Intl.DateTimeFormat(undefined, opts).format(d) + ' • Local time';
 
-  // NEW: toggle service pill based on time (11PM–5AM)
-  const late = isLateNight(d);
-  if (late) {
-    serviceState.textContent = 'Service: Late Night';
-    serviceState.className = 'pill late-night';
-  } else {
-    serviceState.textContent = 'Service: Day';
-    serviceState.className = 'pill';
+    const late = isLateNight(d);
+    if (late) {
+      serviceState.textContent = 'Service: Late Night';
+      serviceState.className = 'pill late-night';
+    } else {
+      serviceState.textContent = 'Service: Day';
+      serviceState.className = 'pill';
+    }
   }
-}
 
-  function renderStations(){
-    stationSelect.innerHTML = STATIONS.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
-    const def = STATIONS.find(s=>s.id==='Mount Hindsboro') || STATIONS[0];
+  function renderStations() {
+    stationSelect.innerHTML = STATIONS.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    const def = STATIONS.find(s => s.id === 'Mount Hindsboro') || STATIONS[0];
     if (def) stationSelect.value = def.id;
   }
-  
-  // --- slide helpers ---
-function slideDown(el){
-  // prepare to measure the natural height
-  el.classList.add('open');
-  el.style.maxHeight = el.scrollHeight + 'px';
-  // after the transition ends, let it grow/shrink naturally
-  const clear = () => {
-    el.style.maxHeight = 'none';
-    el.removeEventListener('transitionend', clear);
-  };
-  el.addEventListener('transitionend', clear);
-}
 
-function slideUp(el){
-  // lock the current height, then transition to 0
-  el.style.maxHeight = el.scrollHeight + 'px';
-  requestAnimationFrame(() => {
-    el.classList.remove('open');
-    el.style.maxHeight = '0px';
-  });
-}
+  function slideDown(el) {
+    el.classList.add('open');
+    el.style.maxHeight = el.scrollHeight + 'px';
+    const clear = () => {
+      el.style.maxHeight = 'none';
+      el.removeEventListener('transitionend', clear);
+    };
+    el.addEventListener('transitionend', clear);
+  }
 
-  function renderArrivals(){
-  const sid = stationSelect.value;
-  const cap = parseInt(limitSelect.value, 10);
-  const list = arrivalsForStation(sid, new Date()).slice(0, cap);
+  function slideUp(el) {
+    el.style.maxHeight = el.scrollHeight + 'px';
+    requestAnimationFrame(() => {
+      el.classList.remove('open');
+      el.style.maxHeight = '0px';
+    });
+  }
 
-  arrivalsEl.innerHTML = list.map((item, i) => {
-    // Build pieces we need for compact + full views
-    const stopsHtml = item.stops.map(s=>`<li>${s}</li>`).join('');
-    const origin = item.stops[0];
-    const dest   = item.stops[item.stops.length - 1];
-    const midCount = Math.max(0, item.stops.length - 2);
-    const midLabel = `Making ${midCount} ${midCount===1 ? 'stop' : 'stops'}`;
+  function renderArrivals() {
+    const sid = stationSelect.value;
+    const cap = parseInt(limitSelect.value, 10);
+    const now = new Date();
+    const nowSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+    const list = arrivalsForStation(sid, now).slice(0, cap);
 
-    return `
-      <details class="row" data-index="${i}">
-        <summary style="list-style:none; display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center; cursor:pointer;">
-          <div class="dot" style="background:${item.color}"></div>
-          <div>
-            <div class="lineTag">${item.line} Line</div>
-            <div class="dest">to ${item.destination} <span class="pill" style="margin-left:6px;">${item.code}</span></div>
-          </div>
-          <div class="mins">${fmtMins(item.minsAway)}</div>
-        </summary>
+    arrivalsEl.innerHTML = list.map((item, i) => {
+      // Create unique train seed for consistent timing
+      const trainSeed = `${item.code}-${item.departureMin || item.timeMin}-${item.destination}`;
+      
+      // Calculate detailed stop times
+      const stopTimesData = calculateStopTimes(trainSeed, item.stops, item.departureMin || (item.timeMin - (item.stops.indexOf(sid) * SEGMENT_TIME)));
+      const position = getTrainPosition(stopTimesData, nowSec);
 
-        <!-- Content area: starts compact (origin + mid-count + destination) -->
-        <div style="margin:10px 0 2px 26px;">
-          <!-- Compact view -->
-            <div class="compact" id="compact-${i}">
-                <ul class="stops" style="color:#ffffff">
-                    <li><strong>${origin}</strong></li>
-                </ul>
+      // Build stops HTML with times
+      const stopsHtml = stopTimesData.stops.map((stop, idx) => {
+        const isCurrentStation = position.status === 'at-station' && position.currentIndex === idx;
+        const isEnRouteTo = position.status === 'en-route' && position.toIndex === idx;
+        const isPast = (position.status === 'at-station' && idx < position.currentIndex) ||
+                       (position.status === 'en-route' && idx < position.toIndex) ||
+                       position.status === 'completed';
+        const isFuture = !isPast && !isCurrentStation && !isEnRouteTo;
 
-            <div style="padding-left:1px; margin:1px 0;">
-                <button class="linklike" data-action="expand" data-i="${i}">${midLabel}</button>
+        // Determine which icon to use
+        let icon;
+        let stopClass = 'stop-item';
+        
+        if (isCurrentStation) {
+          stopClass += ' current';
+          if (stop.isDelayed) {
+            stopClass += ' delayed';
+            icon = ICONS.pinOrange;
+          } else {
+            icon = ICONS.pinGreen;
+          }
+        } else if (isPast) {
+          stopClass += ' past';
+          icon = ICONS.pinDim;
+        } else if (isEnRouteTo) {
+          stopClass += ' en-route';
+          icon = ICONS.pinGray;
+        } else {
+          icon = ICONS.pinGray;
+        }
+
+        // Format times
+        const scheduledTime = formatTime24(stop.scheduledArrivalSec / 60);
+        const actualArrival = formatTime24Full(stop.actualArrivalSec);
+        const actualDeparture = formatTime24Full(stop.actualDepartureSec);
+        
+        // Delayed time display
+        let timeDisplay;
+        if (stop.isDelayed) {
+          const delayedTime = formatTime24((stop.scheduledArrivalSec + stop.delaySeconds) / 60);
+          timeDisplay = `<span class="stop-time-main delayed"><span class="scheduled">${scheduledTime}</span><span class="new-time">${delayedTime}</span></span>`;
+        } else {
+          timeDisplay = `<span class="stop-time-main">${scheduledTime}</span>`;
+        }
+
+        // Show arrived/departed details only for current and past stations
+        let detailsHtml = '';
+        if (isPast || isCurrentStation) {
+          if (isCurrentStation && position.status === 'at-station') {
+            // At station - show only arrived
+            detailsHtml = `
+              <div class="stop-details">
+                <span class="detail-item">${ICONS.clock} Arrived at ${actualArrival}</span>
+              </div>`;
+          } else if (isPast) {
+            // Past station - show both
+            detailsHtml = `
+              <div class="stop-details">
+                <span class="detail-item">${ICONS.clock} Arrived at ${actualArrival}</span>
+                <span class="detail-item">${ICONS.clock} Departed at ${actualDeparture}</span>
+              </div>`;
+          }
+        }
+
+        return `
+          <li class="${stopClass}">
+            <span class="stop-icon">${icon}</span>
+            ${timeDisplay}
+            <span class="stop-name">${stop.name}</span>
+            ${detailsHtml}
+          </li>`;
+      }).join('');
+
+      // Add en-route banner if applicable
+      let enRouteBanner = '';
+      if (position.status === 'en-route') {
+        enRouteBanner = `
+          <div class="en-route-banner">
+            ${ICONS.train}
+            <span>En route to ${position.toStop}</span>
+          </div>`;
+      }
+
+      // Find selected station index for display
+      const selectedIdx = item.stops.indexOf(sid);
+      const selectedStop = selectedIdx >= 0 ? stopTimesData.stops[selectedIdx] : null;
+      
+      // Delay indicator in main display
+      let delayBadge = '';
+      if (stopTimesData.hasDelay && selectedStop && selectedStop.isDelayed) {
+        delayBadge = ` <span style="color: var(--warning); font-size: 11px;">(+${Math.round(stopTimesData.delaySeconds / 60)} min)</span>`;
+      }
+
+      return `
+        <details class="row" data-index="${i}">
+          <summary style="list-style:none; display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center; cursor:pointer;">
+            <div class="dot" style="background:${item.color}"></div>
+            <div>
+              <div class="lineTag">${item.line} Line${delayBadge}</div>
+              <div class="dest">to ${item.destination} <span class="pill" style="margin-left:6px;">${item.code}</span></div>
             </div>
+            <div class="mins">${fmtMins(item.minsAway)}</div>
+          </summary>
 
-            <ul class="stops" style="color:#ffffff">
-                <li><strong>${dest}</strong></li>
-            </ul>
-            </div>
-
-          <!-- Full list view (hidden until user taps the mid-count text) -->
-          <div class="full slide" id="full-${i}">
-            <div class="subtle" style="margin-bottom:6px;">Making stops at…</div>
-            <ul class="stops" style="color:#ffffff">
+          <div style="margin:10px 0 2px 10px;">
+            ${enRouteBanner}
+            <div class="subtle" style="margin-bottom:8px;">Making stops at…</div>
+            <ul class="stops-list">
               ${stopsHtml}
             </ul>
           </div>
-        </div>
-      </details>`;
-  }).join('') || `<div class="subtle">No upcoming trains in the next 6 hours.</div>`;
-
-  // Wire up expand buttons: switch from compact → full (with slide)
-arrivalsEl.querySelectorAll('[data-action="expand"]').forEach(btn=>{
-  btn.addEventListener('click', (e)=>{
-    e.stopPropagation(); // keep the <details> open
-    const i = btn.dataset.i;
-    const comp = document.getElementById(`compact-${i}`);
-    const full = document.getElementById(`full-${i}`);
-    if (comp && full){
-      comp.style.display = 'none';
-      // ensure we're at a known collapsed state
-      full.hidden = false;            // ← ADD THIS LINE
-      full.style.maxHeight = '0px';
-      slideDown(full);
-    }
-  });
-});
-
-  // When the user closes the details, reset to compact view so the mid-count returns
-  arrivalsEl.querySelectorAll('details.row').forEach(d=>{
-    d.addEventListener('toggle', ()=>{
-      if (!d.open){
-        const comp = d.querySelector('.compact');
-        const full = d.querySelector('.full');
-        if (comp && full){ 
-            comp.hidden = false; 
-            full.hidden = true; 
-            comp.style.display = '';
-        }
-      }
-    });
-  });
-}
+        </details>`;
+    }).join('') || `<div class="subtle">No upcoming trains in the next 6 hours.</div>`;
+  }
 
   renderStations();
   renderClock();
   renderArrivals();
 
-  setInterval(()=>{ renderClock(); renderArrivals(); }, 20000);
+  // Update every 5 seconds for real-time tracking
+  setInterval(() => { renderClock(); renderArrivals(); }, 5000);
   stationSelect.addEventListener('change', renderArrivals);
   limitSelect.addEventListener('change', renderArrivals);
-  refreshBtn.addEventListener('click', ()=>{ renderClock(); renderArrivals(); });
+  refreshBtn.addEventListener('click', () => { renderClock(); renderArrivals(); });
 
   // ---------------------------
-  // 4) OPTIONAL: basic offline cache (works after first load)
+  // 4) OPTIONAL: basic offline cache
   // ---------------------------
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       const sw = URL.createObjectURL(new Blob([
-        `self.addEventListener('install', e=>{ e.waitUntil(caches.open('borail-v1').then(c=>c.addAll(['./']))); });
-`+
+        `self.addEventListener('install', e=>{ e.waitUntil(caches.open('borail-v1').then(c=>c.addAll(['./']))); });` +
         `self.addEventListener('fetch', e=>{ e.respondWith(caches.match(e.request).then(r=>r || fetch(e.request))); });`
       ], { type: 'text/javascript' }));
-      navigator.serviceWorker.register(sw).catch(()=>{});
+      navigator.serviceWorker.register(sw).catch(() => {});
     });
   }
   </script>
