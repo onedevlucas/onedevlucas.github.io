@@ -1,5 +1,4 @@
 <!doctype html>
-
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -50,302 +49,300 @@
     .title { font-weight: 800; letter-spacing: .2px; font-size: 22px; }
     .subtle { color: var(--muted); font-size: 12px; }
 
-```
-.controls { display: grid; gap: 10px; grid-template-columns: 1fr auto; align-items: center; margin-top: 10px; }
-select, button, input[type="time"] {
-  width: 100%; appearance: none; border: 1px solid rgba(255,255,255,.12); background: var(--card);
-  color: var(--text); border-radius: 14px; padding: 12px 40px 12px 12px; font-size: 16px;
-}
-.seg { display: flex; gap: 10px; align-items: center; }
-.pill { padding: 8px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); font-size: 12px; }
-.pill.late-night {
-  border-color: var(--line-Gold);
-  color: var(--line-Gold);
-  box-shadow: 0 0 0 2px rgba(255, 204, 0, 0.20) inset;
-}
+    .controls { display: grid; gap: 10px; grid-template-columns: 1fr auto; align-items: center; margin-top: 10px; }
+    select, button, input[type="time"] {
+      width: 100%; appearance: none; border: 1px solid rgba(255,255,255,.12); background: var(--card);
+      color: var(--text); border-radius: 14px; padding: 12px 40px 12px 12px; font-size: 16px;
+    }
+    .seg { display: flex; gap: 10px; align-items: center; }
+    .pill { padding: 8px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); font-size: 12px; }
+    .pill.late-night {
+      border-color: var(--line-Gold);
+      color: var(--line-Gold);
+      box-shadow: 0 0 0 2px rgba(255, 204, 0, 0.20) inset;
+    }
 
-.grid { display: grid; gap: 12px; margin-top: 14px; }
-.card { background: linear-gradient(180deg, rgba(255,255,255,.03), transparent), var(--card); border: 5px solid rgba(255,255,255,.06); border-radius: 18px; padding: 14px; }
+    .grid { display: grid; gap: 12px; margin-top: 14px; }
+    .card { background: linear-gradient(180deg, rgba(255,255,255,.03), transparent), var(--card); border: 5px solid rgba(255,255,255,.06); border-radius: 18px; padding: 14px; }
 
-.list { display: grid; gap: 15px; }
-.row { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; padding: 18px 15px; border-radius: 14px; border: 1px solid rgba(255,255,255,.06); background: rgba(255,255,255,.02); }
-.dot { width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 0 3px rgba(255,255,255,.08) inset; }
-.lineTag { font-weight: 560; letter-spacing: .3px; }
-.dest { color: var(--muted); font-size: 13px; }
-.mins { font-weight: 700; font-variant-numeric: tabular-nums; }
+    .list { display: grid; gap: 15px; }
+    .row { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; padding: 18px 15px; border-radius: 14px; border: 1px solid rgba(255,255,255,.06); background: rgba(255,255,255,.02); }
+    .dot { width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 0 3px rgba(255,255,255,.08) inset; }
+    .lineTag { font-weight: 560; letter-spacing: .3px; }
+    .dest { color: var(--muted); font-size: 13px; }
+    .mins { font-weight: 700; font-variant-numeric: tabular-nums; }
 
-.banner { display:flex; align-items:center; justify-content:space-between; gap: 10px; padding: 12px; border:1px dashed rgba(255,255,255,.10); border-radius:14px; background: rgba(255,255,255,.03); }
-.adbox { height: 64px; border-radius: 12px; background: linear-gradient(90deg, rgba(255,255,255,.06), transparent), #0b0b10; border:1px solid rgba(255,255,255,.08); flex:1; display:flex; align-items:center; justify-content:center; color: var(--muted); font-size:12px; }
+    .banner { display:flex; align-items:center; justify-content:space-between; gap: 10px; padding: 12px; border:1px dashed rgba(255,255,255,.10); border-radius:14px; background: rgba(255,255,255,.03); }
+    .adbox { height: 64px; border-radius: 12px; background: linear-gradient(90deg, rgba(255,255,255,.06), transparent), #0b0b10; border:1px solid rgba(255,255,255,.08); flex:1; display:flex; align-items:center; justify-content:center; color: var(--muted); font-size:12px; }
 
-footer { color: var(--muted); font-size: 12px; padding: 40px 0 80px; text-align: center; }
+    footer { color: var(--muted); font-size: 12px; padding: 40px 0 80px; text-align: center; }
 
-@media (min-width: 700px) { .grid { grid-template-columns: 2fr 1fr; } }
+    @media (min-width: 700px) { .grid { grid-template-columns: 2fr 1fr; } }
 
-/* Route stops list styling */
-.stops-list { 
-  list-style: none; 
-  margin: 0; 
-  padding-left: 0; 
-  line-height: 1.4;
-}
-.stop-item {
-  position: relative;
-  margin: 0;
-  padding: 8px 0 8px 32px;
-  border-left: 2px solid rgba(255,255,255,0.14);
-  margin-left: 8px;
-}
-.stop-item:last-child {
-  border-left-color: transparent;
-}
-.stop-item .stop-icon {
-  position: absolute;
-  left: -9px;
-  top: 8px;
-  width: 18px;
-  height: 18px;
-}
-.stop-item .stop-icon svg {
-  width: 18px;
-  height: 18px;
-}
-.stop-item.current .stop-name {
-  color: var(--success);
-  font-weight: 600;
-}
-.stop-item.current.delayed .stop-name {
-  color: var(--warning);
-}
-.stop-item.past {
-  opacity: 0.5;
-}
-.stop-item.en-route .stop-name {
-  color: var(--accent);
-}
+    /* Route stops list styling */
+    .stops-list { 
+      list-style: none; 
+      margin: 0; 
+      padding-left: 0; 
+      line-height: 1.4;
+    }
+    .stop-item {
+      position: relative;
+      margin: 0;
+      padding: 8px 0 8px 32px;
+      border-left: 2px solid rgba(255,255,255,0.14);
+      margin-left: 8px;
+    }
+    .stop-item:last-child {
+      border-left-color: transparent;
+    }
+    .stop-item .stop-icon {
+      position: absolute;
+      left: -9px;
+      top: 8px;
+      width: 18px;
+      height: 18px;
+    }
+    .stop-item .stop-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+    .stop-item.current .stop-name {
+      color: var(--success);
+      font-weight: 600;
+    }
+    .stop-item.current.delayed .stop-name {
+      color: var(--warning);
+    }
+    .stop-item.past {
+      opacity: 0.5;
+    }
+    .stop-item.en-route .stop-name {
+      color: var(--accent);
+    }
+    
+    .stop-time-main {
+      font-size: 13px;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      margin-bottom: 2px;
+    }
+    .stop-time-main.delayed .scheduled {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+    .stop-time-main .new-time {
+      color: var(--warning);
+      margin-left: 6px;
+    }
+    .stop-name {
+      font-size: 14px;
+      color: var(--text);
+    }
+    .stop-details {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 3px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .stop-details .clock-icon {
+      width: 12px;
+      height: 12px;
+      vertical-align: middle;
+      margin-right: 3px;
+      opacity: 0.7;
+    }
+    .stop-details .detail-item {
+      display: inline-flex;
+      align-items: center;
+    }
+    
+    .en-route-banner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      background: rgba(138, 143, 255, 0.1);
+      border: 1px solid rgba(138, 143, 255, 0.3);
+      border-radius: 8px;
+      margin: 6px 0 10px 0;
+      font-size: 12px;
+      color: var(--accent);
+    }
+    .en-route-banner svg {
+      width: 16px;
+      height: 16px;
+    }
 
-.stop-time-main {
-  font-size: 13px;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-  margin-bottom: 2px;
-}
-.stop-time-main.delayed .scheduled {
-  text-decoration: line-through;
-  opacity: 0.6;
-}
-.stop-time-main .new-time {
-  color: var(--warning);
-  margin-left: 6px;
-}
-.stop-name {
-  font-size: 14px;
-  color: var(--text);
-}
-.stop-details {
-  font-size: 11px;
-  color: var(--muted);
-  margin-top: 3px;
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-.stop-details .clock-icon {
-  width: 12px;
-  height: 12px;
-  vertical-align: middle;
-  margin-right: 3px;
-  opacity: 0.7;
-}
-.stop-details .detail-item {
-  display: inline-flex;
-  align-items: center;
-}
+    /* Train Info Box styling */
+    .train-info-box {
+      background: rgba(138, 143, 255, 0.08);
+      border: 1px solid rgba(138, 143, 255, 0.25);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+    }
+    .train-info-header {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .train-info-header .route-code {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .train-info-details {
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .train-info-details svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+    .train-info-details .model {
+      color: var(--text);
+      font-weight: 500;
+    }
+    .train-info-details .lead-car {
+      color: var(--accent);
+      font-weight: 600;
+    }
 
-.en-route-banner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  background: rgba(138, 143, 255, 0.1);
-  border: 1px solid rgba(138, 143, 255, 0.3);
-  border-radius: 8px;
-  margin: 6px 0 10px 0;
-  font-size: 12px;
-  color: var(--accent);
-}
-.en-route-banner svg {
-  width: 16px;
-  height: 16px;
-}
+    /* Compact view styling */
+    .compact-view {
+      padding: 0 0 0 4px;
+    }
+    .compact-stop {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 4px 0;
+    }
+    .compact-stop .compact-time {
+      font-size: 13px;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      min-width: 42px;
+    }
+    .compact-stop .compact-time.delayed .scheduled {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+    .compact-stop .compact-time .new-time {
+      color: var(--warning);
+      display: block;
+      font-size: 12px;
+    }
+    .compact-stop .compact-icon {
+      width: 18px;
+      height: 18px;
+    }
+    .compact-stop .compact-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+    .compact-stop .compact-name {
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .compact-stop.at-station .compact-name {
+      color: var(--success);
+    }
+    .compact-stop.at-station.delayed .compact-name {
+      color: var(--warning);
+    }
+    
+    .mid-stops-btn {
+      background: none;
+      border: 0;
+      padding: 8px 4px 8px 56px;
+      color: var(--accent);
+      font: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      display: block;
+      text-align: left;
+      width: 100%;
+    }
+    .mid-stops-btn:hover {
+      text-decoration: underline;
+    }
 
-/* Train Info Box styling */
-.train-info-box {
-  background: rgba(138, 143, 255, 0.08);
-  border: 1px solid rgba(138, 143, 255, 0.25);
-  border-radius: 10px;
-  padding: 10px 12px;
-  margin-bottom: 10px;
-}
-.train-info-header {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-  margin-bottom: 6px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.train-info-header .route-code {
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 4px;
-  padding: 2px 6px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
-.train-info-details {
-  font-size: 12px;
-  color: var(--muted);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.train-info-details svg {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-}
-.train-info-details .model {
-  color: var(--text);
-  font-weight: 500;
-}
-.train-info-details .lead-car {
-  color: var(--accent);
-  font-weight: 600;
-}
+    /* Slide animation */
+    .slide {
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: max-height 350ms ease, opacity 250ms ease;
+    }
+    .slide.open {
+      opacity: 1;
+    }
 
-/* Compact view styling */
-.compact-view {
-  padding: 0 0 0 4px;
-}
-.compact-stop {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 4px 0;
-}
-.compact-stop .compact-time {
-  font-size: 13px;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-  min-width: 42px;
-}
-.compact-stop .compact-time.delayed .scheduled {
-  text-decoration: line-through;
-  opacity: 0.6;
-}
-.compact-stop .compact-time .new-time {
-  color: var(--warning);
-  display: block;
-  font-size: 12px;
-}
-.compact-stop .compact-icon {
-  width: 18px;
-  height: 18px;
-}
-.compact-stop .compact-icon svg {
-  width: 18px;
-  height: 18px;
-}
-.compact-stop .compact-name {
-  font-size: 14px;
-  font-weight: 500;
-}
-.compact-stop.at-station .compact-name {
-  color: var(--success);
-}
-.compact-stop.at-station.delayed .compact-name {
-  color: var(--warning);
-}
+    .linklike { 
+      background: none; border: 0; padding: 0; 
+      color: var(--accent); font: inherit; cursor: pointer;
+    }
 
-.mid-stops-btn {
-  background: none;
-  border: 0;
-  padding: 8px 4px 8px 56px;
-  color: var(--accent);
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
-  display: block;
-  text-align: left;
-  width: 100%;
-}
-.mid-stops-btn:hover {
-  text-decoration: underline;
-}
+    /* Bottom tab bar */
+    .tabbar {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      z-index: 20;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      align-items: end;
+      gap: 6px;
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+      border-top: 1px solid rgba(255,255,255,.08);
+      background: rgba(180,180,180,0.20);
+      backdrop-filter: saturate(180%) blur(14px);
+    }
 
-/* Slide animation */
-.slide {
-  overflow: hidden;
-  max-height: 0;
-  opacity: 0;
-  transition: max-height 350ms ease, opacity 250ms ease;
-}
-.slide.open {
-  opacity: 1;
-}
+    .tabbar a {
+      text-decoration: none;
+      color: var(--muted);
+      text-align: center;
+    }
 
-.linklike { 
-  background: none; border: 0; padding: 0; 
-  color: var(--accent); font: inherit; cursor: pointer;
-}
+    .tabbar .item {
+      display: grid;
+      gap: 6px;
+      justify-items: center;
+      font-size: 12px;
+    }
 
-/* Bottom tab bar */
-.tabbar {
-  position: fixed;
-  left: 0; right: 0; bottom: 0;
-  z-index: 20;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  align-items: end;
-  gap: 6px;
-  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-  border-top: 1px solid rgba(255,255,255,.08);
-  background: rgba(180,180,180,0.20);
-  backdrop-filter: saturate(180%) blur(14px);
-}
+    .tabbar .item img {
+      width: 26px; height: 26px;
+      display: block;
+      opacity: .8;
+      filter: grayscale(100%);
+    }
 
-.tabbar a {
-  text-decoration: none;
-  color: var(--muted);
-  text-align: center;
-}
+    .tabbar a.active {
+      color: var(--accent);
+    }
 
-.tabbar .item {
-  display: grid;
-  gap: 6px;
-  justify-items: center;
-  font-size: 12px;
-}
-
-.tabbar .item img {
-  width: 26px; height: 26px;
-  display: block;
-  opacity: .8;
-  filter: grayscale(100%);
-}
-
-.tabbar a.active {
-  color: var(--accent);
-}
-
-.tabbar a.active img {
-  opacity: 1;
-  filter: none;
-}
-```
+    .tabbar a.active img {
+      opacity: 1;
+      filter: none;
+    }
 
   </style>
 </head>
@@ -381,36 +378,33 @@ footer { color: var(--muted); font-size: 12px; padding: 40px 0 80px; text-align:
         <div id="arrivals" class="list"></div>
       </div>
 
-```
-  <aside class="card">
-    <div class="banner" style="margin-bottom:12px;">
-      <div class="subtle">Sponsored</div>
-      <div class="pill">Ad</div>
-    </div>
-    <div class="adbox">
-      <img src="ad2.png" alt="Advertisement" style="max-width:100%; max-height:64px; border-radius:10px;">
-    </div>
-    <div style="height:10px"></div>
-    <div class="adbox">
-      <a href="https://youtube.com/theemfanner" target="_blank" rel="noopener">
-        <img src="ad1.png" alt="Promote YouTube Channel" style="max-width:100%; max-height:64px; border-radius:10px;">
-      </a>
-    </div>
-  </aside>
-</section>
+      <aside class="card">
+        <div class="banner" style="margin-bottom:12px;">
+          <div class="subtle">Sponsored</div>
+          <div class="pill">Ad</div>
+        </div>
+        <div class="adbox">
+          <img src="ad2.png" alt="Advertisement" style="max-width:100%; max-height:64px; border-radius:10px;">
+        </div>
+        <div style="height:10px"></div>
+        <div class="adbox">
+          <a href="https://youtube.com/theemfanner" target="_blank" rel="noopener">
+            <img src="ad1.png" alt="Promote YouTube Channel" style="max-width:100%; max-height:64px; border-radius:10px;">
+          </a>
+        </div>
+      </aside>
+    </section>
 
-<section class="card" style="margin-top:12px;">
-  <details>
-    <summary class="subtle">About this app</summary>
-    <p style="color:var(--muted); line-height:1.5">This is a fictional live timetable for a Minecraft metro with 62 stations across seven lines: Red, Gold, Green, Orange, Blue, Pink, and Brown. Times are computed on-device from the current time and line schedules. Add this site to your iPhone Home Screen to use it like a native app.</p>
-  </details>
-</section>
-```
-
+    <section class="card" style="margin-top:12px;">
+      <details>
+        <summary class="subtle">About this app</summary>
+        <p style="color:var(--muted); line-height:1.5">This is a fictional live timetable for a Minecraft metro with 62 stations across seven lines: Red, Gold, Green, Orange, Blue, Pink, and Brown. Times are computed on-device from the current time and line schedules. Add this site to your iPhone Home Screen to use it like a native app.</p>
+      </details>
+    </section>
   </main>
 
-  <footer>© BORail • Built for iPhone • Works offline after first load | Version 38</footer>
-
+  <footer>© BORail • Built for iPhone • Works offline after first load | Version 37</footer>
+  
   <nav class="tabbar" role="navigation" aria-label="Primary">
     <a class="active" href="index.html">
       <div class="item">
@@ -440,7 +434,7 @@ footer { color: var(--muted); font-size: 12px; padding: 40px 0 80px; text-align:
 
   <script>
   // ---------------------------
-  // SVG ICONS (inlines)
+  // SVG ICONS (inline)
   // ---------------------------
   const ICONS = {
     clock: `<svg class="clock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -533,35 +527,11 @@ footer { color: var(--muted); font-size: 12px; padding: 40px 0 80px; text-align:
     'MTC-T 455-3': { model: 'MTC-T 455', cars: 3, leadCarRange: [700, 769] }
   };
 
-  // Gold line base lead car (fixed for the day, seeded by date)
-  function getGoldBaseLeadCar() {
-    const today = new Date();
-    const dateSeed = `gold-${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
-    const rng = seededRandom(dateSeed);
-    const [minCar, maxCar] = TRAIN_TYPES['MTC-T 110'].leadCarRange;
-    // Pick an even number so we can alternate between base and base-1
-    let baseCar = minCar + Math.floor(rng() * (maxCar - minCar));
-    if (baseCar <= minCar) baseCar = minCar + 1; // Ensure we can subtract 1
-    return baseCar;
-  }
-
-  function getTrainConsist(trainSeed, lineName, isLateNight = false, goldTripDirection = null) {
+  function getTrainConsist(trainSeed, lineName, isLateNight = false) {
     const rng = seededRandom(trainSeed + '-consist');
     const roll = rng();
     
     let trainType, model, cars, leadCarRange;
-    
-    // Special handling for Gold line - single train with alternating lead car
-    if (lineName === 'Gold') {
-      const baseCar = getGoldBaseLeadCar();
-      // Direction: 'toBerwickHall' uses baseCar, 'toBradfordBay' uses baseCar - 1
-      const leadCar = (goldTripDirection === 'toBradfordBay') ? (baseCar - 1) : baseCar;
-      return {
-        model: 'MTC-T 110',
-        cars: 2,
-        leadCar: leadCar
-      };
-    }
     
     if (isLateNight) {
       // Late night: fixed train types per line
@@ -578,6 +548,7 @@ footer { color: var(--muted); font-size: 12px; padding: 40px 0 80px; text-align:
           trainType = TRAIN_TYPES['MTC-T 2253'];
           model = 'MTC-T 2253';
           break;
+        case 'Gold':
         case 'Orange':
           trainType = TRAIN_TYPES['MTC-T 110'];
           model = 'MTC-T 110';
@@ -624,6 +595,7 @@ footer { color: var(--muted); font-size: 12px; padding: 40px 0 80px; text-align:
             model = 'MTC-T 2254';
           }
           break;
+        case 'Gold':
         case 'Orange':
           // 100% MTC-T 110
           trainType = TRAIN_TYPES['MTC-T 110'];
@@ -732,7 +704,7 @@ footer { color: var(--muted); font-size: 12px; padding: 40px 0 80px; text-align:
     { id: 'Oakville City Airport', name: 'Oakville City Airport' }
   ];
 
-  // 1.5 minutes (90 seconds) between each station (default)
+  // 1.5 minutes (90 seconds) between each station
   const SEGMENT_TIME = 1.5;
   const segFor = (route) => Array(route.length - 1).fill(SEGMENT_TIME);
 
@@ -748,7 +720,7 @@ footer { color: var(--muted); font-size: 12px; padding: 40px 0 80px; text-align:
     { line: 'Red', color: '#ff3b30', code: 'RR02', bidirectional: true, route: ['Newkirk','Berwick Hall','Cambridge Central','Atkinson Junction','La Vista','Brookfield Lawn','Foxston','New Cottage','Whitebranch'] },
     { line: 'Red', color: '#ff3b30', code: 'RR01', bidirectional: true, route: ['Newkirk','Hoganville','Berwick Hall','Atkinson Junction','Garner','Kenilworth'] },
 
-    { line: 'Gold', color: '#ffcc00', code: 'RD01', bidirectional: true, route: ['Bradford Bay','Bradford Square','Westpoint','Berwick Hall'] },
+    { line: 'Gold', color: '#ffcc00', code: 'RG01', bidirectional: true, route: ['Berwick Hall','Westpoint','Bradford Square','Bradford Bay'] },
 
     { line: 'Orange', color: '#ff9500', code: 'RO01', bidirectional: true, route: ['Oakville City Airport','Veridia Nexus'] },
 
@@ -841,7 +813,7 @@ footer { color: var(--muted); font-size: 12px; padding: 40px 0 80px; text-align:
       ],
       weekend: [ { start: '06:00', end: '22:30', every: 10 } ]
     },
-    'Gold': { weekday: [], weekend: [] }, // Gold handled separately with single train
+    'Gold': { weekday: [ { start: '05:30', end: '22:30', every: 10 } ], weekend: [ { start: '06:00', end: '22:30', every: 12 } ] },
     'Orange': { weekday: [], weekend: [] },
     'Blue': {
       weekday: [
@@ -904,26 +876,15 @@ footer { color: var(--muted); font-size: 12px; padding: 40px 0 80px; text-align:
   // ---------------------------
   // CALCULATE DETAILED STOP TIMES
   // ---------------------------
-  function calculateStopTimes(trainSeed, stops, departureMinutes, customSegmentTimes = null) {
+  function calculateStopTimes(trainSeed, stops, departureMinutes) {
     const rng = seededRandom(trainSeed);
     const delayInfo = getTrainDelayInfo(trainSeed);
     
     const result = [];
-    const defaultSegmentSeconds = SEGMENT_TIME * 60; // 90 seconds between stations
-    
-    let cumulativeTime = 0;
+    const segmentSeconds = SEGMENT_TIME * 60; // 90 seconds between stations
     
     for (let i = 0; i < stops.length; i++) {
-      // Calculate time to reach this stop
-      if (i > 0) {
-        if (customSegmentTimes && customSegmentTimes[i - 1] !== undefined) {
-          cumulativeTime += customSegmentTimes[i - 1] * 60; // Convert minutes to seconds
-        } else {
-          cumulativeTime += defaultSegmentSeconds;
-        }
-      }
-      
-      const scheduledArrivalSec = departureMinutes * 60 + cumulativeTime;
+      const scheduledArrivalSec = departureMinutes * 60 + (i * segmentSeconds);
       
       // Random offset for "realism" (5-25 seconds)
       const arrivalOffset = Math.floor(rng() * 21) + 5;
@@ -1026,92 +987,37 @@ footer { color: var(--muted); font-size: 12px; padding: 40px 0 80px; text-align:
     return list[h % list.length];
   }
 
-  // ---------------------------
-  // GOLD LINE - SINGLE TRAIN SHUTTLE (RD01)
-  // ---------------------------
-  // Route: Bradford Bay <-> Berwick Hall
-  // Timing TO Berwick Hall: Bradford Bay → Bradford Square (1.5) → Westpoint (1.5) → Berwick Hall (2.0)
-  // Timing TO Bradford Bay: Berwick Hall → Westpoint (1.5) → Bradford Square (1.5) → Bradford Bay (1.5)
-  // Terminal dwell: 5 minutes at both ends
-  
-  const GOLD_ROUTE_TO_BERWICK = ['Bradford Bay', 'Bradford Square', 'Westpoint', 'Berwick Hall'];
-  const GOLD_SEGMENTS_TO_BERWICK = [1.5, 1.5, 2.0]; // Bradford Bay→Bradford Square, Bradford Square→Westpoint, Westpoint→Berwick Hall
-  
-  const GOLD_ROUTE_TO_BRADFORD = ['Berwick Hall', 'Westpoint', 'Bradford Square', 'Bradford Bay'];
-  const GOLD_SEGMENTS_TO_BRADFORD = [1.5, 1.5, 1.5]; // Berwick Hall→Westpoint, Westpoint→Bradford Square, Bradford Square→Bradford Bay
-  
-  const GOLD_TERMINAL_DWELL = 5; // 5 minutes at terminals
+  // Gold shuttle (daytime only)
+  const GOLD_ROUTE = ['Berwick Hall', 'Westpoint', 'Bradford Square', 'Bradford Bay'];
+  const GOLD_FORWARD = [1.5, 1.5, 1.5];
+  const GOLD_REVERSE = [1.5, 1.5, 1.5];
 
   function goldShuttleTrips(now = new Date()) {
     const trips = [];
     const startMin = 5 * 60 + 30;  // 05:30
     const endMin = 22 * 60 + 30;   // 22:30
-    
-    // Calculate one-way travel times
-    const travelToBerwick = GOLD_SEGMENTS_TO_BERWICK.reduce((a, b) => a + b, 0); // 5 minutes
-    const travelToBradford = GOLD_SEGMENTS_TO_BRADFORD.reduce((a, b) => a + b, 0); // 4.5 minutes
-    
-    // Full cycle: Bradford Bay → Berwick Hall → Bradford Bay
-    // = travel to Berwick (5) + dwell at Berwick (5) + travel to Bradford (4.5) + dwell at Bradford (5)
-    // = 19.5 minutes per full cycle
-    
-    let t = startMin; // Start at Bradford Bay at 05:30
-    let direction = 'toBerwickHall';
-    
-    while (t <= endMin + 10) { // Add buffer to catch trains completing after service end
-      if (direction === 'toBerwickHall') {
-        // Train departing Bradford Bay heading to Berwick Hall
+    let t = startMin;
+    let dir = 'forward';
+
+    while (t <= endMin) {
+      if (dir === 'forward') {
         let cur = t;
-        for (let i = 0; i < GOLD_ROUTE_TO_BERWICK.length; i++) {
-          if (cur <= endMin + 10) {
-            trips.push({
-              station: GOLD_ROUTE_TO_BERWICK[i],
-              time: cur,
-              dest: 'Berwick Hall',
-              line: 'Gold',
-              code: 'RD01',
-              color: '#ffcc00',
-              stops: GOLD_ROUTE_TO_BERWICK,
-              segmentTimes: GOLD_SEGMENTS_TO_BERWICK,
-              departureMin: t,
-              goldDirection: 'toBerwickHall'
-            });
-          }
-          if (i < GOLD_SEGMENTS_TO_BERWICK.length) {
-            cur += GOLD_SEGMENTS_TO_BERWICK[i];
-          }
+        for (let i = 0; i < GOLD_ROUTE.length; i++) {
+          trips.push({ station: GOLD_ROUTE[i], time: cur, dest: 'Bradford Bay', line: 'Gold', code: 'RG01', color: '#ffcc00', stops: GOLD_ROUTE });
+          if (i < GOLD_FORWARD.length) cur += GOLD_FORWARD[i];
         }
-        // After arriving at Berwick Hall, wait 5 minutes
-        t = t + travelToBerwick + GOLD_TERMINAL_DWELL;
-        direction = 'toBradfordBay';
+        t = cur + 3;
+        dir = 'reverse';
       } else {
-        // Train departing Berwick Hall heading to Bradford Bay
         let cur = t;
-        for (let i = 0; i < GOLD_ROUTE_TO_BRADFORD.length; i++) {
-          if (cur <= endMin + 10) {
-            trips.push({
-              station: GOLD_ROUTE_TO_BRADFORD[i],
-              time: cur,
-              dest: 'Bradford Bay',
-              line: 'Gold',
-              code: 'RD01',
-              color: '#ffcc00',
-              stops: GOLD_ROUTE_TO_BRADFORD,
-              segmentTimes: GOLD_SEGMENTS_TO_BRADFORD,
-              departureMin: t,
-              goldDirection: 'toBradfordBay'
-            });
-          }
-          if (i < GOLD_SEGMENTS_TO_BRADFORD.length) {
-            cur += GOLD_SEGMENTS_TO_BRADFORD[i];
-          }
+        for (let i = GOLD_ROUTE.length - 1; i >= 0; i--) {
+          trips.push({ station: GOLD_ROUTE[i], time: cur, dest: 'Berwick Hall', line: 'Gold', code: 'RG01', color: '#ffcc00', stops: [...GOLD_ROUTE].reverse() });
+          if (i > 0) cur += GOLD_REVERSE[GOLD_ROUTE.length - 1 - i];
         }
-        // After arriving at Bradford Bay, wait 5 minutes
-        t = t + travelToBradford + GOLD_TERMINAL_DWELL;
-        direction = 'toBerwickHall';
+        t = cur + 5;
+        dir = 'forward';
       }
     }
-    
     return trips;
   }
 
@@ -1393,26 +1299,14 @@ footer { color: var(--muted); font-size: 12px; padding: 40px 0 80px; text-align:
       }
     }
 
-    // Gold shuttle (single train, daytime only)
+    // Gold shuttle (daytime only)
     if (stationId) {
       const goldTrips = goldShuttleTrips(now);
       for (const g of goldTrips) {
         if (g.station === stationId) {
           const minsAway = g.time - nowMin;
           if (minsAway >= -1 && minsAway <= 360) {
-            results.push({
-              line: g.line,
-              color: g.color,
-              code: g.code,
-              destination: g.dest,
-              timeMin: g.time,
-              minsAway,
-              stops: g.stops,
-              departureMin: g.departureMin,
-              isLateNight: false,
-              segmentTimes: g.segmentTimes,
-              goldDirection: g.goldDirection
-            });
+            results.push({ line: g.line, color: g.color, code: g.code, destination: g.dest, timeMin: g.time, minsAway, stops: g.stops, departureMin: g.time - (g.stops.indexOf(g.station) * SEGMENT_TIME), isLateNight: false });
           }
         }
       }
@@ -1528,17 +1422,11 @@ footer { color: var(--muted); font-size: 12px; padding: 40px 0 80px; text-align:
       const trainSeed = `${item.code}-${item.departureMin || item.timeMin}-${item.destination}`;
       const trainId = `train-${i}`;
       
-      // Use custom segment times for Gold line
-      const stopTimesData = calculateStopTimes(
-        trainSeed, 
-        item.stops, 
-        item.departureMin || (item.timeMin - (item.stops.indexOf(sid) * SEGMENT_TIME)),
-        item.segmentTimes || null
-      );
+      const stopTimesData = calculateStopTimes(trainSeed, item.stops, item.departureMin || (item.timeMin - (item.stops.indexOf(sid) * SEGMENT_TIME)));
       const position = getTrainPosition(stopTimesData, nowSec);
 
-      // Get train consist info (with Gold direction for alternating lead car)
-      const consist = getTrainConsist(trainSeed, item.line, item.isLateNight || false, item.goldDirection || null);
+      // Get train consist info
+      const consist = getTrainConsist(trainSeed, item.line, item.isLateNight || false);
       const origin = item.stops[0];
       const destination = item.stops[item.stops.length - 1];
 
@@ -1822,6 +1710,5 @@ footer { color: var(--muted); font-size: 12px; padding: 40px 0 80px; text-align:
     });
   }
   </script>
-
 </body>
 </html>
