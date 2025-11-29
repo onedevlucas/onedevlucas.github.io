@@ -403,7 +403,7 @@
     </section>
   </main>
 
-  <footer>© BORail • Built for iPhone • Works offline after first load | Version 37</footer>
+  <footer>© BORail • Built for iPhone • Works offline after first load | Version 38</footer>
   
   <nav class="tabbar" role="navigation" aria-label="Primary">
     <a class="active" href="index.html">
@@ -527,11 +527,23 @@
     'MTC-T 455-3': { model: 'MTC-T 455', cars: 3, leadCarRange: [700, 769] }
   };
 
-  function getTrainConsist(trainSeed, lineName, isLateNight = false) {
+  function getTrainConsist(trainSeed, lineName, isLateNight = false, goldDirection = null) {
     const rng = seededRandom(trainSeed + '-consist');
     const roll = rng();
     
     let trainType, model, cars, leadCarRange;
+    
+    // Special handling for Gold line - single train with alternating lead car
+    if (lineName === 'Gold') {
+      const baseCar = getGoldBaseLeadCar();
+      // Direction: 'toBerwickHall' uses baseCar, 'toBradfordBay' uses baseCar - 1
+      const leadCar = (goldDirection === 'toBradfordBay') ? (baseCar - 1) : baseCar;
+      return {
+        model: 'MTC-T 110',
+        cars: 2,
+        leadCar: leadCar
+      };
+    }
     
     if (isLateNight) {
       // Late night: fixed train types per line
@@ -548,7 +560,6 @@
           trainType = TRAIN_TYPES['MTC-T 2253'];
           model = 'MTC-T 2253';
           break;
-        case 'Gold':
         case 'Orange':
           trainType = TRAIN_TYPES['MTC-T 110'];
           model = 'MTC-T 110';
@@ -595,7 +606,6 @@
             model = 'MTC-T 2254';
           }
           break;
-        case 'Gold':
         case 'Orange':
           // 100% MTC-T 110
           trainType = TRAIN_TYPES['MTC-T 110'];
@@ -720,7 +730,7 @@
     { line: 'Red', color: '#ff3b30', code: 'RR02', bidirectional: true, route: ['Newkirk','Berwick Hall','Cambridge Central','Atkinson Junction','La Vista','Brookfield Lawn','Foxston','New Cottage','Whitebranch'] },
     { line: 'Red', color: '#ff3b30', code: 'RR01', bidirectional: true, route: ['Newkirk','Hoganville','Berwick Hall','Atkinson Junction','Garner','Kenilworth'] },
 
-    { line: 'Gold', color: '#ffcc00', code: 'RG01', bidirectional: true, route: ['Berwick Hall','Westpoint','Bradford Square','Bradford Bay'] },
+    { line: 'Gold', color: '#ffcc00', code: 'RD01', bidirectional: true, route: ['Bradford Bay','Bradford Square','Westpoint','Berwick Hall'] },
 
     { line: 'Orange', color: '#ff9500', code: 'RO01', bidirectional: true, route: ['Oakville City Airport','Veridia Nexus'] },
 
@@ -813,7 +823,7 @@
       ],
       weekend: [ { start: '06:00', end: '22:30', every: 10 } ]
     },
-    'Gold': { weekday: [ { start: '05:30', end: '22:30', every: 10 } ], weekend: [ { start: '06:00', end: '22:30', every: 12 } ] },
+    'Gold': { weekday: [], weekend: [] },  // Gold handled separately - single train shuttle
     'Orange': { weekday: [], weekend: [] },
     'Blue': {
       weekday: [
@@ -876,15 +886,26 @@
   // ---------------------------
   // CALCULATE DETAILED STOP TIMES
   // ---------------------------
-  function calculateStopTimes(trainSeed, stops, departureMinutes) {
+  function calculateStopTimes(trainSeed, stops, departureMinutes, customSegmentTimes = null) {
     const rng = seededRandom(trainSeed);
     const delayInfo = getTrainDelayInfo(trainSeed);
     
     const result = [];
-    const segmentSeconds = SEGMENT_TIME * 60; // 90 seconds between stations
+    const defaultSegmentSeconds = SEGMENT_TIME * 60; // 90 seconds between stations
+    
+    let cumulativeSeconds = 0;
     
     for (let i = 0; i < stops.length; i++) {
-      const scheduledArrivalSec = departureMinutes * 60 + (i * segmentSeconds);
+      // Calculate cumulative travel time to this stop
+      if (i > 0) {
+        if (customSegmentTimes && customSegmentTimes[i - 1] !== undefined) {
+          cumulativeSeconds += customSegmentTimes[i - 1] * 60; // Convert minutes to seconds
+        } else {
+          cumulativeSeconds += defaultSegmentSeconds;
+        }
+      }
+      
+      const scheduledArrivalSec = departureMinutes * 60 + cumulativeSeconds;
       
       // Random offset for "realism" (5-25 seconds)
       const arrivalOffset = Math.floor(rng() * 21) + 5;
@@ -987,37 +1008,106 @@
     return list[h % list.length];
   }
 
-  // Gold shuttle (daytime only)
-  const GOLD_ROUTE = ['Berwick Hall', 'Westpoint', 'Bradford Square', 'Bradford Bay'];
-  const GOLD_FORWARD = [1.5, 1.5, 1.5];
-  const GOLD_REVERSE = [1.5, 1.5, 1.5];
+  // ---------------------------
+  // GOLD LINE - SINGLE TRAIN SHUTTLE (RD01)
+  // ---------------------------
+  // Single train bouncing Bradford Bay <-> Berwick Hall all day
+  // Timing TO Berwick Hall: BB→BS (1.5) → BS→WP (1.5) → WP→BH (2.0) = 5.0 min
+  // Timing TO Bradford Bay: BH→WP (1.5) → WP→BS (1.5) → BS→BB (1.5) = 4.5 min
+  // Terminal dwell: 5 minutes at both ends
+  
+  const GOLD_ROUTE_TO_BERWICK = ['Bradford Bay', 'Bradford Square', 'Westpoint', 'Berwick Hall'];
+  const GOLD_SEGMENTS_TO_BERWICK = [1.5, 1.5, 2.0]; // BB→BS, BS→WP, WP→BH
+  
+  const GOLD_ROUTE_TO_BRADFORD = ['Berwick Hall', 'Westpoint', 'Bradford Square', 'Bradford Bay'];
+  const GOLD_SEGMENTS_TO_BRADFORD = [1.5, 1.5, 1.5]; // BH→WP, WP→BS, BS→BB
+  
+  const GOLD_TERMINAL_DWELL = 5; // 5 minutes at terminals
+
+  // Get the base lead car for Gold line (seeded by date, consistent all day)
+  function getGoldBaseLeadCar() {
+    const today = new Date();
+    const dateSeed = `gold-${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
+    const rng = seededRandom(dateSeed);
+    const [minCar, maxCar] = TRAIN_TYPES['MTC-T 110'].leadCarRange; // 510-569
+    // Pick a number, ensure we can subtract 1
+    let baseCar = minCar + 1 + Math.floor(rng() * (maxCar - minCar - 1));
+    return baseCar;
+  }
 
   function goldShuttleTrips(now = new Date()) {
     const trips = [];
     const startMin = 5 * 60 + 30;  // 05:30
     const endMin = 22 * 60 + 30;   // 22:30
-    let t = startMin;
-    let dir = 'forward';
-
-    while (t <= endMin) {
-      if (dir === 'forward') {
+    
+    // Calculate one-way travel times (in minutes)
+    const travelToBerwick = GOLD_SEGMENTS_TO_BERWICK.reduce((a, b) => a + b, 0); // 5.0 min
+    const travelToBradford = GOLD_SEGMENTS_TO_BRADFORD.reduce((a, b) => a + b, 0); // 4.5 min
+    
+    let t = startMin; // Start at Bradford Bay at 05:30
+    let direction = 'toBerwickHall';
+    let tripNumber = 0;
+    
+    while (t <= endMin + 10) { // Buffer to catch final trips
+      tripNumber++;
+      
+      if (direction === 'toBerwickHall') {
+        // Train departing Bradford Bay heading to Berwick Hall
+        const departureMin = t;
         let cur = t;
-        for (let i = 0; i < GOLD_ROUTE.length; i++) {
-          trips.push({ station: GOLD_ROUTE[i], time: cur, dest: 'Bradford Bay', line: 'Gold', code: 'RG01', color: '#ffcc00', stops: GOLD_ROUTE });
-          if (i < GOLD_FORWARD.length) cur += GOLD_FORWARD[i];
+        for (let i = 0; i < GOLD_ROUTE_TO_BERWICK.length; i++) {
+          if (cur <= endMin + 10) {
+            trips.push({
+              station: GOLD_ROUTE_TO_BERWICK[i],
+              time: cur,
+              dest: 'Berwick Hall',
+              line: 'Gold',
+              code: 'RD01',
+              color: '#ffcc00',
+              stops: GOLD_ROUTE_TO_BERWICK,
+              segmentTimes: GOLD_SEGMENTS_TO_BERWICK,
+              departureMin: departureMin,
+              tripNumber: tripNumber,
+              goldDirection: 'toBerwickHall'
+            });
+          }
+          if (i < GOLD_SEGMENTS_TO_BERWICK.length) {
+            cur += GOLD_SEGMENTS_TO_BERWICK[i];
+          }
         }
-        t = cur + 3;
-        dir = 'reverse';
+        // After arriving at Berwick Hall, wait 5 minutes
+        t = t + travelToBerwick + GOLD_TERMINAL_DWELL;
+        direction = 'toBradfordBay';
       } else {
+        // Train departing Berwick Hall heading to Bradford Bay
+        const departureMin = t;
         let cur = t;
-        for (let i = GOLD_ROUTE.length - 1; i >= 0; i--) {
-          trips.push({ station: GOLD_ROUTE[i], time: cur, dest: 'Berwick Hall', line: 'Gold', code: 'RG01', color: '#ffcc00', stops: [...GOLD_ROUTE].reverse() });
-          if (i > 0) cur += GOLD_REVERSE[GOLD_ROUTE.length - 1 - i];
+        for (let i = 0; i < GOLD_ROUTE_TO_BRADFORD.length; i++) {
+          if (cur <= endMin + 10) {
+            trips.push({
+              station: GOLD_ROUTE_TO_BRADFORD[i],
+              time: cur,
+              dest: 'Bradford Bay',
+              line: 'Gold',
+              code: 'RD01',
+              color: '#ffcc00',
+              stops: GOLD_ROUTE_TO_BRADFORD,
+              segmentTimes: GOLD_SEGMENTS_TO_BRADFORD,
+              departureMin: departureMin,
+              tripNumber: tripNumber,
+              goldDirection: 'toBradfordBay'
+            });
+          }
+          if (i < GOLD_SEGMENTS_TO_BRADFORD.length) {
+            cur += GOLD_SEGMENTS_TO_BRADFORD[i];
+          }
         }
-        t = cur + 5;
-        dir = 'forward';
+        // After arriving at Bradford Bay, wait 5 minutes
+        t = t + travelToBradford + GOLD_TERMINAL_DWELL;
+        direction = 'toBerwickHall';
       }
     }
+    
     return trips;
   }
 
@@ -1299,14 +1389,26 @@
       }
     }
 
-    // Gold shuttle (daytime only)
+    // Gold shuttle (single train, daytime only)
     if (stationId) {
       const goldTrips = goldShuttleTrips(now);
       for (const g of goldTrips) {
         if (g.station === stationId) {
           const minsAway = g.time - nowMin;
           if (minsAway >= -1 && minsAway <= 360) {
-            results.push({ line: g.line, color: g.color, code: g.code, destination: g.dest, timeMin: g.time, minsAway, stops: g.stops, departureMin: g.time - (g.stops.indexOf(g.station) * SEGMENT_TIME), isLateNight: false });
+            results.push({
+              line: g.line,
+              color: g.color,
+              code: g.code,
+              destination: g.dest,
+              timeMin: g.time,
+              minsAway,
+              stops: g.stops,
+              departureMin: g.departureMin,
+              isLateNight: false,
+              segmentTimes: g.segmentTimes,
+              goldDirection: g.goldDirection
+            });
           }
         }
       }
@@ -1422,11 +1524,17 @@
       const trainSeed = `${item.code}-${item.departureMin || item.timeMin}-${item.destination}`;
       const trainId = `train-${i}`;
       
-      const stopTimesData = calculateStopTimes(trainSeed, item.stops, item.departureMin || (item.timeMin - (item.stops.indexOf(sid) * SEGMENT_TIME)));
+      // Use custom segment times for Gold line if available
+      const stopTimesData = calculateStopTimes(
+        trainSeed, 
+        item.stops, 
+        item.departureMin || (item.timeMin - (item.stops.indexOf(sid) * SEGMENT_TIME)),
+        item.segmentTimes || null
+      );
       const position = getTrainPosition(stopTimesData, nowSec);
 
-      // Get train consist info
-      const consist = getTrainConsist(trainSeed, item.line, item.isLateNight || false);
+      // Get train consist info (pass goldDirection for Gold line)
+      const consist = getTrainConsist(trainSeed, item.line, item.isLateNight || false, item.goldDirection || null);
       const origin = item.stops[0];
       const destination = item.stops[item.stops.length - 1];
 
