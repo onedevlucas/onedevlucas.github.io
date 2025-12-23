@@ -403,7 +403,7 @@
     </section>
   </main>
 
-  <footer>© BORail • Built for iPhone • Works offline after first load | Version 38</footer>
+  <footer>© BORail • Built for iPhone • Works offline after first load | Version 40</footer>
   
   <nav class="tabbar" role="navigation" aria-label="Primary">
     <a class="active" href="index.html">
@@ -545,6 +545,18 @@
       };
     }
     
+    // Special handling for Silver line - single shuttle with paired lead cars (baseCar/baseCar+1)
+    if (lineName === 'Silver') {
+      const baseCar = getSilverBaseLeadCar();
+      // Direction: 'toCannonView' uses baseCar, 'toRalstonFinchEast' uses baseCar + 1
+      const leadCar = (goldDirection === 'toRalstonFinchEast') ? (baseCar + 1) : baseCar;
+      return {
+        model: 'MTC-T 110',
+        cars: 2,
+        leadCar: leadCar
+      };
+    }
+
     if (isLateNight) {
       // Late night: fixed train types per line
       switch (lineName) {
@@ -667,6 +679,7 @@
     { id: 'Carrollton', name: 'Carrollton' },
     { id: 'Chelsea Bay', name: 'Chelsea Bay' },
     { id: 'Cherrywood', name: 'Cherrywood' },
+    { id: 'Djimar', name: 'Djimar' },
     { id: 'Doverville', name: 'Doverville' },
     { id: 'East Heights', name: 'East Heights' },
     { id: 'Foxston', name: 'Foxston' },
@@ -678,6 +691,7 @@
     { id: 'Harrington City', name: 'Harrington City' },
     { id: 'Hoganville', name: 'Hoganville' },
     { id: 'Hutchinson Point', name: 'Hutchinson Point' },
+    { id: 'Ivory Knolls', name: 'Ivory Knolls' },
     { id: 'Kenilworth', name: 'Kenilworth' },
     { id: 'La Vista', name: 'La Vista' },
     { id: 'Leighton Castle', name: 'Leighton Castle' },
@@ -697,6 +711,7 @@
     { id: 'Perry Road', name: 'Perry Road' },
     { id: 'Port Williamson', name: 'Port Williamson' },
     { id: 'Radcliff Fields', name: 'Radcliff Fields' },
+    { id: 'Ralston-Finch East', name: 'Ralston-Finch East' },
     { id: 'Rockcastle', name: 'Rockcastle' },
     { id: 'Roxbury Landing', name: 'Roxbury Landing' },
     { id: 'Santa Mora', name: 'Santa Mora' },
@@ -705,6 +720,7 @@
     { id: 'South Harrington', name: 'South Harrington' },
     { id: 'Talmedge Hill', name: 'Talmedge Hill' },
     { id: 'Tyford Farms', name: 'Tyford Farms' },
+    { id: 'Vanderburg', name: 'Vanderburg' },
     { id: 'Vanwood', name: 'Vanwood' },
     { id: 'Veridia Nexus', name: 'Veridia Nexus' },
     { id: 'Westpoint', name: 'Westpoint' },
@@ -731,6 +747,8 @@
     { line: 'Red', color: '#ff3b30', code: 'RR01', bidirectional: true, route: ['Newkirk','Hoganville','Berwick Hall','Atkinson Junction','Garner','Kenilworth'] },
 
     { line: 'Gold', color: '#ffcc00', code: 'RD01', bidirectional: true, route: ['Bradford Bay','Bradford Square','Westpoint','Berwick Hall'] },
+
+    { line: 'Silver', color: '#c7c7cc', code: 'RS01', bidirectional: true, route: ['Cannon View','Ivory Knolls','Djimar','Vanderburg','Ralston-Finch East'] },
 
     { line: 'Orange', color: '#ff9500', code: 'RO01', bidirectional: true, route: ['Oakville City Airport','Veridia Nexus'] },
 
@@ -824,6 +842,8 @@
       weekend: [ { start: '06:00', end: '22:30', every: 10 } ]
     },
     'Gold': { weekday: [], weekend: [] },  // Gold handled separately - single train shuttle
+    'Silver': { weekday: [], weekend: [] },  // Silver handled separately - single train shuttle (no late night)
+    
     'Orange': { weekday: [], weekend: [] },
     'Blue': {
       weekday: [
@@ -1023,6 +1043,105 @@
   const GOLD_SEGMENTS_TO_BRADFORD = [1.5, 1.5, 1.5]; // BH→WP, WP→BS, BS→BB
   
   const GOLD_TERMINAL_DWELL = 5; // 5 minutes at terminals
+
+
+  // Silver Line shuttle: Cannon View <-> Ralston-Finch East (single train, daytime only)
+  // Timing: CV→IK (2.0) → IK→Dj (1.5) → Dj→Vb (1.5) → Vb→RFE (2.0) = 7.0 min
+  // Terminal dwell: 5 minutes at both ends
+  // Service: 05:30 - 22:30 (NO late night)
+
+  const SILVER_ROUTE_TO_RALSTON = ['Cannon View', 'Ivory Knolls', 'Djimar', 'Vanderburg', 'Ralston-Finch East'];
+  const SILVER_SEGMENTS_TO_RALSTON = [2.0, 1.5, 1.5, 2.0]; // CV→IK, IK→Dj, Dj→Vb, Vb→RFE
+
+  const SILVER_ROUTE_TO_CANNON = ['Ralston-Finch East', 'Vanderburg', 'Djimar', 'Ivory Knolls', 'Cannon View'];
+  const SILVER_SEGMENTS_TO_CANNON = [2.0, 1.5, 1.5, 2.0]; // RFE→Vb, Vb→Dj, Dj→IK, IK→CV
+
+  const SILVER_TERMINAL_DWELL = 5; // 5 minutes at terminals
+
+  // Get the base lead car for Silver line (seeded by date, consistent all day)
+  function getSilverBaseLeadCar() {
+    const today = new Date();
+    const dateSeed = `silver-${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
+    const rng = seededRandom(dateSeed);
+    const [minCar, maxCar] = TRAIN_TYPES['MTC-T 110'].leadCarRange; // 510-569
+    // Pick a number such that baseCar + 1 is still valid
+    let baseCar = minCar + Math.floor(rng() * (maxCar - minCar)); // 510..568
+    if (baseCar >= maxCar) baseCar = maxCar - 1;
+    return baseCar;
+  }
+
+  function silverShuttleTrips(now = new Date()) {
+    const trips = [];
+    const startMin = 5 * 60 + 30;  // 05:30
+    const endMin = 22 * 60 + 30;   // 22:30
+
+    const travelToRalston = SILVER_SEGMENTS_TO_RALSTON.reduce((a, b) => a + b, 0); // 7.0
+    const travelToCannon  = SILVER_SEGMENTS_TO_CANNON.reduce((a, b) => a + b, 0);  // 7.0
+
+    let t = startMin;
+    let direction = 'toRalstonFinchEast';
+    let tripNumber = 1;
+
+    while (t <= endMin) {
+      if (direction === 'toRalstonFinchEast') {
+        // Train departing Cannon View heading to Ralston-Finch East
+        const departureMin = t;
+        let cur = t;
+        for (let i = 0; i < SILVER_ROUTE_TO_RALSTON.length; i++) {
+          if (cur <= endMin + 10) {
+            trips.push({
+              station: SILVER_ROUTE_TO_RALSTON[i],
+              time: cur,
+              dest: 'Ralston-Finch East',
+              line: 'Silver',
+              code: 'RS01',
+              color: '#c7c7cc',
+              stops: SILVER_ROUTE_TO_RALSTON,
+              segmentTimes: SILVER_SEGMENTS_TO_RALSTON,
+              departureMin: departureMin,
+              tripNumber: tripNumber,
+              silverDirection: 'toRalstonFinchEast'
+            });
+          }
+          if (i < SILVER_SEGMENTS_TO_RALSTON.length) {
+            cur += SILVER_SEGMENTS_TO_RALSTON[i];
+          }
+        }
+        // After arriving at Ralston-Finch East, wait 5 minutes
+        t = t + travelToRalston + SILVER_TERMINAL_DWELL;
+        direction = 'toCannonView';
+      } else {
+        // Train departing Ralston-Finch East heading to Cannon View
+        const departureMin = t;
+        let cur = t;
+        for (let i = 0; i < SILVER_ROUTE_TO_CANNON.length; i++) {
+          if (cur <= endMin + 10) {
+            trips.push({
+              station: SILVER_ROUTE_TO_CANNON[i],
+              time: cur,
+              dest: 'Cannon View',
+              line: 'Silver',
+              code: 'RS01',
+              color: '#c7c7cc',
+              stops: SILVER_ROUTE_TO_CANNON,
+              segmentTimes: SILVER_SEGMENTS_TO_CANNON,
+              departureMin: departureMin,
+              tripNumber: tripNumber,
+              silverDirection: 'toCannonView'
+            });
+          }
+          if (i < SILVER_SEGMENTS_TO_CANNON.length) {
+            cur += SILVER_SEGMENTS_TO_CANNON[i];
+          }
+        }
+        // After arriving at Cannon View, wait 5 minutes
+        t = t + travelToCannon + SILVER_TERMINAL_DWELL;
+        direction = 'toRalstonFinchEast';
+        tripNumber++;
+      }
+    }
+    return trips;
+  }
 
   // Get the base lead car for Gold line (seeded by date, consistent all day)
   function getGoldBaseLeadCar() {
@@ -1414,7 +1533,33 @@
       }
     }
 
-    // Orange shuttle (event only)
+    
+    // Silver shuttle (single train, daytime only - NO late night)
+    if (stationId) {
+      const silverTrips = silverShuttleTrips(now);
+      for (const g of silverTrips) {
+        if (g.station === stationId) {
+          const minsAway = g.time - nowMin;
+          if (minsAway >= -1 && minsAway <= 360) {
+            results.push({
+              line: g.line,
+              color: g.color,
+              code: g.code,
+              destination: g.dest,
+              timeMin: g.time,
+              minsAway,
+              stops: g.stops,
+              departureMin: g.departureMin,
+              isLateNight: false,
+              segmentTimes: g.segmentTimes,
+              silverDirection: g.silverDirection
+            });
+          }
+        }
+      }
+    }
+
+// Orange shuttle (event only)
     if (stationId && ORANGE_ENABLED) {
       const orangeTrips = orangeShuttleTrips(now);
       for (const g of orangeTrips) {
@@ -1534,7 +1679,7 @@
       const position = getTrainPosition(stopTimesData, nowSec);
 
       // Get train consist info (pass goldDirection for Gold line)
-      const consist = getTrainConsist(trainSeed, item.line, item.isLateNight || false, item.goldDirection || null);
+      const consist = getTrainConsist(trainSeed, item.line, item.isLateNight || false, item.goldDirection || item.silverDirection || null);
       const origin = item.stops[0];
       const destination = item.stops[item.stops.length - 1];
 
