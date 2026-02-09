@@ -22,6 +22,7 @@
       --line-Blue:#007aff;
       --line-Pink:#ff2d55;
       --line-Brown:#a2845e;
+      --line-Silver:#c0c0c0;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -60,6 +61,8 @@
     .srow[open] summary .arrow{transform:rotate(90deg)}
     .name{font-weight:600;letter-spacing:.2px}
     .dot{width:14px;height:14px;border-radius:50%;box-shadow:0 0 0 3px rgba(255,255,255,.08) inset}
+    .lnicon{width:28px;height:28px;object-fit:contain;display:block}
+
     .pill{
       font-weight:600;
       border:1px solid rgba(255,255,255,.12);
@@ -94,7 +97,7 @@
   <header>
     <div class="wrap">
       <div class="title">BORail • Status</div>
-      <div class="subtle">Live line conditions • Tap a disrupted line to see details.</div>
+      <div class="subtle">Live line conditions • Based on your local time • Tap a disrupted service to see details.</div>
     </div>
   </header>
 
@@ -146,16 +149,50 @@
   </nav>
 
   <script>
-    // ----- probabilities per line -----
-    const LINES = [
-      { name:'Green Line',  color:'var(--line-Green)',  probs:{ ok:90, minor:3, major:5, none:2 } },
-      { name:'Red Line',    color:'var(--line-Red)',    probs:{ ok:85, minor:9, major:4, none:2 } },
-      { name:'Gold Line',   color:'var(--line-Gold)',   probs:{ ok:95, minor:2, major:2, none:1 } },
-      { name:'Orange Line', color:'var(--line-Orange)', probs:{ ok:99, minor:0, major:0, none:1 } },
-      { name:'Blue Line',   color:'var(--line-Blue)',   probs:{ ok:80, minor:4, major:15, none:1 } },
-      { name:'Pink Line',   color:'var(--line-Pink)',   probs:{ ok:86, minor:4, major:5, none:5 } },
-      { name:'Brown Line',  color:'var(--line-Brown)',  probs:{ ok:86, minor:1, major:9, none:4 } },
+    // ----- base line probabilities (shared by local/express variants) -----
+    const BASE_LINES = [
+      { letter:'A', color:'var(--line-Green)',  probs:{ ok:90, minor:3, major:5, none:2 } }, // formerly Green
+      { letter:'F', color:'var(--line-Red)',    probs:{ ok:85, minor:9, major:4, none:2 } }, // formerly Red
+      { letter:'G', color:'var(--line-Gold)',   probs:{ ok:95, minor:2, major:2, none:1 } }, // formerly Gold
+      { letter:'D', color:'var(--line-Orange)', probs:{ ok:99, minor:0, major:0, none:1 } }, // formerly Orange
+      { letter:'B', color:'var(--line-Blue)',   probs:{ ok:80, minor:4, major:15, none:1 } }, // formerly Blue
+      { letter:'C', color:'var(--line-Pink)',   probs:{ ok:86, minor:4, major:5, none:5 } }, // formerly Pink
+      { letter:'E', color:'var(--line-Brown)',  probs:{ ok:86, minor:1, major:9, none:4 } }, // formerly Brown
+      // new Silver Line
+      { letter:'S', color:'var(--line-Silver)', probs:{ ok:90, minor:4, major:4, none:2 } },
     ];
+    const BASE = Object.fromEntries(BASE_LINES.map(x => [x.letter, x]));
+
+    // ----- services shown on the status page -----
+    // nameHtml is inserted via innerHTML
+    const SERVICES = [
+      // A (Green) - Local + Express
+      { id:'A-local',   nameHtml:'Line',        icon:'ALocalIcon.png',    letter:'A', mode:'local'   },
+      { id:'A-express', nameHtml:'Line',  icon:'AExpressIcon.png',  letter:'A', mode:'express' },
+
+      // F (Red) - Local + Express
+      { id:'F-local',   nameHtml:'Line',        icon:'FLocalIcon.png',    letter:'F', mode:'local'   },
+      { id:'F-express', nameHtml:'Line',  icon:'FExpressIcon.png',  letter:'F', mode:'express' },
+
+      // G (Gold) - Local
+      { id:'G-local',   nameHtml:'Line',        icon:'GLocalIcon.png',    letter:'G', mode:'local'   },
+
+      // D (Orange) - Local
+      { id:'D-local',   nameHtml:'Line',        icon:'DLocalIcon.png',    letter:'D', mode:'local'   },
+
+      // B (Blue) - Local
+      { id:'B-local',   nameHtml:'Line',        icon:'BLocalIcon.png',    letter:'B', mode:'local'   },
+
+      // C (Pink) - Local
+      { id:'C-local',   nameHtml:'Line',        icon:'CLocalIcon.png',    letter:'C', mode:'local'   },
+
+      // E (Brown) - Local
+      { id:'E-local',   nameHtml:'Line',        icon:'ELocalIcon.png',    letter:'E', mode:'local'   },
+
+      // S (Silver) - Local + Express
+      { id:'S-local',   nameHtml:'Line',        icon:'SLocalIcon.png',    letter:'S', mode:'local'   },
+      { id:'S-express', nameHtml:'Line',  icon:'SExpressIcon.png',  letter:'S', mode:'express' },
+    ].map(s => ({ ...s, ...BASE[s.letter] }));
 
     // 3 reasons per type (white text in details)
     const REASONS = {
@@ -179,6 +216,61 @@
       ]
     };
 
+    // ----- time-based service rules (uses the viewer's local time) -----
+    const SCHEDULE = {
+      morningRushStart: 6*60 + 30,   // 6:30 AM
+      morningRushEnd:   9*60 + 30,   // 9:30 AM
+      eveningRushStart: 17*60 + 0,   // 5:00 PM
+      eveningRushEnd:   19*60 + 30,  // 7:30 PM
+      lateNightStart:   22*60 + 30,  // 10:30 PM
+      lateNightEnd:     6*60 + 30    // 6:30 AM
+    };
+
+    const LATE_NIGHT_OFF = new Set(['S-local','S-express','G-local','D-local']);
+
+    function minutesNowLocal(){
+      const d = new Date();
+      return d.getHours()*60 + d.getMinutes();
+    }
+
+    function getScheduleState(){
+      const m = minutesNowLocal();
+      const late = (m >= SCHEDULE.lateNightStart) || (m < SCHEDULE.lateNightEnd);
+      const morningRush = (m >= SCHEDULE.morningRushStart) && (m < SCHEDULE.morningRushEnd);
+      const eveningRush = (m >= SCHEDULE.eveningRushStart) && (m < SCHEDULE.eveningRushEnd);
+      const rush = morningRush || eveningRush;
+      return { m, late, rush };
+    }
+
+    function scheduleKey(){
+      const s = getScheduleState();
+      return s.late ? 'late' : (s.rush ? 'rush' : 'noexpress');
+    }
+
+    function scheduledOverride(service){
+      const s = getScheduleState();
+
+      // Late night shutdown (10:30 PM–6:30 AM): S (local+express), G, D
+      if (s.late && LATE_NIGHT_OFF.has(service.id)) {
+        return {
+          cls: 'nosvc',
+          label: 'NO SERVICE',
+          reason: 'Service does not operate 10:30 PM–6:30 AM (your local time).'
+        };
+      }
+
+      // Express only during rush windows
+      if (service.mode === 'express' && !s.rush) {
+        return {
+          cls: 'nosvc',
+          label: 'NO SERVICE',
+          reason: 'Express service operates only 6:30 AM–9:30 AM and 5:00 PM–7:30 PM (your local time).'
+        };
+      }
+
+      return null;
+    }
+
     function pickStatus(p){
       // returns one of: 'ok' | 'minor' | 'major' | 'none'
       const r = Math.random()*100;
@@ -188,110 +280,142 @@
       return 'none';
     }
 
-    function reasonFor(type){
-      const list = REASONS[type];
-      return list[Math.floor(Math.random()*list.length)];
-    }
-
     function renderStatus(state){
-  const host = document.getElementById('statusList');
-  host.innerHTML = state.statuses.map((stObj) => {
-    const lnName = stObj.name;
-    const lnColor = stObj.color;
-    const st = stObj.type; // 'ok' | 'minor' | 'major' | 'none'
-    const dot = `<div class="dot" style="background:${lnColor}"></div>`;
-    const left = `<div class="name">${lnName}</div>`;
+      const host = document.getElementById('statusList');
+      host.innerHTML = state.statuses.map((stObj) => {
+        const svcName = stObj.nameHtml;
+        const st = stObj.type; // 'ok' | 'minor' | 'major' | 'none'
 
-    if (st === 'ok'){
-      // plain row (not clickable)
-      return `
-        <div class="row">
-          ${dot}
-          ${left}
-          <span class="pill ok">No Disruptions</span>
-        </div>`;
-    } else {
-      // details row (clickable)
-      const cls = st==='minor' ? 'warn' : (st==='major' ? 'bad' : 'nosvc');
-      const label =
-        st==='minor' ? 'Minor Disruptions' :
-        st==='major' ? 'Major Disruptions' : 'NO SERVICE';
+        const icon = `<img class="lnicon" src="${stObj.icon}" alt="${stObj.letter} ${stObj.mode}" loading="lazy" onerror="this.style.display='none'">`;
+        const left = `<div class="name">${svcName}</div>`;
 
-      // fixed reason pulled from the stored reasonIndex
-      const pool =
-        st==='minor' ? REASONS.minor :
-        st==='major' ? REASONS.major : REASONS.none;
-      const reasonText = pool[stObj.reasonIndex] || pool[0];
+        const forced = scheduledOverride(stObj);
+        if (forced){
+          // schedule-based "NO SERVICE" row (clickable for explanation)
+          return `
+            <details class="srow">
+              <summary>
+                ${icon}
+                ${left}
+                <span class="pill ${forced.cls}">${forced.label}<span class="arrow">▸</span></span>
+              </summary>
+              <div class="reason">${forced.reason}</div>
+            </details>`;
+        }
 
-      return `
-        <details class="srow">
-          <summary>
-            ${dot}
-            ${left}
-            <span class="pill ${cls}">${label}<span class="arrow">▸</span></span>
-          </summary>
-          <div class="reason">${reasonText}</div>
-        </details>`;
+        if (st === 'ok'){
+          // plain row (not clickable)
+          return `
+            <div class="row">
+              ${icon}
+              ${left}
+              <span class="pill ok">No Disruptions</span>
+            </div>`;
+        } else {
+          // details row (clickable)
+          const cls = st==='minor' ? 'warn' : (st==='major' ? 'bad' : 'nosvc');
+          const label =
+            st==='minor' ? 'Minor Disruptions' :
+            st==='major' ? 'Major Disruptions' : 'NO SERVICE';
+
+          // fixed reason pulled from the stored reasonIndex
+          const pool =
+            st==='minor' ? REASONS.minor :
+            st==='major' ? REASONS.major : REASONS.none;
+          const reasonText = pool[stObj.reasonIndex] || pool[0];
+
+          return `
+            <details class="srow">
+              <summary>
+                ${icon}
+                ${left}
+                <span class="pill ${cls}">${label}<span class="arrow">▸</span></span>
+              </summary>
+              <div class="reason">${reasonText}</div>
+            </details>`;
+        }
+      }).join('');
     }
-  }).join('');
-}
 
-// --- 12-hour persistence (per device) ---
-const WINDOW_MS = 12 * 60 * 60 * 1000; // 12 hours
-const STORAGE_KEY = 'borail_status_window_v1';
+    // --- 12-hour persistence (per device) ---
+    const WINDOW_MS = 12 * 60 * 60 * 1000; // 12 hours
+    const STORAGE_KEY = 'borail_status_window_v3';
 
-// Load previously saved state, or null
-function loadStatusState() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
-}
+    // Load previously saved state, or null
+    function loadStatusState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch { return null; }
+    }
 
-// Save state { start:number (ms epoch), statuses:Array }
-function saveStatusState(state) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
-}
+    function saveStatusState(state) {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+      catch { /* ignore */ }
+    }
 
-// Create a fresh state starting now, using your probabilities
-function createNewStatusState() {
-  return {
-    start: Date.now(),
-    statuses: LINES.map(ln => {
-      // pick disruption type from probabilities
-      const type = pickStatus(ln.probs); // 'ok' | 'minor' | 'major' | 'none'
-      // fix a specific reason so it doesn't change on refresh
-      let reasonIndex = -1;
-      if (type !== 'ok') {
-        const pool =
-          type === 'minor' ? REASONS.minor :
-          type === 'major' ? REASONS.major : REASONS.none;
-        reasonIndex = Math.floor(Math.random() * pool.length);
+    function createNewStatusState() {
+      // One disruption status per letter, shared across local/express variants.
+      const byLetter = {};
+      for (const ln of BASE_LINES) {
+        const type = pickStatus(ln.probs); // 'ok' | 'minor' | 'major' | 'none'
+        let reasonIndex = -1;
+        if (type !== 'ok') {
+          const pool =
+            type === 'minor' ? REASONS.minor :
+            type === 'major' ? REASONS.major : REASONS.none;
+          reasonIndex = Math.floor(Math.random() * pool.length);
+        }
+        byLetter[ln.letter] = { type, reasonIndex };
       }
-      return { name: ln.name, color: ln.color, type, reasonIndex };
-    })
-  };
-}
 
-// Get state: reuse if under 12h, otherwise create/replace
-function getOrCreateStatusState() {
-  const cur = loadStatusState();
-  if (!cur) {
-    const fresh = createNewStatusState();
-    saveStatusState(fresh);
-    return fresh;
-  }
-  const age = Date.now() - cur.start;
-  if (age >= WINDOW_MS) {
-    const fresh = createNewStatusState();
-    saveStatusState(fresh);
-    return fresh;
-  }
-  return cur;
-}
+      return {
+        start: Date.now(),
+        statuses: SERVICES.map(svc => {
+          const shared = byLetter[svc.letter] || { type: 'ok', reasonIndex: -1 };
+          return {
+            id: svc.id,
+            nameHtml: svc.nameHtml,
+            icon: svc.icon,
+            letter: svc.letter,
+            mode: svc.mode,
+            color: svc.color,
+            type: shared.type,
+            reasonIndex: shared.reasonIndex
+          };
+        })
+      };
+    }
+
+    // Get state: reuse if under 12h, otherwise create/replace
+    function getOrCreateStatusState() {
+      const cur = loadStatusState();
+      if (!cur) {
+        const fresh = createNewStatusState();
+        saveStatusState(fresh);
+        return fresh;
+      }
+      const age = Date.now() - cur.start;
+      if (age >= WINDOW_MS) {
+        const fresh = createNewStatusState();
+        saveStatusState(fresh);
+        return fresh;
+      }
+      return cur;
+    }
 
     const STATUS_STATE = getOrCreateStatusState();
     renderStatus(STATUS_STATE);
-  </script>
+
+    // Re-render when we cross into a different service window (based on viewer's local time).
+    let _lastKey = scheduleKey();
+    setInterval(() => {
+      const k = scheduleKey();
+      if (k !== _lastKey){
+        _lastKey = k;
+        renderStatus(STATUS_STATE);
+      }
+    }, 30 * 1000);
+</script>
 </body>
 </html>
