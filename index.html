@@ -527,139 +527,68 @@
     'MTC-T 455-3': { model: 'MTC-T 455', cars: 3, leadCarRange: [700, 769] }
   };
 
-  function getTrainConsist(trainSeed, lineName, isLateNight = false, goldDirection = null) {
+  function getTrainConsist(trainSeed, lineName, isLateNight = false, directionHint = null) {
     const rng = seededRandom(trainSeed + '-consist');
-    const roll = rng();
-    
-    let trainType, model, cars, leadCarRange;
-    
-    // Special handling for Gold line - single train with alternating lead car
+
+    // Gold line: single train, paired lead cars (base and base-1)
     if (lineName === 'Gold') {
       const baseCar = getGoldBaseLeadCar();
-      // Direction: 'toBerwickHall' uses baseCar, 'toBradfordBay' uses baseCar - 1
-      const leadCar = (goldDirection === 'toBradfordBay') ? (baseCar - 1) : baseCar;
-      return {
-        model: 'MTC-T 110',
-        cars: 2,
-        leadCar: leadCar
-      };
-    }
-    
-    // Special handling for Silver line - single shuttle with paired lead cars (baseCar/baseCar+1)
-    if (lineName === 'Silver') {
-      const baseCar = getSilverBaseLeadCar();
-      // Direction: 'toCannonView' uses baseCar, 'toRalstonFinchEast' uses baseCar + 1
-      const leadCar = (goldDirection === 'toRalstonFinchEast') ? (baseCar + 1) : baseCar;
-      return {
-        model: 'MTC-T 110',
-        cars: 2,
-        leadCar: leadCar
-      };
+      const leadCar = (directionHint === 'toBradfordBay') ? (baseCar - 1) : baseCar;
+      return { model: 'MTC-T 110', cars: 2, leadCar };
     }
 
-    if (isLateNight) {
-      // Late night: fixed train types per line
-      switch (lineName) {
-        case 'Blue':
-          trainType = TRAIN_TYPES['MTC-T 3298'];
-          model = 'MTC-T 3298';
-          break;
-        case 'Green':
-          trainType = TRAIN_TYPES['MTC-T 2254'];
-          model = 'MTC-T 2254';
-          break;
-        case 'Red':
-          trainType = TRAIN_TYPES['MTC-T 2253'];
-          model = 'MTC-T 2253';
-          break;
-        case 'Orange':
-          trainType = TRAIN_TYPES['MTC-T 110'];
-          model = 'MTC-T 110';
-          break;
-        case 'Pink':
-          trainType = TRAIN_TYPES['MTC-T 454'];
-          model = 'MTC-T 454';
-          break;
-        case 'Brown':
-          trainType = TRAIN_TYPES['MTC-T 455-2'];
-          model = 'MTC-T 455';
-          break;
-        default:
-          trainType = TRAIN_TYPES['MTC-T 2254'];
-          model = 'MTC-T 2254';
-      }
-      cars = trainType.cars;
-      leadCarRange = trainType.leadCarRange;
-    } else {
-      // Daytime: probabilistic train types for mixed lines
-      switch (lineName) {
-        case 'Blue':
-          // 100% MTC-T 3298
-          trainType = TRAIN_TYPES['MTC-T 3298'];
-          model = 'MTC-T 3298';
-          break;
-        case 'Green':
-          // 80% MTC-T 2254, 20% MTC-T 2253
-          if (roll < 0.80) {
-            trainType = TRAIN_TYPES['MTC-T 2254'];
-            model = 'MTC-T 2254';
-          } else {
-            trainType = TRAIN_TYPES['MTC-T 2253'];
-            model = 'MTC-T 2253';
-          }
-          break;
-        case 'Red':
-          // 80% MTC-T 2253, 20% MTC-T 2254
-          if (roll < 0.80) {
-            trainType = TRAIN_TYPES['MTC-T 2253'];
-            model = 'MTC-T 2253';
-          } else {
-            trainType = TRAIN_TYPES['MTC-T 2254'];
-            model = 'MTC-T 2254';
-          }
-          break;
-        case 'Orange':
-          // 100% MTC-T 110
-          trainType = TRAIN_TYPES['MTC-T 110'];
-          model = 'MTC-T 110';
-          break;
-        case 'Pink':
-          // 90% MTC-T 454 (3 cars), 8% MTC-T 455 (2 cars), 2% MTC-T 455 (3 cars)
-          if (roll < 0.90) {
-            trainType = TRAIN_TYPES['MTC-T 454'];
-            model = 'MTC-T 454';
-          } else if (roll < 0.98) {
-            trainType = TRAIN_TYPES['MTC-T 455-2'];
-            model = 'MTC-T 455';
-          } else {
-            trainType = TRAIN_TYPES['MTC-T 455-3'];
-            model = 'MTC-T 455';
-          }
-          break;
-        case 'Brown':
-          // 100% MTC-T 455 (2 cars only)
-          trainType = TRAIN_TYPES['MTC-T 455-2'];
-          model = 'MTC-T 455';
-          break;
-        default:
-          trainType = TRAIN_TYPES['MTC-T 2254'];
-          model = 'MTC-T 2254';
-      }
-      cars = trainType.cars;
-      leadCarRange = trainType.leadCarRange;
+    // Orange line: event shuttle uses only MTC-T 110
+    if (lineName === 'Orange') {
+      const leadCar = 110 + Math.floor(rng() * 60);
+      return { model: 'MTC-T 110', cars: 2, leadCar };
     }
-    
-    // Generate lead car number from range
-    const [minCar, maxCar] = leadCarRange;
-    const leadCar = minCar + Math.floor(rng() * (maxCar - minCar + 1));
-    
-    return { model, cars, leadCar };
+
+    // Helper to pick a consist from the CONSISTS table with allowed keys
+    const pickFrom = (allowedKeys) => {
+      const k = allowedKeys[Math.floor(rng() * allowedKeys.length)];
+      const c = CONSISTS[k];
+      const leadCar = c.leadCarRange
+        ? (c.leadCarRange[0] + Math.floor(rng() * (c.leadCarRange[1] - c.leadCarRange[0] + 1)))
+        : (100 + Math.floor(rng() * 900));
+      return { model: c.model, cars: c.cars, leadCar };
+    };
+
+    // Enforce your fleet rules
+    if (lineName === 'Blue') {
+      return pickFrom(['MTC-T 3298-4']);
+    }
+
+    if (lineName === 'Silver') {
+      return pickFrom(['MTC-T 2254-4', 'MTC-T 2254-3', 'MTC-T 2254-2']);
+    }
+
+    if (lineName === 'Green' || lineName === 'Red') {
+      // A/F can use 2253 or 2254
+      return pickFrom(['MTC-T 2253-4', 'MTC-T 2253-3', 'MTC-T 2254-4', 'MTC-T 2254-3']);
+    }
+
+    if (lineName === 'Pink') {
+      // C can use 454 or 455
+      return pickFrom(['MTC-T 454-4', 'MTC-T 454-3', 'MTC-T 455-3', 'MTC-T 455-2']);
+    }
+
+    if (lineName === 'Brown') {
+      // E ONLY uses 455
+      return pickFrom(['MTC-T 455-3', 'MTC-T 455-2']);
+    }
+
+    if (lineName === 'Gold') {
+      return { model: 'MTC-T 110', cars: 2, leadCar: 110 };
+    }
+
+    // Fallback: preserve old behavior
+    return pickFrom(Object.keys(CONSISTS));
   }
 
   // ---------------------------
   // 1) DATA MODEL
   // ---------------------------
-  let ORANGE_ENABLED = false;
+  let ORANGE_ENABLED = false; // set true to enable (D) Event Line
 
   const STATIONS = [
     { id: 'Alpherst', name: 'Alpherst' },
@@ -726,7 +655,7 @@
     { id: 'Westpoint', name: 'Westpoint' },
     { id: 'Whitebranch', name: 'Whitebranch' },
     { id: 'Willow Springs', name: 'Willow Springs' },
-    { id: 'Wood-By-Hike', name: 'Wood-By-Hike' },
+    { id: 'Wood-by-Hike', name: 'Wood-by-Hike' },
     { id: 'Oakville City Airport', name: 'Oakville City Airport' }
   ];
 
@@ -756,8 +685,8 @@
     { line: 'Blue', color: '#007aff', code: 'RB02', bidirectional: true, route: ['Oakville Plaza','Oakville City Center','Oakville Exchange','Greens Corner','Doverville','Orchard Ridge','Groveton','Madisonboro','Hutchinson Point','Vanwood','South Harrington','Harrington City','Carrollton','Hadleigh'] },
     { line: 'Blue', color: '#007aff', code: 'RB03', bidirectional: true, route: ['Oakville Plaza','Oakville City Center','Oakville Exchange','Perry Road','Mount Hindsboro','Greens Corner','Doverville','Orchard Ridge','Groveton','Madisonboro','Hutchinson Point','Vanwood','South Harrington','Harrington City'] },
 
-    { line: 'Pink', color: '#ff2d55', code: 'RP01', bidirectional: true, route: ['Leighton Castle','Oakville Plaza','Oakville City Center','Oakville Exchange','Perry Road','Mount Hindsboro','Wood-By-Hike','New Salemview','Millford Heights','Roxbury Landing','East Heights'] },
-    { line: 'Pink', color: '#ff2d55', code: 'RP02', bidirectional: true, route: ['Oakville City Airport','Perry Road','Mount Hindsboro','Wood-By-Hike','New Salemview','Millford Heights','Roxbury Landing','East Heights'] },
+    { line: 'Pink', color: '#ff2d55', code: 'RP01', bidirectional: true, route: ['Leighton Castle','Oakville Plaza','Oakville City Center','Oakville Exchange','Perry Road','Mount Hindsboro','Wood-by-Hike','New Salemview','Millford Heights','Roxbury Landing','East Heights'] },
+    { line: 'Pink', color: '#ff2d55', code: 'RP02', bidirectional: true, route: ['Oakville City Airport','Perry Road','Mount Hindsboro','Wood-by-Hike','New Salemview','Millford Heights','Roxbury Landing','East Heights'] },
 
     { line: 'Brown', color: '#a2845e', code: 'RW01N', bidirectional: false, route: ['East Heights','Alpherst','New Halifax','Tyford Farms','Scottsbury','Ameryville','Scottsdale','Grant Park','Cherrywood','Brandywine','Santa Mora'] },
     { line: 'Brown', color: '#a2845e', code: 'RW01S', bidirectional: false, route: ['Santa Mora','Brandywine','Cherrywood','Grant Park','Scottsdale','Ameryville','Scottsbury','Tyford Farms','New Halifax','Alpherst','Roxbury Landing','East Heights'] }
@@ -767,56 +696,56 @@
   // LATE NIGHT ROUTES (22:30 - 05:30)
   // ---------------------------
   const LATE_NIGHT_ROUTES = {
-    // Red Line: NRR01 - 4 trains bouncing Newkirk <-> Boylston
+    // Red Line (F): Late-night local service (bounce Newkirk <-> Boylston)
     NRR01: {
       line: 'Red',
       color: '#ff3b30',
       code: 'NRR01',
       trains: 4,
-      route: ['Newkirk', 'Hoganville', 'Chelsea Bay', 'Berwick Hall', 'Cambridge Central', 'Atkinson Junction', 'La Vista', 'Brookfield Lawn', 'Boylston']
+      route: ['Newkirk','Newkirk - Oak Street','Hoganville','Bayview Park','Chelsea Bay','Berwick Hall','Cambridge Central','Atkinson Junction','La Vista','Brookfield Lawn','Boylston']
     },
-    
-    // Green Line: NRG01 - 4 trains bouncing Newkirk <-> Mount River
+
+    // Green Line (A): Late-night local service (bounce Newkirk <-> Mount River)
     NRG01: {
       line: 'Green',
       color: '#34c759',
       code: 'NRG01',
       trains: 4,
-      route: ['Newkirk', 'Burlington - University of NCU', 'Willow Springs', 'Rockcastle', 'Cannon View', 'Atkins Bridge', 'Oakville City Airport', 'Oakville Exchange', 'Oakville Plaza', 'Talmedge Hill', 'Mount River']
+      route: ['Newkirk','Burlington - University of NCU','Willow Springs','Rockcastle','Cannon View','Atkins Bridge','Radcliff Fields','Oakville City Airport','Oakville Exchange','Oakville City Center','Oakville Plaza','Talmedge Hill','Mount River']
     },
-    
-    // Pink Line: NRP01 - 2 trains bouncing East Heights <-> Leighton Castle
+
+    // Pink Line (C): Late-night short service (bounce East Heights <-> Mount Hindsboro) - 2 trains
     NRP01: {
       line: 'Pink',
       color: '#ff2d55',
       code: 'NRP01',
       trains: 2,
-      route: ['East Heights', 'Roxbury Landing', 'Millford Heights', 'New Salemview', 'Wood-By-Hike', 'Mount Hindsboro', 'Perry Road', 'Oakville Exchange', 'Oakville City Center', 'Oakville Plaza', 'Leighton Castle']
+      route: ['East Heights','Roxbury Landing','Millford Heights','New Salemview','Wood-by-Hike','Mount Hindsboro']
     },
-    
-    // Blue Line: NRB01 - 2 trains bouncing Harrington City <-> Mount Hindsboro
+
+    // Blue Line (B): Late-night extension (bounce Harrington City <-> Leighton Castle)
     NRB01: {
       line: 'Blue',
       color: '#007aff',
       code: 'NRB01',
       trains: 2,
-      route: ['Harrington City', 'South Harrington', 'Vanwood', 'Hutchinson Point', 'Madisonboro', 'Groveton', 'Orchard Ridge', 'Doverville', 'Greens Corner', 'Mount Hindsboro']
+      route: ['Harrington City','South Harrington','Vanwood','Hutchinson Point','Madisonboro','Groveton','Orchard Ridge','Doverville','Greens Corner','Mount Hindsboro','Perry Road','Oakville Exchange','Oakville City Center','Oakville Plaza','Leighton Castle']
     },
-    
-    // Brown Line: NRW01N - North direction (East Heights -> Scottsbury)
-    NRW01N: {
-      line: 'Brown',
-      color: '#a2845e',
-      code: 'NRW01N',
-      route: ['East Heights', 'Alpherst', 'New Halifax', 'Scottsbury']
-    },
-    
-    // Brown Line: NRW01S - South direction (Scottsbury -> East Heights, includes Roxbury Landing)
+
+    // Brown Line (E): Late-night southbound and northbound patterns (2 trains each)
     NRW01S: {
       line: 'Brown',
-      color: '#a2845e',
+      color: '#8e8e93',
       code: 'NRW01S',
-      route: ['Scottsbury', 'New Halifax', 'Alpherst', 'Roxbury Landing', 'East Heights']
+      trains: 2,
+      route: ['Scottsbury','Tyford Farms','New Halifax','Alpherst','Roxbury Landing','East Heights']
+    },
+    NRW01N: {
+      line: 'Brown',
+      color: '#8e8e93',
+      code: 'NRW01N',
+      trains: 2,
+      route: ['East Heights','Alpherst','New Halifax','Scottsbury']
     }
   };
 
@@ -906,43 +835,45 @@
   // ---------------------------
   // CALCULATE DETAILED STOP TIMES
   // ---------------------------
-  function calculateStopTimes(trainSeed, stops, departureMinutes, customSegmentTimes = null) {
+  function calculateStopTimes(trainSeed, stops, departureMinutes, customSegmentTimes = null, customDwellSeconds = null) {
     const rng = seededRandom(trainSeed);
     const delayInfo = getTrainDelayInfo(trainSeed);
-    
+
     const result = [];
     const defaultSegmentSeconds = SEGMENT_TIME * 60; // 90 seconds between stations
-    
+
     let cumulativeSeconds = 0;
-    
+
     for (let i = 0; i < stops.length; i++) {
-      // Calculate cumulative travel time to this stop
+      // Travel time to this stop
       if (i > 0) {
         if (customSegmentTimes && customSegmentTimes[i - 1] !== undefined) {
-          cumulativeSeconds += customSegmentTimes[i - 1] * 60; // Convert minutes to seconds
+          cumulativeSeconds += customSegmentTimes[i - 1] * 60;
         } else {
           cumulativeSeconds += defaultSegmentSeconds;
         }
       }
-      
+
       const scheduledArrivalSec = departureMinutes * 60 + cumulativeSeconds;
-      
+
       // Random offset for "realism" (5-25 seconds)
       const arrivalOffset = Math.floor(rng() * 21) + 5;
-      
-      // Dwell time 12-20 seconds (quick stop and go)
-      const dwellTime = Math.floor(rng() * 9) + 12;
-      
+
+      // Default dwell ~1:15–1:30 unless overridden (Gold/Orange terminals, etc.)
+      const dwellTime = (customDwellSeconds && customDwellSeconds[i] !== undefined)
+        ? customDwellSeconds[i]
+        : (Math.floor(rng() * 16) + 75);
+
       let delaySec = 0;
       let isStopDelayed = false;
       if (delayInfo.isDelayed && i >= delayInfo.delayStartStop) {
         delaySec = delayInfo.delaySeconds;
         isStopDelayed = true;
       }
-      
+
       const actualArrivalSec = scheduledArrivalSec + arrivalOffset + delaySec;
       const actualDepartureSec = actualArrivalSec + dwellTime;
-      
+
       result.push({
         name: stops[i],
         stopIndex: i,
@@ -953,12 +884,8 @@
         delaySeconds: isStopDelayed ? delayInfo.delaySeconds : 0
       });
     }
-    
-    return {
-      stops: result,
-      hasDelay: delayInfo.isDelayed,
-      delaySeconds: delayInfo.delaySeconds
-    };
+
+    return { stops: result };
   }
 
   // ---------------------------
@@ -1274,12 +1201,12 @@
     }
 
     const nowMinRaw = now.getHours() * 60 + now.getMinutes();
-    // Handle time after midnight (00:00-05:30 → treat as 24:00-29:30 for sorting)
-    const clockMin = (nowMinRaw < 5 * 60 + 30) ? nowMinRaw + 1440 : nowMinRaw;
+    // Handle time after midnight (00:00-06:30 → treat as 24:00-29:30 for sorting)
+    const clockMin = (nowMinRaw < 6 * 60 + 30) ? nowMinRaw + 1440 : nowMinRaw;
 
-    // Late night window: 22:30 (1350 min) to 05:30 next day (1770 min when normalized)
+    // Late night window: 22:30 (1350 min) to 06:30 next day (1770 min when normalized)
     const start = 22 * 60 + 30;  // 22:30 = 1350
-    const end = 24 * 60 + 5 * 60 + 30;  // 05:30 next day = 1770
+    const end = 24 * 60 + 6 * 60 + 30;  // 06:30 next day = 1770
 
     const sum = arr => arr.reduce((a, b) => a + b, 0);
     const out = [];
@@ -1424,163 +1351,331 @@
   // MAIN ARRIVALS FUNCTION
   // ---------------------------
   function arrivalsForStation(stationId, now = new Date()) {
-    const h = now.getHours();
-    const m = now.getMinutes();
-    const nowMin = h * 60 + m;
-    
-    // Late night: 22:30 - 05:30
-    const isLate = (nowMin >= 22 * 60 + 30) || (nowMin < 5 * 60 + 30);
-    
-    if (isLate) {
-      return nightArrivalsForStation(stationId, now);
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+
+    const isLate = (nowMin >= 22 * 60 + 30) || (nowMin < 6 * 60 + 30);
+    if (isLate) return nightArrivalsForStation(stationId, now);
+
+    const isRush = (nowMin >= 6 * 60 + 30 && nowMin < 9 * 60 + 30) ||
+                   (nowMin >= 17 * 60 && nowMin < 19 * 60 + 30);
+
+    const windowStart = nowMin - 2;
+    const windowEnd = nowMin + 360;
+
+    const ICON_BASE = 'https://raw.githubusercontent.com/onedevlucas/onedevlucas.github.io/main/';
+    const ICONS_SVC = {
+      A_LOCAL: ICON_BASE + 'ALocalIcon.png',
+      A_EXP: ICON_BASE + 'AExpressIcon.png',
+      F_LOCAL: ICON_BASE + 'FLocalIcon.png',
+      F_EXP: ICON_BASE + 'FExpressIcon.png',
+      G_LOCAL: ICON_BASE + 'GLocalIcon.png',
+      D_LOCAL: ICON_BASE + 'DLocalIcon.png',
+      B_LOCAL: ICON_BASE + 'BLocalIcon.png',
+      C_LOCAL: ICON_BASE + 'CLocalIcon.png',
+      E_LOCAL: ICON_BASE + 'ELocalIcon.png',
+      S_LOCAL: ICON_BASE + 'SLocalIcon.png',
+      S_EXP: ICON_BASE + 'SExpressIcon.png'
+    };
+
+    const genDepartures = (startMin, endMin, everyMin) => {
+      const out = [];
+      const s = toMinutes(startMin);
+      const e = toMinutes(endMin);
+      for (let t = s; t <= e; t += everyMin) out.push(t);
+      return out;
+    };
+
+    // Day services (06:30–22:30). Headways are per your spec.
+    const services = [];
+
+    // Green (A)
+    services.push({
+      key: 'A_LOCAL', line: 'Green', color: '#34c759', icon: ICONS_SVC.A_LOCAL, displayLine: 'Green Line',
+      route: ['Mount River','Talmedge Hill','Oakville Plaza','Oakville City Center','Oakville Exchange','Oakville City Airport','Radcliff Fields','Atkins Bridge','Cannon View','Burlington - University of NCU','Newkirk'],
+      every: isRush ? 4 : 4,
+      bidirectional: true,
+      active: true
+    });
+
+    if (isRush) {
+      // <A> to Port Williamson includes Willow Springs
+      services.push({
+        key: 'A_EXP', line: 'Green', color: '#34c759', icon: ICONS_SVC.A_EXP, displayLine: 'Green Line',
+        route: ['Mount River','Talmedge Hill','Oakville Plaza','Oakville City Center','Oakville Exchange','Oakville City Airport','Atkins Bridge','Cannon View','Willow Springs','Port Williamson'],
+        every: 6,
+        bidirectional: false,
+        active: true
+      });
+      // <A> back to Mount River SKIPS Willow Springs
+      services.push({
+        key: 'A_EXP', line: 'Green', color: '#34c759', icon: ICONS_SVC.A_EXP, displayLine: 'Green Line',
+        route: ['Port Williamson','Cannon View','Atkins Bridge','Oakville City Airport','Oakville Exchange','Oakville City Center','Oakville Plaza','Talmedge Hill','Mount River'],
+        every: 6,
+        bidirectional: false,
+        active: true
+      });
     }
 
-    const weekend = isWeekend(now);
+    // Red (F)
+    services.push({
+      key: 'F_LOCAL_K', line: 'Red', color: '#ff3b30', icon: ICONS_SVC.F_LOCAL, displayLine: 'Red Line',
+      route: ['Newkirk','Newkirk - Oak Street','Hoganville','Bayview Park','Chelsea Bay','Berwick Hall','Cambridge Central','Atkinson Junction','Garner','Kenilworth'],
+      every: isRush ? 4 : 4,
+      bidirectional: true,
+      active: true
+    });
+    services.push({
+      key: 'F_LOCAL_B', line: 'Red', color: '#ff3b30', icon: ICONS_SVC.F_LOCAL, displayLine: 'Red Line',
+      route: ['Newkirk','Newkirk - Oak Street','Hoganville','Bayview Park','Chelsea Bay','Berwick Hall','Cambridge Central','Atkinson Junction','La Vista','Brookfield Lawn','Boylston'],
+      every: isRush ? 3 : 3,
+      bidirectional: true,
+      active: true
+    });
+    if (isRush) {
+      services.push({
+        key: 'F_EXP', line: 'Red', color: '#ff3b30', icon: ICONS_SVC.F_EXP, displayLine: 'Red Line',
+        route: ['Newkirk','Newkirk - Oak Street','Hoganville','Berwick Hall','Atkinson Junction','La Vista','Brookfield Lawn','Foxston','New Cottage','Whitebranch'],
+        every: 8,
+        bidirectional: true,
+        active: true
+      });
+    }
+
+    // Silver (S)
+    services.push({
+      key: 'S_LOCAL', line: 'Silver', color: '#c0c0c0', icon: ICONS_SVC.S_LOCAL, displayLine: 'Silver Line',
+      route: ['Ralston-Finch East','Vanderburg','Djimar','Ivory Knolls','Cannon View','Rockcastle','Willow Springs','Burlington - University of NCU'],
+      every: isRush ? 6 : 6,
+      bidirectional: true,
+      active: true
+    });
+    if (isRush) {
+      services.push({
+        key: 'S_EXP', line: 'Silver', color: '#c0c0c0', icon: ICONS_SVC.S_EXP, displayLine: 'Silver Line',
+        route: ['Ralston-Finch East','Cannon View','Rockcastle','Willow Springs','Burlington - University of NCU','Newkirk - Oak Street','Newkirk'],
+        every: 10,
+        bidirectional: true,
+        active: true
+      });
+    }
+
+    // Pink (C)
+    services.push({
+      key: 'C_LOCAL_L', line: 'Pink', color: '#ff2d55', icon: ICONS_SVC.C_LOCAL, displayLine: 'Pink Line',
+      route: ['East Heights','Roxbury Landing','Millford Heights','New Salemview','Wood-by-Hike','Mount Hindsboro','Perry Road','Oakville Exchange','Oakville City Center','Oakville Plaza','Leighton Castle'],
+      every: 4,
+      bidirectional: true,
+      active: true
+    });
+    services.push({
+      key: 'C_LOCAL_A', line: 'Pink', color: '#ff2d55', icon: ICONS_SVC.C_LOCAL, displayLine: 'Pink Line',
+      route: ['East Heights','Roxbury Landing','Millford Heights','New Salemview','Wood-by-Hike','Mount Hindsboro','Perry Road','Oakville City Airport'],
+      every: 4,
+      bidirectional: true,
+      active: true
+    });
+
+    // Blue (B)
+    services.push({
+      key: 'B_LOCAL', line: 'Blue', color: '#007aff', icon: ICONS_SVC.B_LOCAL, displayLine: 'Blue Line',
+      route: ['Oakville Plaza','Oakville City Center','Oakville Exchange','Perry Road','Mount Hindsboro','Greens Corner','Doverville','Orchard Ridge','Groveton','Madisonboro','Hutchinson Point','Vanwood','South Harrington','Harrington City'],
+      every: 3,
+      bidirectional: true,
+      active: true
+    });
+    if (isRush) {
+      services.push({
+        key: 'B_RUSH_H', line: 'Blue', color: '#007aff', icon: ICONS_SVC.B_LOCAL, displayLine: 'Blue Line',
+        route: ['Oakville Plaza','Oakville City Center','Oakville Exchange','Perry Road','Mount Hindsboro','Greens Corner','Doverville','Orchard Ridge','Groveton','Madisonboro','Hutchinson Point','Vanwood','South Harrington','Harrington City','Carrollton','Hadleigh'],
+        every: 9,
+        bidirectional: true,
+        active: true
+      });
+    }
+
+    // Brown (E) - directional patterns always active until late-night
+    services.push({
+      key: 'E_S', line: 'Brown', color: '#8e8e93', icon: ICONS_SVC.E_LOCAL, displayLine: 'Brown Line',
+      route: ['Santa Mora','Brandywine','Cherrywood','Grant Park','Scottsdale','Ameryville','Scottsburg','Tyford Farms','New Halifax','Alpherst','Roxbury Landing','East Heights'],
+      every: 3,
+      bidirectional: false,
+      active: true
+    });
+    services.push({
+      key: 'E_N', line: 'Brown', color: '#8e8e93', icon: ICONS_SVC.E_LOCAL, displayLine: 'Brown Line',
+      route: ['East Heights','Alpherst','New Halifax','Scottsburg','Ameryville','Scottsdale','Grant Park','Cherrywood','Brandywine','Santa Mora'],
+      every: 3,
+      bidirectional: false,
+      active: true
+    });
+
     const results = [];
-    const lines = Object.keys(LINE_SERVICE);
 
-    for (const lineName of lines) {
-      const service = LINE_SERVICE[lineName][weekend ? 'weekend' : 'weekday'];
-      const dep = expandDepartures(service);
+    // Generate scheduled services
+    services.forEach((svc, svcIdx) => {
+      if (!svc.active) return;
 
-      for (const t0 of dep) {
-        if (lineName === 'Brown') {
-          const vN = ROUTE_VARIANTS.find(v => v.code === 'RW01N');
-          const rN = vN.route, segN = segFor(rN);
-          const idxN = rN.indexOf(stationId);
-          if (idxN !== -1) {
-            const arr = t0 + cumulative(segN, idxN);
-            for (let k = 0; k < 2; k++) {
-              const arrDay = arr + k * 24 * 60;
-              const minsAway = arrDay - nowMin;
-              if (minsAway >= -1 && minsAway <= 360) {
-                results.push({ line: vN.line, color: vN.color, code: vN.code, destination: rN[rN.length - 1], timeMin: arrDay, minsAway, stops: rN, departureMin: t0, isLateNight: false });
-              }
-            }
-          }
-          const vS = ROUTE_VARIANTS.find(v => v.code === 'RW01S');
-          const rS = vS.route, segS = segFor(rS);
-          const idxS = rS.indexOf(stationId);
-          if (idxS !== -1) {
-            const arr = t0 + cumulative(segS, idxS);
-            for (let k = 0; k < 2; k++) {
-              const arrDay = arr + k * 24 * 60;
-              const minsAway = arrDay - nowMin;
-              if (minsAway >= -1 && minsAway <= 360) {
-                results.push({ line: vS.line, color: vS.color, code: vS.code, destination: rS[rS.length - 1], timeMin: arrDay, minsAway, stops: rS, departureMin: t0, isLateNight: false });
-              }
-            }
-          }
-          continue;
-        }
+      // During non-rush we must hide all express trains
+      if (!isRush && (svc.key === 'A_EXP' || svc.key === 'F_EXP' || svc.key === 'S_EXP' || svc.key === 'B_RUSH_H')) return;
 
-        const v = pickVariant(lineName, t0);
-        if (!v) continue;
-        const r = v.route, seg = segFor(r);
+      const depTimes = genDepartures('06:30', '22:30', svc.every);
 
-        const idxF = r.indexOf(stationId);
-        if (idxF !== -1) {
-          const arr = t0 + cumulative(seg, idxF);
-          for (let k = 0; k < 2; k++) {
-            const arrDay = arr + k * 24 * 60;
-            const minsAway = arrDay - nowMin;
-            if (minsAway >= -1 && minsAway <= 360) {
-              results.push({ line: v.line, color: v.color, code: v.code, destination: r[r.length - 1], timeMin: arrDay, minsAway, stops: r, departureMin: t0, isLateNight: false });
-            }
+      depTimes.forEach((t0) => {
+        const r = svc.route;
+        const seg = segFor(r);
+        const idx = r.indexOf(stationId);
+        if (idx !== -1) {
+          const arr = t0 + cumulative(seg, idx);
+          const minsAway = arr - nowMin;
+          if (minsAway >= -1 && minsAway <= 360) {
+            results.push({
+              line: svc.line,
+              displayLine: svc.displayLine,
+              icon: svc.icon,
+              color: svc.color,
+              code: svc.key + '-' + (t0 % 10000) + '-' + svcIdx,
+              destination: r[r.length - 1],
+              timeMin: arr,
+              minsAway,
+              stops: r,
+              departureMin: t0,
+              isLateNight: false
+            });
           }
         }
 
-        if (v.bidirectional) {
+        if (svc.bidirectional) {
           const rRev = [...r].reverse();
           const segRev = segFor(rRev);
           const idxR = rRev.indexOf(stationId);
           if (idxR !== -1) {
             const arr = t0 + cumulative(segRev, idxR);
-            for (let k = 0; k < 2; k++) {
-              const arrDay = arr + k * 24 * 60;
-              const minsAway = arrDay - nowMin;
-              if (minsAway >= -1 && minsAway <= 360) {
-                results.push({ line: v.line, color: v.color, code: v.code, destination: rRev[rRev.length - 1], timeMin: arrDay, minsAway, stops: rRev, departureMin: t0, isLateNight: false });
-              }
+            const minsAway = arr - nowMin;
+            if (minsAway >= -1 && minsAway <= 360) {
+              results.push({
+                line: svc.line,
+                displayLine: svc.displayLine,
+                icon: svc.icon,
+                color: svc.color,
+                code: svc.key + 'R-' + (t0 % 10000) + '-' + svcIdx,
+                destination: rRev[rRev.length - 1],
+                timeMin: arr,
+                minsAway,
+                stops: rRev,
+                departureMin: t0,
+                isLateNight: false
+              });
             }
           }
         }
-      }
-    }
+      });
+    });
 
-    // Gold shuttle (single train, daytime only)
-    if (stationId) {
-      const goldTrips = goldShuttleTrips(now);
-      for (const g of goldTrips) {
-        if (g.station === stationId) {
-          const minsAway = g.time - nowMin;
+    // Gold shuttle (G) - single train
+    // Forward seg minutes (Bay -> Hall): 2, 1.5, 2.5 ; Back seg minutes (Hall -> Bay): 2, 1.5, 2
+    const addGold = () => {
+      const forward = ['Bradford Bay','Bradford Square','Westpoint','Berwick Hall'];
+      const back = ['Berwick Hall','Westpoint','Bradford Square','Bradford Bay'];
+      const segF = [2, 1.5, 2.5];
+      const segB = [2, 1.5, 2];
+      const dwellTerm = 300; // 5 min
+      const baseStart = toMinutes('06:30');
+      const end = toMinutes('22:30') + 180;
+      let t = baseStart;
+      let dir = 'toBerwickHall';
+      while (t < end) {
+        const route = (dir === 'toBerwickHall') ? forward : back;
+        const segs = (dir === 'toBerwickHall') ? segF : segB;
+        const dwell = route.map((_, i) => (i === 0 || i === route.length - 1) ? dwellTerm : (80));
+        const idx = route.indexOf(stationId);
+        if (idx !== -1) {
+          const arr = t + cumulative(segs, idx);
+          const minsAway = arr - nowMin;
           if (minsAway >= -1 && minsAway <= 360) {
             results.push({
-              line: g.line,
-              color: g.color,
-              code: g.code,
-              destination: g.dest,
-              timeMin: g.time,
+              line: 'Gold',
+              displayLine: 'Gold Line',
+              icon: ICONS_SVC.G_LOCAL,
+              color: '#ffcc00',
+              code: 'G-' + dir + '-' + t,
+              destination: route[route.length - 1],
+              timeMin: arr,
               minsAway,
-              stops: g.stops,
-              departureMin: g.departureMin,
-              isLateNight: false,
-              segmentTimes: g.segmentTimes,
-              goldDirection: g.goldDirection
+              stops: route,
+              departureMin: t,
+              segmentTimes: segs,
+              dwellSeconds: dwell,
+              goldDirection: dir,
+              isLateNight: false
             });
           }
         }
-      }
-    }
-
-    
-    // Silver shuttle (single train, daytime only - NO late night)
-    if (stationId) {
-      const silverTrips = silverShuttleTrips(now);
-      for (const g of silverTrips) {
-        if (g.station === stationId) {
-          const minsAway = g.time - nowMin;
-          if (minsAway >= -1 && minsAway <= 360) {
-            results.push({
-              line: g.line,
-              color: g.color,
-              code: g.code,
-              destination: g.dest,
-              timeMin: g.time,
-              minsAway,
-              stops: g.stops,
-              departureMin: g.departureMin,
-              isLateNight: false,
-              segmentTimes: g.segmentTimes,
-              silverDirection: g.silverDirection
-            });
-          }
+        // advance to next trip (travel + dwell at terminal)
+        const travelTotal = segs.reduce((a,b)=>a+b,0);
+        t = t + travelTotal + (dwellTerm/60);
+        if (dir === 'toBerwickHall') {
+          // extra dwell 5 min already included by dwellTerm at terminal, but keep symmetric
+          dir = 'toBradfordBay';
+        } else {
+          dir = 'toBerwickHall';
         }
       }
-    }
+    };
+    addGold();
 
-// Orange shuttle (event only)
-    if (stationId && ORANGE_ENABLED) {
-      const orangeTrips = orangeShuttleTrips(now);
-      for (const g of orangeTrips) {
-        if (g.station === stationId) {
-          const minsAway = g.time - nowMin;
-          if (minsAway >= -1 && minsAway <= 360) {
-            results.push({ line: g.line, color: g.color, code: g.code, destination: g.dest, timeMin: g.time, minsAway, stops: g.stops, departureMin: g.time - (g.stops.indexOf(g.station) * SEGMENT_TIME), isLateNight: false });
+    // Orange shuttle (D) - event line
+    if (ORANGE_ENABLED) {
+      const addOrange = () => {
+        const forward = ['Oakville City Airport','Veridia Nexus'];
+        const back = ['Veridia Nexus','Oakville City Airport'];
+        const seg = [3];
+        const baseStart = toMinutes('06:30');
+        const end = toMinutes('22:30') + 180;
+        let t = baseStart;
+        let dir = 'toNexus';
+        while (t < end) {
+          const route = (dir === 'toNexus') ? forward : back;
+          const segs = seg;
+          const dwell = route.map((s,i)=>{
+            if (s === 'Oakville City Airport') return 300;
+            if (s === 'Veridia Nexus') return 120;
+            return 80;
+          });
+          const idx = route.indexOf(stationId);
+          if (idx !== -1) {
+            const arr = t + cumulative(segs, idx);
+            const minsAway = arr - nowMin;
+            if (minsAway >= -1 && minsAway <= 360) {
+              results.push({
+                line: 'Orange',
+                displayLine: 'Orange Line',
+                icon: ICONS_SVC.D_LOCAL,
+                color: '#ff9500',
+                code: 'D-' + dir + '-' + t,
+                destination: route[route.length - 1],
+                timeMin: arr,
+                minsAway,
+                stops: route,
+                departureMin: t,
+                segmentTimes: segs,
+                dwellSeconds: dwell,
+                isLateNight: false
+              });
+            }
           }
+          // advance by travel + dwell at arrival terminal
+          const travel = segs.reduce((a,b)=>a+b,0);
+          const arrivalTerm = route[route.length - 1];
+          const termDwell = (arrivalTerm === 'Oakville City Airport') ? 300 : 120;
+          t = t + travel + (termDwell/60);
+          dir = (dir === 'toNexus') ? 'toAirport' : 'toNexus';
         }
-      }
+      };
+      addOrange();
     }
 
-    const selectedName = STATIONS.find(s => s.id === stationId)?.name || stationId;
-    let filtered = results.filter(r => r.destination !== selectedName);
-    if (TERMINAL_RULES[selectedName]) {
-      const allowed = new Set(TERMINAL_RULES[selectedName]);
-      filtered = filtered.filter(r => allowed.has(r.destination));
-    }
-
-    filtered.sort((a, b) => a.timeMin - b.timeMin);
-    return filtered;
+    results.sort((a, b) => a.minsAway - b.minsAway);
+    return results;
   }
 
   // ---------------------------
@@ -1668,13 +1763,33 @@
     arrivalsEl.innerHTML = list.map((item, i) => {
       const trainSeed = `${item.code}-${item.departureMin || item.timeMin}-${item.destination}`;
       const trainId = `train-${i}`;
+      const ICON_BASE = 'https://raw.githubusercontent.com/onedevlucas/onedevlucas.github.io/main/';
+      if (!item.icon) {
+        const byLine = {
+          Green: ICON_BASE + 'ALocalIcon.png',
+          Red: ICON_BASE + 'FLocalIcon.png',
+          Gold: ICON_BASE + 'GLocalIcon.png',
+          Orange: ICON_BASE + 'DLocalIcon.png',
+          Blue: ICON_BASE + 'BLocalIcon.png',
+          Pink: ICON_BASE + 'CLocalIcon.png',
+          Brown: ICON_BASE + 'ELocalIcon.png',
+          Silver: ICON_BASE + 'SLocalIcon.png'
+        };
+        item.icon = byLine[item.line] || '';
+      }
+      if (!item.displayLine) {
+        const dn = { Green:'Green Line', Red:'Red Line', Gold:'Gold Line', Orange:'Orange Line', Blue:'Blue Line', Pink:'Pink Line', Brown:'Brown Line', Silver:'Silver Line' };
+        item.displayLine = dn[item.line] || (item.line + ' Line');
+      }
+
       
       // Use custom segment times for Gold line if available
       const stopTimesData = calculateStopTimes(
         trainSeed, 
         item.stops, 
         item.departureMin || (item.timeMin - (item.stops.indexOf(sid) * SEGMENT_TIME)),
-        item.segmentTimes || null
+        item.segmentTimes || null,
+        item.dwellSeconds || null
       );
       const position = getTrainPosition(stopTimesData, nowSec);
 
@@ -1802,9 +1917,12 @@
       // Train info box HTML
       const trainInfoBox = `
         <div class="train-info-box">
-          <div class="train-info-header">
-            <span class="route-code">${item.code}</span>
-            <span>${origin} to ${destination}</span>
+          <div class="train-info-header" style="display:flex; align-items:flex-start; gap:10px;">
+            <img class="svcIcon" src="${item.icon || ''}" alt="" style="width:22px; height:22px; object-fit:contain; margin-top:2px;" />
+            <div style="display:flex; flex-direction:column; gap:2px;">
+              <div style="font-weight:700;">${(item.displayLine || (item.line + ' Line'))}</div>
+              <div style="opacity:.85;">to ${destination}</div>
+            </div>
           </div>
           <div class="train-info-details">
             ${ICONS.train}
@@ -1839,10 +1957,10 @@
       return `
         <details class="row" data-train-id="${trainId}" ${isOpen ? 'open' : ''}>
           <summary style="list-style:none; display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center; cursor:pointer;">
-            <div class="dot" style="background:${item.color}"></div>
+            <img class="svcIcon" src="${item.icon || ''}" alt="" style="width:22px; height:22px; object-fit:contain;" />
             <div>
-              <div class="lineTag">${item.line} Line${delayBadge}</div>
-              <div class="dest">to ${item.destination} <span class="pill" style="margin-left:6px;">${item.code}</span></div>
+              <div class="lineTag">${(item.displayLine || (item.line + ' Line'))}${delayBadge}</div>
+              <div class="dest">to ${item.destination}</div>
             </div>
             <div class="mins">${fmtMins(item.minsAway)}</div>
           </summary>
