@@ -319,10 +319,10 @@
       position: fixed;
       left: 0; right: 0; bottom: 0;
       z-index: 20;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      align-items: end;
-      gap: 6px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      flex-wrap: nowrap;
       padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
       border-top: 1px solid rgba(255,255,255,.08);
       background: rgba(180,180,180,0.20);
@@ -330,9 +330,13 @@
     }
 
     .tabbar a {
+      flex: 1;
+      min-width: 0;
       text-decoration: none;
       color: var(--muted);
       text-align: center;
+      display: flex;
+      justify-content: center;
     }
 
     .tabbar .item {
@@ -357,8 +361,7 @@
       opacity: 1;
       filter: none;
     }
-
-  </style>
+</style>
 </head>
 <body>
   <header>
@@ -598,7 +601,7 @@ const STATIONS = [
   'Newkirk','Newkirk - Oak Street','Hoganville','Bayview Park','Chelsea Bay','Berwick Hall',
   'Westpoint','Bradford Square','Bradford Bay','Cambridge Central','Atkinson Junction','Garner',
   'Kenilworth','La Vista','Brookfield Lawn','Boylston','Foxston','New Cottage','Whitebranch',
-  'Burlington - Univ. of NCU','Port Williamson','Willow Springs','Rockcastle','Cannon View',
+  'Burlington - University of NCU','Port Williamson','Willow Springs','Rockcastle','Cannon View',
   'Ivory Knolls','Djimar','Vanderburg','Ralston-Finch East','Atkins Bridge','Radcliff Fields',
   'Oakville City Airport','Veridia Nexus','Oakville Exchange','Oakville City Center','Oakville Plaza',
   'Leighton Castle','Talmedge Hill','Mount River','Perry Road','Mount Hindsboro','Wood-by-Hike',
@@ -654,20 +657,20 @@ const ROUTES = [
     stops:['Berwick Hall','Westpoint','Bradford Square','Bradford Bay'], segmentTimes:[1.5,1.5,1.5] },
 
   // S local / express
-  { serviceId:'S', isExpress:false, tag:'LCL', dir:'NB', origin:'Ralston-Finch East', destination:'Burlington - Univ. of NCU',
-    stops:['Ralston-Finch East','Vanderburg','Djimar','Ivory Knolls','Cannon View','Rockcastle','Willow Springs','Burlington - Univ. of NCU'] },
-  { serviceId:'S', isExpress:false, tag:'LCL', dir:'SB', origin:'Burlington - Univ. of NCU', destination:'Ralston-Finch East',
-    stops:['Burlington - Univ. of NCU','Willow Springs','Rockcastle','Cannon View','Ivory Knolls','Djimar','Vanderburg','Ralston-Finch East'] },
+  { serviceId:'S', isExpress:false, tag:'LCL', dir:'NB', origin:'Ralston-Finch East', destination:'Burlington - University of NCU',
+    stops:['Ralston-Finch East','Vanderburg','Djimar','Ivory Knolls','Cannon View','Rockcastle','Willow Springs','Burlington - University of NCU'] },
+  { serviceId:'S', isExpress:false, tag:'LCL', dir:'SB', origin:'Burlington - University of NCU', destination:'Ralston-Finch East',
+    stops:['Burlington - University of NCU','Willow Springs','Rockcastle','Cannon View','Ivory Knolls','Djimar','Vanderburg','Ralston-Finch East'] },
   { serviceId:'S', isExpress:true, tag:'EXP', dir:'NB', origin:'Ralston-Finch East', destination:'Newkirk',
-    stops:['Ralston-Finch East','Cannon View','Rockcastle','Willow Springs','Burlington - Univ. of NCU','Newkirk - Oak Street','Newkirk'] },
+    stops:['Ralston-Finch East','Cannon View','Rockcastle','Willow Springs','Burlington - University of NCU','Newkirk - Oak Street','Newkirk'] },
   { serviceId:'S', isExpress:true, tag:'EXP', dir:'SB', origin:'Newkirk', destination:'Ralston-Finch East',
-    stops:['Newkirk','Newkirk - Oak Street','Burlington - Univ. of NCU','Willow Springs','Rockcastle','Cannon View','Ralston-Finch East'] },
+    stops:['Newkirk','Newkirk - Oak Street','Burlington - University of NCU','Willow Springs','Rockcastle','Cannon View','Ralston-Finch East'] },
 
   // A local / express
   { serviceId:'A', isExpress:false, tag:'LCL', dir:'NB', origin:'Mount River', destination:'Newkirk',
-    stops:['Mount River','Talmedge Hill','Oakville Plaza','Oakville Exchange','Oakville City Airport','Radcliff Fields','Atkins Bridge','Cannon View','Burlington - Univ. of NCU','Newkirk'] },
+    stops:['Mount River','Talmedge Hill','Oakville Plaza','Oakville Exchange','Oakville City Airport','Radcliff Fields','Atkins Bridge','Cannon View','Burlington - University of NCU','Newkirk'] },
   { serviceId:'A', isExpress:false, tag:'LCL', dir:'SB', origin:'Newkirk', destination:'Mount River',
-    stops:['Newkirk','Burlington - Univ. of NCU','Cannon View','Atkins Bridge','Radcliff Fields','Oakville City Airport','Oakville Exchange','Oakville Plaza','Talmedge Hill','Mount River'] },
+    stops:['Newkirk','Burlington - University of NCU','Cannon View','Atkins Bridge','Radcliff Fields','Oakville City Airport','Oakville Exchange','Oakville Plaza','Talmedge Hill','Mount River'] },
   { serviceId:'A', isExpress:true, tag:'EXP', dir:'NB', origin:'Mount River', destination:'Port Williamson',
     stops:['Mount River','Talmedge Hill','Oakville Plaza','Oakville Exchange','Oakville City Airport','Atkins Bridge','Cannon View','Willow Springs','Port Williamson'] },
   { serviceId:'A', isExpress:true, tag:'EXP', dir:'SB', origin:'Port Williamson', destination:'Mount River',
@@ -1086,6 +1089,8 @@ function renderClock() {
   serviceState.textContent = (mode === 'rush') ? 'Service: Rush (LCL+EXP)' :
                              (mode === 'local') ? 'Service: Local only' :
                              'Service: Overnight';
+  // Visual highlight for overnight service window
+  serviceState.classList.toggle('late-night', mode === 'overnight');
 }
 
 function iconFor(serviceId, isExpress) {
