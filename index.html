@@ -420,7 +420,7 @@
     </section>
   </main>
 
-  <footer>© BORail • Built for iPhone • Works offline after first load | Version 40</footer>
+  <footer>© BORail • Built for iPhone • Works offline after first load | Version 44</footer>
   
   <nav class="tabbar" role="navigation" aria-label="Primary">
     <a class="active" href="index.html">
@@ -604,7 +604,7 @@ const STATIONS = [
   'Burlington - University of NCU','Port Williamson','Willow Springs','Rockcastle','Cannon View',
   'Ivory Knolls','Djimar','Vanderburg','Ralston-Finch East','Atkins Bridge','Radcliff Fields',
   'Oakville City Airport','Veridia Nexus','Oakville Exchange','Oakville City Center','Oakville Plaza',
-  'Leighton Castle','Talmedge Hill','Mount River','Perry Road','Mount Hindsboro','Wood-by-Hike',
+  'Leighton Castle','Fort Meadow','Yoakum','Joplin','Fernwood','Talmedge Hill','Mount River','Perry Road','Mount Hindsboro','Wood-by-Hike',
   'New Salemview','Millford Heights','Roxbury Landing','East Heights','Alpherst','New Halifax',
   'Tyford Farms','Scottsbury','Ameryville','Scottsdale','Grant Park','Cherrywood','Brandywine',
   'Santa Mora','Greens Corner','Doverville','Orchard Ridge','Groveton','Madisonboro','Hutchinson Point',
@@ -685,12 +685,12 @@ const ROUTES = [
   // C local: two branches
   { serviceId:'C', isExpress:false, tag:'LCL', dir:'SB', origin:'East Heights', destination:'Oakville City Airport',
     stops:['East Heights','Roxbury Landing','Millford Heights','New Salemview','Wood-by-Hike','Mount Hindsboro','Perry Road','Oakville City Airport'] },
-  { serviceId:'C', isExpress:false, tag:'LCL', dir:'SB', origin:'East Heights', destination:'Leighton Castle',
-    stops:['East Heights','Roxbury Landing','Millford Heights','New Salemview','Wood-by-Hike','Mount Hindsboro','Perry Road','Oakville Exchange','Oakville City Center','Oakville Plaza','Leighton Castle'] },
+  { serviceId:'C', isExpress:false, tag:'LCL', dir:'SB', origin:'East Heights', destination:'Fernwood',
+    stops:['East Heights','Roxbury Landing','Millford Heights','New Salemview','Wood-by-Hike','Mount Hindsboro','Perry Road','Oakville Exchange','Oakville City Center','Oakville Plaza','Leighton Castle','Fort Meadow','Yoakum','Joplin','Fernwood'] },
   { serviceId:'C', isExpress:false, tag:'LCL', dir:'NB', origin:'Oakville City Airport', destination:'East Heights',
     stops:['Oakville City Airport','Perry Road','Mount Hindsboro','Wood-by-Hike','New Salemview','Millford Heights','Roxbury Landing','East Heights'] },
-  { serviceId:'C', isExpress:false, tag:'LCL', dir:'NB', origin:'Leighton Castle', destination:'East Heights',
-    stops:['Leighton Castle','Oakville Plaza','Oakville City Center','Oakville Exchange','Perry Road','Mount Hindsboro','Wood-by-Hike','New Salemview','Millford Heights','Roxbury Landing','East Heights'] },
+  { serviceId:'C', isExpress:false, tag:'LCL', dir:'NB', origin:'Fernwood', destination:'East Heights',
+    stops:['Fernwood','Joplin','Yoakum','Fort Meadow','Leighton Castle','Oakville Plaza','Oakville City Center','Oakville Exchange','Perry Road','Mount Hindsboro','Wood-by-Hike','New Salemview','Millford Heights','Roxbury Landing','East Heights'] },
 
   // E local only
   { serviceId:'E', isExpress:false, tag:'LCL', dir:'SB', origin:'Santa Mora', destination:'East Heights',
