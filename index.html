@@ -420,7 +420,7 @@
     </section>
   </main>
 
-  <footer>© BORail • Built for iPhone • Works offline after first load | Version 45 (5/31/26)</footer>
+  <footer>© BORail • Built for iPhone • Works offline after first load | Version 46 (5/31/26)</footer>
   
   <nav class="tabbar" role="navigation" aria-label="Primary">
     <a class="active" href="index.html">
@@ -1090,7 +1090,7 @@ function renderClock() {
   const now = new Date();
   nowText.textContent = `Now: ${formatTime24Full(now.getHours()*3600 + now.getMinutes()*60 + now.getSeconds())}`;
   const mode = timeMode(now);
-  serviceState.textContent = (mode === 'rush') ? 'Service: Rush (LCL+EXP)' :
+  serviceState.textContent = (mode === 'rushAM' || mode === 'rushPM') ? 'Service: Rush (LCL+EXP)' :
                              (mode === 'local') ? 'Service: Local only' :
                              'Service: Overnight';
   // Visual highlight for overnight service window
