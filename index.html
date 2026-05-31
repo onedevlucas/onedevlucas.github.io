@@ -415,12 +415,12 @@
     <section class="card" style="margin-top:12px;">
       <details>
         <summary class="subtle">About this app</summary>
-        <p style="color:var(--muted); line-height:1.5">This is a fictional live timetable for a Minecraft metro with 66 stations. Services are labeled like a subway (e.g., (A) local and <A> express) and times are computed on-device from the current time and service patterns. Add this site to your iPhone Home Screen to use it like a native app.</p>
+        <p style="color:var(--muted); line-height:1.5">This is a fictional live timetable for a Minecraft metro with 70 stations. Services are labeled like a subway (e.g., (A) local and <A> express) and times are computed on-device from the current time and service patterns. Add this site to your iPhone Home Screen to use it like a native app.</p>
       </details>
     </section>
   </main>
 
-  <footer>© BORail • Built for iPhone • Works offline after first load | Version 44</footer>
+  <footer>© BORail • Built for iPhone • Works offline after first load | Version 45 (5/31/26)</footer>
   
   <nav class="tabbar" role="navigation" aria-label="Primary">
     <a class="active" href="index.html">
@@ -661,9 +661,9 @@ const ROUTES = [
     stops:['Ralston-Finch East','Vanderburg','Djimar','Ivory Knolls','Cannon View','Rockcastle','Willow Springs','Burlington - University of NCU'] },
   { serviceId:'S', isExpress:false, tag:'LCL', dir:'SB', origin:'Burlington - University of NCU', destination:'Ralston-Finch East',
     stops:['Burlington - University of NCU','Willow Springs','Rockcastle','Cannon View','Ivory Knolls','Djimar','Vanderburg','Ralston-Finch East'] },
-  { serviceId:'S', isExpress:true, tag:'EXP', dir:'NB', origin:'Ralston-Finch East', destination:'Newkirk',
+  { serviceId:'S', isExpress:true, tag:'EXP', dir:'NB', origin:'Ralston-Finch East', destination:'Newkirk', peak: 'AM',
     stops:['Ralston-Finch East','Cannon View','Rockcastle','Willow Springs','Burlington - University of NCU','Newkirk - Oak Street','Newkirk'] },
-  { serviceId:'S', isExpress:true, tag:'EXP', dir:'SB', origin:'Newkirk', destination:'Ralston-Finch East',
+  { serviceId:'S', isExpress:true, tag:'EXP', dir:'SB', origin:'Newkirk', destination:'Ralston-Finch East', peak: 'PM',
     stops:['Newkirk','Newkirk - Oak Street','Burlington - University of NCU','Willow Springs','Rockcastle','Cannon View','Ralston-Finch East'] },
 
   // A local / express
@@ -723,23 +723,27 @@ function timeMode(now = new Date()) {
   const rushAM = (nowMin >= toMin('06:30') && nowMin < toMin('09:30'));
   const rushPM = (nowMin >= toMin('17:00') && nowMin < toMin('19:30'));
   const overnight = (nowMin >= toMin('22:30') || nowMin < toMin('06:30'));
+  
   if (overnight) return 'overnight';
-  if (rushAM || rushPM) return 'rush';
+  if (rushAM) return 'rushAM';
+  if (rushPM) return 'rushPM';
   return 'local';
 }
 
 function isServiceAllowed(route, mode) {
-  // Express only during rush
-  if (mode !== 'rush' && route.isExpress) return false;
+  // 1. Handle the new directional S Express peak rules
+  if (route.serviceId === 'S' && route.isExpress) {
+    if (mode === 'rushAM' && route.peak === 'AM') return true;
+    if (mode === 'rushPM' && route.peak === 'PM') return true;
+    return false; // Blocks SB in the morning, NB in the evening, and non-rush hours
+  }
 
+  // 2. Standard rules for all other lines during non-rush times
+  const isGenericRush = (mode === 'rushAM' || mode === 'rushPM');
+  if (!isGenericRush && route.isExpress) return false;
+
+  // 3. Overnight cuts
   if (mode === 'overnight') {
-    // overnight cuts (10:30PM-6:30AM)
-    // - No G
-    // - No S (local or express)
-    // - No F express
-    // - No A express
-    // - No D
-    // - No B express
     if (route.serviceId === 'G') return false;
     if (route.serviceId === 'S') return false;
     if (route.serviceId === 'D') return false;
