@@ -4,7 +4,6 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>BORail Live Timetable</title>
-  <!-- iOS add-to-home support -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="BORail" />
@@ -38,6 +37,49 @@
         -moz-osx-font-smoothing: grayscale;
         padding-bottom: calc(78px + env(safe-area-inset-bottom));
     }
+
+    /* ---------------------------------- */
+    /* INTRO SPLASH SCREEN STYLES        */
+    /* ---------------------------------- */
+    #splash-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: var(--bg);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999; /* Keeps it on top of everything */
+      opacity: 1;
+      animation: fadeOutSplash 0.5s ease-in-out 4s forwards;
+    }
+
+    #splash-logo {
+      width: 280px; /* Adjust scale of logo here */
+      height: auto;
+      opacity: 0;
+      /* Animates over 4 seconds, then finishes */
+      animation: dynamicLogoIntro 4s ease-in-out forwards;
+    }
+
+    /* Multi-step logo fade choreography */
+    @keyframes dynamicLogoIntro {
+      0% { opacity: 0; transform: scale(0.95); }
+      20% { opacity: 1; transform: scale(1); }      /* Fade in */
+      45% { opacity: 0.3; }                          /* Fade out slightly */
+      65% { opacity: 1; }                            /* Fade back in */
+      90% { opacity: 1; }                            /* Hold look */
+      100% { opacity: 0; }                           /* Fade out logo */
+    }
+
+    /* Fades the entire background overlay away */
+    @keyframes fadeOutSplash {
+      to { opacity: 0; visibility: hidden; }
+    }
+    /* ---------------------------------- */
+
     header {
       position: sticky; top: 0; z-index: 10;
       backdrop-filter: saturate(180%) blur(14px);
@@ -364,6 +406,11 @@
 </style>
 </head>
 <body>
+
+  <div id="splash-screen">
+    <img id="splash-logo" src="b-removebg-preview.png" alt="BORail Logo">
+  </div>
+
   <header>
     <div class="wrap">
       <div class="title">BORail Live Timetable</div>
@@ -415,12 +462,12 @@
     <section class="card" style="margin-top:12px;">
       <details>
         <summary class="subtle">About this app</summary>
-        <p style="color:var(--muted); line-height:1.5">This is a fictional live timetable for a Minecraft metro with 70 stations. Services are labeled like a subway (e.g., (A) local and <A> express) and times are computed on-device from the current time and service patterns. Add this site to your iPhone Home Screen to use it like a native app.</p>
+        <p style="color:var(--muted); line-height:1.5">This is a fictional live timetable for a Minecraft metro with 70 stations. Services are labeled like a subway (e.g., (A) local and &lt;A&gt; express) and times are computed on-device from the current time and service patterns. Add this site to your iPhone Home Screen to use it like a native app.</p>
       </details>
     </section>
   </main>
 
-  <footer>© BORail • Built for iPhone • Works offline after first load | Version 47 (6/2/26)</footer>
+  <footer>© BORail • Built for iPhone • Works offline after first load | Version 48 (6/7/26)</footer>
   
   <nav class="tabbar" role="navigation" aria-label="Primary">
     <a class="active" href="index.html">
@@ -529,20 +576,6 @@ function getTrainConsist(trainSeed, serviceId, isExpress) {
   const rng = seededRandom(trainSeed + '-consist');
   const roll = rng();
 
-  // Rules from user:
-  // - 3298 only for B
-  // - 2254 for A/F/S
-  // - 2253 for A/F
-  // - 110 for G/D
-  // - 454 for C
-  // - 455 for C/E (2-car only)
-  // Car counts:
-  // - A/F/S = 4
-  // - D/G = 2
-  // - B = 3
-  // - E = 2
-  // - C = 3 or 2 (454=3 only, 455=2 only)
-
   let model = 'MTC-T 2254';
   let cars = 4;
   let range = TRAIN_TYPES['MTC-T 2254'].leadCarRange;
@@ -556,12 +589,10 @@ function getTrainConsist(trainSeed, serviceId, isExpress) {
     cars = 2;
     range = TRAIN_TYPES['MTC-T 110'].leadCarRange;
   } else if (serviceId === 'E') {
-    // E is 2-car, only 455
     model = 'MTC-T 455';
     cars = 2;
     range = TRAIN_TYPES['MTC-T 455-2'].leadCarRange;
   } else if (serviceId === 'C') {
-    // C is mix: mostly 454 (3-car) with some 455 (2-car)
     if (roll < 0.75) {
       model = 'MTC-T 454';
       cars = 3;
@@ -572,7 +603,6 @@ function getTrainConsist(trainSeed, serviceId, isExpress) {
       range = TRAIN_TYPES['MTC-T 455-2'].leadCarRange;
     }
   } else if (serviceId === 'A' || serviceId === 'F') {
-    // Mix 2253/2254
     if (roll < 0.60) {
       model = 'MTC-T 2253';
       cars = 4;
@@ -583,7 +613,6 @@ function getTrainConsist(trainSeed, serviceId, isExpress) {
       range = TRAIN_TYPES['MTC-T 2254'].leadCarRange;
     }
   } else if (serviceId === 'S') {
-    // S uses only 2254 (4 cars)
     model = 'MTC-T 2254';
     cars = 4;
     range = TRAIN_TYPES['MTC-T 2254'].leadCarRange;
@@ -613,11 +642,9 @@ const STATIONS = [
 
 const STATION_SET = new Set(STATIONS.map(s => s.id));
 
-// 1.5 minutes (90 seconds) between each station unless overridden
 const DEFAULT_SEGMENT_TIME = 1.5;
 const segFor = (route) => Array(route.length - 1).fill(DEFAULT_SEGMENT_TIME);
 
-// Line colors kept only for UI accents; we display lettered services + icons
 const SERVICE_META = {
   A: { color: '#34c759', localIcon: 'https://raw.githubusercontent.com/onedevlucas/onedevlucas.github.io/main/ALocalIcon.png', expressIcon: 'https://raw.githubusercontent.com/onedevlucas/onedevlucas.github.io/main/AExpressIcon.png' },
   F: { color: '#ff3b30', localIcon: 'https://raw.githubusercontent.com/onedevlucas/onedevlucas.github.io/main/FLocalIcon.png', expressIcon: 'https://raw.githubusercontent.com/onedevlucas/onedevlucas.github.io/main/FExpressIcon.png' },
@@ -629,12 +656,7 @@ const SERVICE_META = {
   S: { color: '#c7c7cc', localIcon: 'https://raw.githubusercontent.com/onedevlucas/onedevlucas.github.io/main/SLocalIcon.png', expressIcon: 'https://raw.githubusercontent.com/onedevlucas/onedevlucas.github.io/main/SExpressIcon.png' }
 };
 
-// ---------------------------
-// ROUTES (UPDATED: no RB01/RP01 etc)
-// ---------------------------
-
 const ROUTES = [
-  // F local: two branches
   { serviceId:'F', isExpress:false, tag:'LCL', dir:'NB', origin:'Kenilworth', destination:'Newkirk',
     stops:['Kenilworth','Garner','Atkinson Junction','Cambridge Central','Berwick Hall','Chelsea Bay','Bayview Park','Hoganville','Newkirk - Oak Street','Newkirk'] },
   { serviceId:'F', isExpress:false, tag:'LCL', dir:'NB', origin:'Boylston', destination:'Newkirk',
@@ -644,19 +666,16 @@ const ROUTES = [
   { serviceId:'F', isExpress:false, tag:'LCL', dir:'SB', origin:'Newkirk', destination:'Boylston',
     stops:['Newkirk','Newkirk - Oak Street','Hoganville','Bayview Park','Chelsea Bay','Berwick Hall','Cambridge Central','Atkinson Junction','La Vista','Brookfield Lawn','Boylston'] },
 
-  // F express
   { serviceId:'F', isExpress:true, tag:'EXP', dir:'NB', origin:'Whitebranch', destination:'Newkirk',
     stops:['Whitebranch','New Cottage','Foxston','Brookfield Lawn','La Vista','Atkinson Junction','Berwick Hall','Hoganville','Newkirk - Oak Street','Newkirk'] },
   { serviceId:'F', isExpress:true, tag:'EXP', dir:'SB', origin:'Newkirk', destination:'Whitebranch',
     stops:['Newkirk','Newkirk - Oak Street','Hoganville','Berwick Hall','Atkinson Junction','La Vista','Brookfield Lawn','Foxston','New Cottage','Whitebranch'] },
 
-  // G shuttle (local only)
   { serviceId:'G', isExpress:false, tag:'LCL', dir:'EB', origin:'Bradford Bay', destination:'Berwick Hall',
     stops:['Bradford Bay','Bradford Square','Westpoint','Berwick Hall'], segmentTimes:[1.5,1.5,2.0] },
   { serviceId:'G', isExpress:false, tag:'LCL', dir:'WB', origin:'Berwick Hall', destination:'Bradford Bay',
     stops:['Berwick Hall','Westpoint','Bradford Square','Bradford Bay'], segmentTimes:[1.5,1.5,1.5] },
 
-  // S local / express
   { serviceId:'S', isExpress:false, tag:'LCL', dir:'NB', origin:'Ralston-Finch East', destination:'Burlington - University of NCU',
     stops:['Ralston-Finch East','Vanderburg','Djimar','Ivory Knolls','Cannon View','Rockcastle','Willow Springs','Burlington - University of NCU'] },
   { serviceId:'S', isExpress:false, tag:'LCL', dir:'SB', origin:'Burlington - University of NCU', destination:'Ralston-Finch East',
@@ -666,7 +685,6 @@ const ROUTES = [
   { serviceId:'S', isExpress:true, tag:'EXP', dir:'SB', origin:'Newkirk', destination:'Ralston-Finch East', peak: 'PM',
     stops:['Newkirk','Newkirk - Oak Street','Burlington - University of NCU','Willow Springs','Rockcastle','Cannon View','Ralston-Finch East'] },
 
-  // A local / express
   { serviceId:'A', isExpress:false, tag:'LCL', dir:'NB', origin:'Mount River', destination:'Newkirk',
     stops:['Mount River','Talmedge Hill','Oakville Plaza','Oakville Exchange','Oakville City Airport','Radcliff Fields','Atkins Bridge','Cannon View','Burlington - University of NCU','Newkirk'] },
   { serviceId:'A', isExpress:false, tag:'LCL', dir:'SB', origin:'Newkirk', destination:'Mount River',
@@ -676,13 +694,11 @@ const ROUTES = [
   { serviceId:'A', isExpress:true, tag:'EXP', dir:'SB', origin:'Port Williamson', destination:'Mount River',
     stops:['Port Williamson','Cannon View','Atkins Bridge','Oakville City Airport','Oakville Exchange','Oakville Plaza','Talmedge Hill','Mount River'] },
 
-  // D shuttle (local only)
   { serviceId:'D', isExpress:false, tag:'LCL', dir:'NB', origin:'Oakville City Airport', destination:'Veridia Nexus',
     stops:['Oakville City Airport','Veridia Nexus'], segmentTimes:[1.5] },
   { serviceId:'D', isExpress:false, tag:'LCL', dir:'SB', origin:'Veridia Nexus', destination:'Oakville City Airport',
     stops:['Veridia Nexus','Oakville City Airport'], segmentTimes:[1.5] },
 
-  // C local: two branches
   { serviceId:'C', isExpress:false, tag:'LCL', dir:'SB', origin:'East Heights', destination:'Oakville City Airport',
     stops:['East Heights','Roxbury Landing','Millford Heights','New Salemview','Wood-by-Hike','Mount Hindsboro','Perry Road','Oakville City Airport'] },
   { serviceId:'C', isExpress:false, tag:'LCL', dir:'SB', origin:'East Heights', destination:'Fernwood',
@@ -692,13 +708,11 @@ const ROUTES = [
   { serviceId:'C', isExpress:false, tag:'LCL', dir:'NB', origin:'Fernwood', destination:'East Heights',
     stops:['Fernwood','Joplin','Yoakum','Fort Meadow','Leighton Castle','Oakville Plaza','Oakville City Center','Oakville Exchange','Perry Road','Mount Hindsboro','Wood-by-Hike','New Salemview','Millford Heights','Roxbury Landing','East Heights'] },
 
-  // E local only
   { serviceId:'E', isExpress:false, tag:'LCL', dir:'SB', origin:'Santa Mora', destination:'East Heights',
     stops:['Santa Mora','Brandywine','Cherrywood','Grant Park','Scottsdale','Ameryville','Scottsbury','Tyford Farms','New Halifax','Alpherst','Roxbury Landing','East Heights'] },
   { serviceId:'E', isExpress:false, tag:'LCL', dir:'NB', origin:'East Heights', destination:'Santa Mora',
     stops:['East Heights','Alpherst','New Halifax','Scottsbury','Ameryville','Scottsdale','Grant Park','Cherrywood','Brandywine','Santa Mora'] },
 
-  // B local / express
   { serviceId:'B', isExpress:false, tag:'LCL', dir:'NB', origin:'Leighton Castle', destination:'Harrington City',
     stops:['Leighton Castle','Oakville Plaza','Oakville City Center','Oakville Exchange','Perry Road','Mount Hindsboro','Greens Corner','Doverville','Orchard Ridge','Groveton','Madisonboro','Hutchinson Point','Vanwood','South Harrington','Harrington City'] },
   { serviceId:'B', isExpress:false, tag:'LCL', dir:'SB', origin:'Harrington City', destination:'Leighton Castle',
@@ -709,14 +723,6 @@ const ROUTES = [
     stops:['Hadleigh','Carrollton','Harrington City','South Harrington','Vanwood','Hutchinson Point','Madisonboro','Groveton','Orchard Ridge','Doverville','Greens Corner','Oakville Exchange','Oakville City Center','Oakville Plaza', 'Leighton Castle'] }
 ];
 
-// Validate stops exist (debug-friendly, silent)
-ROUTES.forEach(r => {
-  r.stops.forEach(s => { if (!STATION_SET.has(s)) console.warn('Unknown station in route:', s, r); });
-});
-
-// ---------------------------
-// SERVICE WINDOWS (rush/local-only/overnight)
-// ---------------------------
 const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
 function timeMode(now = new Date()) {
   const nowMin = now.getHours() * 60 + now.getMinutes();
@@ -731,18 +737,15 @@ function timeMode(now = new Date()) {
 }
 
 function isServiceAllowed(route, mode) {
-  // 1. Handle the new directional S Express peak rules
   if (route.serviceId === 'S' && route.isExpress) {
     if (mode === 'rushAM' && route.peak === 'AM') return true;
     if (mode === 'rushPM' && route.peak === 'PM') return true;
-    return false; // Blocks SB in the morning, NB in the evening, and non-rush hours
+    return false;
   }
 
-  // 2. Standard rules for all other lines during non-rush times
   const isGenericRush = (mode === 'rushAM' || mode === 'rushPM');
   if (!isGenericRush && route.isExpress) return false;
 
-  // 3. Overnight cuts
   if (mode === 'overnight') {
     if (route.serviceId === 'G') return false;
     if (route.serviceId === 'S') return false;
@@ -754,9 +757,6 @@ function isServiceAllowed(route, mode) {
   return true;
 }
 
-// ---------------------------
-// BASE FREQUENCIES (kept similar to original, but governed by timeMode)
-// ---------------------------
 const LINE_SERVICE = {
   A: { all: [ { start: '05:30', end: '22:30', every: 10 } ] },
   F: { all: [
@@ -788,11 +788,7 @@ const expandDepartures = periods => {
   });
   return out;
 };
-const cumulative = (seg, i) => { let s = 0; for (let k = 0; k < i; k++) s += seg[k]; return s; };
 
-// ---------------------------
-// DELAY SYSTEM (unchanged)
-// ---------------------------
 function getTrainDelayInfo(trainSeed) {
   const rng = seededRandom(trainSeed + '-delay');
   const roll = rng();
@@ -825,8 +821,8 @@ function calculateStopTimes(trainSeed, stops, departureMinutes, customSegmentTim
     }
 
     const scheduledArrivalSec = departureMinutes * 60 + cumulativeSeconds;
-    const arrivalOffset = Math.floor(rng() * 21) + 5; // 5-25s
-    const dwellTime = Math.floor(rng() * 9) + 12; // 12-20s
+    const arrivalOffset = Math.floor(rng() * 21) + 5;
+    const dwellTime = Math.floor(rng() * 9) + 12;
 
     let delaySec = 0;
     let isStopDelayed = false;
@@ -875,21 +871,12 @@ function getTrainPosition(stopTimes, nowSeconds) {
   return { status: 'unknown' };
 }
 
-// ---------------------------
-// ARRIVALS ENGINE
-// ---------------------------
-// ---------------------------
-// SINGLE-TRAIN SHUTTLES (G & D)
-// ---------------------------
 const SINGLE_TRAIN_SHUTTLES = new Set(['G','D']);
-
-// Fixed lead cars per direction (destination)
 const FIXED_SHUTTLE_LEAD_CARS = {
   G: { 'Berwick Hall': 545, 'Bradford Bay': 544 },
   D: { 'Veridia Nexus': 540, 'Oakville City Airport': 541 }
 };
 
-// Cache station-events for the day so the shuttle behaves like ONE train all day.
 const SHUTTLE_EVENTS_CACHE = new Map();
 function getShuttleEventsForToday(serviceId) {
   const dayKey = new Date().toISOString().slice(0, 10);
@@ -914,7 +901,7 @@ function getShuttleEventsForToday(serviceId) {
   const dayEnd = toMin(periods[periods.length - 1].end);
 
   const rng = seededRandom(`${key}-shuttle-seq`);
-  let t0 = dayStart + Math.floor(rng() * 3); // 0..2 min start offset
+  let t0 = dayStart + Math.floor(rng() * 3);
 
   const events = [];
   while (t0 <= dayEnd) {
@@ -940,11 +927,9 @@ function getShuttleEventsForToday(serviceId) {
       if (i < seg.length) cur += seg[i];
     }
 
-    // Terminal layover (single train turns around)
-    const layover = 1 + rng() * 2; // 1..3 min
+    const layover = 1 + rng() * 2;
     t0 = cur + layover;
 
-    // Swap direction
     const tmp = curRoute;
     curRoute = otherRoute;
     otherRoute = tmp;
@@ -959,10 +944,9 @@ function tripsForRoute(routeDef) {
   const dep = expandDepartures(periods);
   const seg = routeDef.segmentTimes ? routeDef.segmentTimes : segFor(routeDef.stops);
 
-  // Stagger branches slightly to reduce perfectly synced results
   const branchSeed = `${routeDef.serviceId}-${routeDef.tag}-${routeDef.origin}-${routeDef.destination}`;
   const rng = seededRandom(branchSeed);
-  const offset = Math.floor(rng() * 3); // 0..2 min offset
+  const offset = Math.floor(rng() * 3);
   const deps = dep.map(t => t + offset);
 
   const out = [];
@@ -991,10 +975,7 @@ function tripsForRoute(routeDef) {
 function arrivalsForStation(stationId, now = new Date()) {
   const nowMinRaw = now.getHours() * 60 + now.getMinutes();
   const mode = timeMode(now);
-
-  // Build candidate arrivals for next 6 hours (same as before)
   const horizon = 6 * 60;
-
   const stationName = stationId;
   const out = [];
   const handledShuttles = new Set();
@@ -1002,7 +983,6 @@ function arrivalsForStation(stationId, now = new Date()) {
   ROUTES.forEach(r => {
     if (!isServiceAllowed(r, mode)) return;
 
-    // G and D are single-train shuttles: generate ONE shared sequence for the whole day.
     if (SINGLE_TRAIN_SHUTTLES.has(r.serviceId)) {
       if (handledShuttles.has(r.serviceId)) return;
       handledShuttles.add(r.serviceId);
@@ -1011,18 +991,15 @@ function arrivalsForStation(stationId, now = new Date()) {
       for (const trip of trips) {
         if (trip.station !== stationName) continue;
 
-        // Normalize for "after midnight" handling so sorting works
         let arr = trip.time;
         let nowMin = nowMinRaw;
         if (mode === 'overnight') {
-          // Treat 00:00-06:29 as 24:00-30:29 for sorting
           if (arr < toMin('06:30')) arr += 1440;
           if (nowMinRaw < toMin('06:30')) nowMin += 1440;
         }
 
         const minsAway = arr - nowMin;
         if (minsAway >= -1 && minsAway <= horizon) {
-          // Filter out trains terminating at selected station
           if (trip.destination === stationName) continue;
           out.push({ ...trip, timeMin: arr, minsAway, mode });
         }
@@ -1031,27 +1008,18 @@ function arrivalsForStation(stationId, now = new Date()) {
     }
 
     const trips = tripsForRoute(r);
-
     for (const trip of trips) {
       if (trip.station !== stationName) continue;
-      // Normalize for "after midnight" handling so sorting works
       let arr = trip.time;
       let nowMin = nowMinRaw;
       if (mode === 'overnight') {
-        // Treat 00:00-06:29 as 24:00-30:29 for sorting
         if (arr < toMin('06:30')) arr += 1440;
         if (nowMinRaw < toMin('06:30')) nowMin += 1440;
       }
       const minsAway = arr - nowMin;
       if (minsAway >= -1 && minsAway <= horizon) {
-        // Filter out trains terminating at selected station
         if (trip.destination === stationName) continue;
-        out.push({
-          ...trip,
-          timeMin: arr,
-          minsAway,
-          mode
-        });
+        out.push({ ...trip, timeMin: arr, minsAway, mode });
       }
     }
   });
@@ -1060,9 +1028,6 @@ function arrivalsForStation(stationId, now = new Date()) {
   return out;
 }
 
-// ---------------------------
-// UI RENDERING
-// ---------------------------
 const stationSelect = document.getElementById('stationSelect');
 const arrivalsEl = document.getElementById('arrivals');
 const nowText = document.getElementById('nowText');
@@ -1077,12 +1042,9 @@ function renderStations() {
   const sorted = [...STATIONS].sort((a, b) =>
     a.name.localeCompare(b.name, 'en', { sensitivity: 'base' })
   );
-
   stationSelect.innerHTML = sorted
     .map(s => `<option value="${s.id}">${s.name}</option>`)
     .join('');
-
-  // default to first alphabetically
   stationSelect.value = sorted[0].id;
 }
 
@@ -1093,7 +1055,6 @@ function renderClock() {
   serviceState.textContent = (mode === 'rushAM' || mode === 'rushPM') ? 'Service: Rush (LCL+EXP)' :
                              (mode === 'local') ? 'Service: Local only' :
                              'Service: Overnight';
-  // Visual highlight for overnight service window
   serviceState.classList.toggle('late-night', mode === 'overnight');
 }
 
@@ -1123,14 +1084,12 @@ function renderArrivals() {
   const station = stationSelect.value;
   const limit = Number(limitSelect.value || 8);
   const rows = arrivalsForStation(station, now).slice(0, limit);
-
   const nowSeconds = now.getHours()*3600 + now.getMinutes()*60 + now.getSeconds();
 
   arrivalsEl.innerHTML = rows.map((r, idx) => {
     const trainSeed = `${r.serviceId}-${r.tag}-${r.departureMin}-${r.origin}-${r.destination}`;
     const consist = getTrainConsist(trainSeed, r.serviceId, r.isExpress);
 
-    // Single-train shuttles have fixed consists + fixed lead cars by direction.
     if (SINGLE_TRAIN_SHUTTLES.has(r.serviceId)) {
       consist.model = 'MTC-T 110';
       consist.cars = 2;
@@ -1138,18 +1097,13 @@ function renderArrivals() {
       if (typeof fixed === 'number') consist.leadCar = fixed;
     }
 
-    // Detailed stop times / position
     const stopTimes = calculateStopTimes(trainSeed, r.stops, r.departureMin, r.segmentTimes);
     const pos = getTrainPosition(stopTimes, nowSeconds);
-
-    // Decide pill time label
     const minsText = (r.minsAway <= 0) ? 'Now' : `${Math.round(r.minsAway)} min`;
-
     const trainId = `${r.serviceId}-${r.tag}-${r.departureMin}-${idx}`.replace(/[^a-zA-Z0-9_-]/g,'');
     const isOpen = openDetails.has(trainId);
     const isExpanded = expandedStops.has(trainId);
 
-    // Stop list HTML (full view)
     const stopsHtml = stopTimes.stops.map((st, i) => {
       let cls = 'stop-item';
       let icon = ICONS.pinGray;
@@ -1169,7 +1123,6 @@ function renderArrivals() {
       const sched = formatTime24Full(st.scheduledArrivalSec);
       const actual = formatTime24Full(st.actualArrivalSec);
       const delayed = st.isDelayed && (actual !== sched);
-
       const timeHtml = delayed
         ? `<span class="scheduled">${sched}</span><span class="new-time">${actual}</span>`
         : `<span>${actual}</span>`;
@@ -1184,7 +1137,6 @@ function renderArrivals() {
       </li>`;
     }).join('');
 
-    // Compact view: show only origin + destination + current status
     const originStop = stopTimes.stops[0];
     const destStop = stopTimes.stops[stopTimes.stops.length - 1];
 
@@ -1198,19 +1150,16 @@ function renderArrivals() {
     }
 
     const badge = lineBadgeHtml(r.serviceId, r.isExpress);
-    const label = serviceLabel(r.serviceId, r.isExpress);
-
     return `<details class="row" data-train-id="${trainId}" ${isOpen ? 'open' : ''}>
       <summary style="list-style:none; cursor:pointer;">
-  <div>
-    <div class="lineTag" style="display:flex; align-items:center; gap:8px;">
-      ${badge} <span>Line</span>
-    </div>
-    <div class="dest">to ${r.destination}</div>
-  </div>
-  <div class="mins">${minsText}</div>
-</summary>
-
+        <div>
+          <div class="lineTag" style="display:flex; align-items:center; gap:8px;">
+            ${badge} <span>Line</span>
+          </div>
+          <div class="dest">to ${r.destination}</div>
+        </div>
+        <div class="mins">${minsText}</div>
+      </summary>
       <div style="margin-top:10px;">
         <div class="train-info-box">
           <div class="train-info-header">
@@ -1223,25 +1172,20 @@ function renderArrivals() {
             <span class="lead-car">Lead Car: ${consist.leadCar}</span>
           </div>
         </div>
-
         ${statusBanner}
-
         <div class="compact-view" id="compact-${trainId}" style="${isExpanded ? 'display:none;' : ''}">
           <div class="compact-stop ${pos.status==='not-started'?'at-station':''}">
             <div class="compact-time"><span class="scheduled">${formatTime24Full(originStop.actualArrivalSec)}</span></div>
             <div class="compact-icon">${ICONS.pinDim}</div>
             <div class="compact-name">${originStop.name}</div>
           </div>
-          <button class="mid-stops-btn" data-action="expand" data-train-id="${trainId}">
-            Show all stops
-          </button>
+          <button class="mid-stops-btn" data-action="expand" data-train-id="${trainId}">Show all stops</button>
           <div class="compact-stop">
             <div class="compact-time"><span class="scheduled">${formatTime24Full(destStop.actualArrivalSec)}</span></div>
             <div class="compact-icon">${ICONS.pinDim}</div>
             <div class="compact-name">${destStop.name}</div>
           </div>
         </div>
-
         <div class="slide" id="full-${trainId}" style="${isExpanded ? 'display:block; max-height:none; opacity:1;' : 'display:none;'}">
           <div class="subtle" style="margin-bottom:8px;">Making stops at…</div>
           <ul class="stops-list">${stopsHtml}</ul>
@@ -1309,9 +1253,16 @@ stationSelect.addEventListener('change', () => {
 limitSelect.addEventListener('change', renderArrivals);
 refreshBtn.addEventListener('click', () => { renderClock(); renderArrivals(); });
 
-// ---------------------------
-// OPTIONAL: basic offline cache
-// ---------------------------
+// Clean up splash screen from DOM after intro ends
+const splash = document.getElementById('splash-screen');
+if (splash) {
+  splash.addEventListener('animationend', (e) => {
+    if (e.animationName === 'fadeOutSplash') {
+      splash.remove();
+    }
+  });
+}
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     const sw = URL.createObjectURL(new Blob([
