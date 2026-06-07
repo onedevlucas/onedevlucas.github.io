@@ -51,30 +51,27 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      z-index: 9999; /* Keeps it on top of everything */
+      z-index: 9999;
       opacity: 1;
-      animation: fadeOutSplash 0.5s ease-in-out 4s forwards;
+      animation: fadeOutSplash 0.5s ease-in-out 3s forwards;
     }
 
     #splash-logo {
-      width: 280px; /* Adjust scale of logo here */
+      width: 280px;
       height: auto;
       opacity: 0;
-      /* Animates over 4 seconds, then finishes */
-      animation: dynamicLogoIntro 4s ease-in-out forwards;
+      animation: dynamicLogoIntro 3s ease-in-out forwards;
     }
 
-    /* Multi-step logo fade choreography */
     @keyframes dynamicLogoIntro {
       0% { opacity: 0; transform: scale(0.95); }
-      20% { opacity: 1; transform: scale(1); }      /* Fade in */
-      45% { opacity: 0.3; }                          /* Fade out slightly */
-      65% { opacity: 1; }                            /* Fade back in */
-      90% { opacity: 1; }                            /* Hold look */
-      100% { opacity: 0; }                           /* Fade out logo */
+      20% { opacity: 1; transform: scale(1); }
+      45% { opacity: 0.3; }
+      65% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { opacity: 0; }
     }
 
-    /* Fades the entire background overlay away */
     @keyframes fadeOutSplash {
       to { opacity: 0; visibility: hidden; }
     }
@@ -85,7 +82,6 @@
       backdrop-filter: saturate(180%) blur(14px);
       background: rgba(10,10,18,.65);
       border-bottom: 1px solid rgba(255,255,255,.08);
-      padding-top: env(safe-area-inset-top);
     }
     .wrap { max-width: 860px; margin: 0 auto; padding: 12px 16px; }
     .title { font-weight: 800; letter-spacing: .2px; font-size: 22px; }
@@ -107,10 +103,31 @@
     .grid { display: grid; gap: 12px; margin-top: 14px; }
     .card { background: linear-gradient(180deg, rgba(255,255,255,.03), transparent), var(--card); border: 5px solid rgba(255,255,255,.06); border-radius: 18px; padding: 14px; }
 
+    /* Directional Heading Header Styles */
+    .direction-group {
+      margin-top: 15px;
+      margin-bottom: 25px;
+    }
+    .direction-group:last-child {
+      margin-bottom: 5px;
+    }
+    .direction-title {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: #ffffff;
+      padding-bottom: 6px;
+      margin-bottom: 12px;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.12);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
     .list { display: grid; gap: 15px; }
     .row { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; padding: 18px 15px; border-radius: 14px; border: 1px solid rgba(255,255,255,.06); background: rgba(255,255,255,.02); }
 
-    /* Make <details class="row"> expand correctly on mobile */
     details.row { display: block; }
     details.row > summary {
       display: grid;
@@ -135,7 +152,6 @@
 
     @media (min-width: 700px) { .grid { grid-template-columns: 2fr 1fr; } }
 
-    /* Route stops list styling */
     .stops-list { 
       list-style: none; 
       margin: 0; 
@@ -233,7 +249,6 @@
       height: 16px;
     }
 
-    /* Train Info Box styling */
     .train-info-box {
       background: rgba(138, 143, 255, 0.08);
       border: 1px solid rgba(138, 143, 255, 0.25);
@@ -280,7 +295,6 @@
       font-weight: 600;
     }
 
-    /* Compact view styling */
     .compact-view {
       padding: 0 0 0 4px;
     }
@@ -340,7 +354,6 @@
       text-decoration: underline;
     }
 
-    /* Slide animation */
     .slide {
       overflow: hidden;
       max-height: 0;
@@ -356,7 +369,6 @@
       color: var(--accent); font: inherit; cursor: pointer;
     }
 
-    /* Bottom tab bar */
     .tabbar {
       position: fixed;
       left: 0; right: 0; bottom: 0;
@@ -408,7 +420,7 @@
 <body>
 
   <div id="splash-screen">
-    <img id="splash-logo" src="b-removebg-preview.png" alt="BORail Logo">
+    <img id="splash-logo" src="b.png" alt="BORail Logo">
   </div>
 
   <header>
@@ -439,7 +451,7 @@
             </select>
           </div>
         </div>
-        <div id="arrivals" class="list"></div>
+        <div id="arrivals"></div>
       </div>
 
       <aside class="card">
@@ -467,7 +479,7 @@
     </section>
   </main>
 
-  <footer>© BORail • Built for iPhone • Works offline after first load | Version 48 (6/7/26)</footer>
+  <footer>© BORail • Built for iPhone • Works offline after first load | Version 49 (6/7/26)</footer>
   
   <nav class="tabbar" role="navigation" aria-label="Primary">
     <a class="active" href="index.html">
@@ -497,9 +509,6 @@
   </nav>
 
   <script>
-  // ---------------------------
-// SVG ICONS (inline)
-// ---------------------------
 const ICONS = {
   clock: `<svg class="clock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
     <circle cx="12" cy="12" r="10"/>
@@ -523,9 +532,6 @@ const ICONS = {
   </svg>`
 };
 
-// ---------------------------
-// SEEDED RANDOM NUMBER GENERATOR
-// ---------------------------
 function seededRandom(seed) {
   let h = 2166136261 >>> 0;
   const s = String(seed);
@@ -540,9 +546,6 @@ function seededRandom(seed) {
   };
 }
 
-// ---------------------------
-// TIME FORMATTING HELPERS
-// ---------------------------
 function formatTime24(totalMinutes) {
   const h = Math.floor(totalMinutes / 60) % 24;
   const m = Math.floor(totalMinutes % 60);
@@ -559,9 +562,6 @@ function formatTime24Full(totalSeconds) {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-// ---------------------------
-// TRAIN CONSIST SYSTEM (UPDATED)
-// ---------------------------
 const TRAIN_TYPES = {
   'MTC-T 3298': { cars: 3, leadCarRange: [100, 219] },
   'MTC-T 2254': { cars: 4, leadCarRange: [200, 329] },
@@ -571,7 +571,6 @@ const TRAIN_TYPES = {
   'MTC-T 455-2': { model: 'MTC-T 455', cars: 2, leadCarRange: [700, 769] }
 };
 
-// Service IDs: A/F/B/C/D/E/G/S + express flag
 function getTrainConsist(trainSeed, serviceId, isExpress) {
   const rng = seededRandom(trainSeed + '-consist');
   const roll = rng();
@@ -623,9 +622,6 @@ function getTrainConsist(trainSeed, serviceId, isExpress) {
   return { model, cars, leadCar };
 }
 
-// ---------------------------
-// 1) DATA MODEL (UPDATED STATIONS + SERVICES)
-// ---------------------------
 const STATIONS = [
   'Newkirk','Newkirk - Oak Street','Hoganville','Bayview Park','Chelsea Bay','Berwick Hall',
   'Westpoint','Bradford Square','Bradford Bay','Cambridge Central','Atkinson Junction','Garner',
@@ -726,9 +722,9 @@ const ROUTES = [
 const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
 function timeMode(now = new Date()) {
   const nowMin = now.getHours() * 60 + now.getMinutes();
-  const rushAM = (nowMin >= toMin('06:30') && nowMin < toMin('09:30'));
+  const rushAM = (nowMin >= toMin('06:00') && nowMin < toMin('09:30'));
   const rushPM = (nowMin >= toMin('17:00') && nowMin < toMin('19:30'));
-  const overnight = (nowMin >= toMin('22:30') || nowMin < toMin('06:30'));
+  const overnight = (nowMin >= toMin('22:30') || nowMin < toMin('03:59'));
   
   if (overnight) return 'overnight';
   if (rushAM) return 'rushAM';
@@ -758,24 +754,48 @@ function isServiceAllowed(route, mode) {
 }
 
 const LINE_SERVICE = {
-  A: { all: [ { start: '05:30', end: '22:30', every: 10 } ] },
+  A: { all: [
+    { start: '04:00', end: '05:59', every: 20 },
+    { start: '06:00', end: '09:29', every: 7 },
+    { start: '09:30', end: '16:59', every: 15 },
+    { start: '17:00', end: '19:29', every: 7 },
+    { start: '19:30', end: '22:29', every: 20 },
+  ]},
   F: { all: [
-    { start: '05:30', end: '06:59', every: 10 },
-    { start: '07:00', end: '09:59', every: 5 },
-    { start: '10:00', end: '15:59', every: 7 },
-    { start: '16:00', end: '18:59', every: 5 },
-    { start: '19:00', end: '22:30', every: 10 },
+    { start: '04:00', end: '05:59', every: 20 },
+    { start: '06:00', end: '09:29', every: 7 },
+    { start: '09:30', end: '16:59', every: 15 },
+    { start: '17:00', end: '19:29', every: 7 },
+    { start: '19:30', end: '22:29', every: 20 },
   ]},
   B: { all: [
-    { start: '05:30', end: '06:59', every: 10 },
-    { start: '07:00', end: '09:59', every: 6 },
-    { start: '10:00', end: '15:59', every: 8 },
-    { start: '16:00', end: '18:59', every: 6 },
-    { start: '19:00', end: '22:30', every: 10 },
+    { start: '04:00', end: '05:59', every: 25 },
+    { start: '06:00', end: '09:29', every: 5 },
+    { start: '09:30', end: '16:59', every: 15 },
+    { start: '17:00', end: '19:29', every: 5 },
+    { start: '19:30', end: '22:29', every: 25 },
   ]},
-  C: { all: [ { start: '05:30', end: '22:30', every: 8 } ] },
-  E: { all: [ { start: '05:30', end: '22:30', every: 10 } ] },
-  S: { all: [ { start: '05:30', end: '22:30', every: 10 } ] },
+  C: { all: [ 
+    { start: '04:00', end: '05:59', every: 20 },
+    { start: '06:00', end: '09:29', every: 7 },
+    { start: '09:30', end: '16:59', every: 15 },
+    { start: '17:00', end: '19:29', every: 7 },
+    { start: '19:30', end: '22:29', every: 20 },
+  ]},
+  E: { all: [ 
+    { start: '04:00', end: '05:59', every: 25 },
+    { start: '06:00', end: '09:29', every: 5 },
+    { start: '09:30', end: '16:59', every: 15 },
+    { start: '17:00', end: '19:29', every: 5 },
+    { start: '19:30', end: '22:29', every: 25 }, 
+  ]},
+  S: { all: [ 
+    { start: '04:00', end: '05:59', every: 20 },
+    { start: '06:00', end: '09:29', every: 7 },
+    { start: '09:30', end: '16:59', every: 15 },
+    { start: '17:00', end: '19:29', every: 7 },
+    { start: '19:30', end: '22:29', every: 20 }, 
+  ]},
   D: { all: [ { start: '05:30', end: '22:30', every: 12 } ] },
   G: { all: [ { start: '05:30', end: '22:30', every: 12 } ] }
 };
@@ -972,6 +992,51 @@ function tripsForRoute(routeDef) {
   return out;
 }
 
+/* ---------------------------------- */
+/* NEW CARDINAL DIRECTION ROUTER REGEX */
+/* ---------------------------------- */
+function getTrainDirection(serviceId, destination) {
+  // Overrides based on specified line behaviors
+  if (destination === 'East Heights') {
+    if (serviceId === 'C') return 'Northbound';
+    if (serviceId === 'E') return 'Southbound';
+  }
+  if (destination === 'Wychwood - Oakville City Airport' || destination === 'Oakville City Airport') {
+    if (serviceId === 'C') return 'Westbound';
+    if (serviceId === 'D') return 'Eastbound';
+  }
+  if (serviceId === 'B') {
+    if (destination === 'Leighton Castle') return 'Eastbound';
+    if (destination === 'Harrington City' || destination === 'Hadleigh') return 'Northbound';
+  }
+
+  // General terminal mappings
+  switch(destination) {
+    case 'Newkirk':
+    case 'Burlington - University of NCU':
+    case 'Port Williamson':
+    case 'Santa Mora':
+    case 'Harrington City':
+    case 'Hadleigh':
+      return 'Northbound';
+    case 'Kenilworth':
+    case 'Boylston':
+    case 'Whitebranch':
+    case 'Ralston-Finch East':
+    case 'Mount River':
+      return 'Southbound';
+    case 'Berwick Hall':
+    case 'Leighton Castle':
+    case 'Fernwood':
+      return 'Eastbound';
+    case 'Bradford Bay':
+    case 'Veridia Nexus':
+      return 'Westbound';
+    default:
+      return 'Northbound'; // Safe default fallback
+  }
+}
+
 function arrivalsForStation(stationId, now = new Date()) {
   const nowMinRaw = now.getHours() * 60 + now.getMinutes();
   const mode = timeMode(now);
@@ -1079,6 +1144,9 @@ function slideDown(el) {
   el.style.opacity = '1';
 }
 
+/* ---------------------------------- */
+/* CATEGORIZED ARRIVALS RENDER ENGINE  */
+/* ---------------------------------- */
 function renderArrivals() {
   const now = new Date();
   const station = stationSelect.value;
@@ -1086,114 +1154,149 @@ function renderArrivals() {
   const rows = arrivalsForStation(station, now).slice(0, limit);
   const nowSeconds = now.getHours()*3600 + now.getMinutes()*60 + now.getSeconds();
 
-  arrivalsEl.innerHTML = rows.map((r, idx) => {
-    const trainSeed = `${r.serviceId}-${r.tag}-${r.departureMin}-${r.origin}-${r.destination}`;
-    const consist = getTrainConsist(trainSeed, r.serviceId, r.isExpress);
+  if (rows.length === 0) {
+    arrivalsEl.innerHTML = `<div class="subtle">No upcoming trains in the next 6 hours.</div>`;
+    return;
+  }
 
-    if (SINGLE_TRAIN_SHUTTLES.has(r.serviceId)) {
-      consist.model = 'MTC-T 110';
-      consist.cars = 2;
-      const fixed = FIXED_SHUTTLE_LEAD_CARS[r.serviceId] && FIXED_SHUTTLE_LEAD_CARS[r.serviceId][r.destination];
-      if (typeof fixed === 'number') consist.leadCar = fixed;
-    }
+  // Group sorting bins
+  const directionsMap = {
+    'Northbound': [],
+    'Southbound': [],
+    'Eastbound': [],
+    'Westbound': []
+  };
 
-    const stopTimes = calculateStopTimes(trainSeed, r.stops, r.departureMin, r.segmentTimes);
-    const pos = getTrainPosition(stopTimes, nowSeconds);
-    const minsText = (r.minsAway <= 0) ? 'Now' : `${Math.round(r.minsAway)} min`;
-    const trainId = `${r.serviceId}-${r.tag}-${r.departureMin}-${idx}`.replace(/[^a-zA-Z0-9_-]/g,'');
-    const isOpen = openDetails.has(trainId);
-    const isExpanded = expandedStops.has(trainId);
+  rows.forEach((r, idx) => {
+    const bound = getTrainDirection(r.serviceId, r.destination);
+    directionsMap[bound].push({ r, idx });
+  });
 
-    const stopsHtml = stopTimes.stops.map((st, i) => {
-      let cls = 'stop-item';
-      let icon = ICONS.pinGray;
+  let fullContainerHtml = '';
 
-      if (pos.status === 'at-station' && pos.currentIndex === i) {
-        cls += ' current' + (st.isDelayed ? ' delayed' : '');
-        icon = st.isDelayed ? ICONS.pinOrange : ICONS.pinGreen;
-      } else if (pos.status === 'en-route' && i === pos.toIndex) {
-        cls += ' en-route';
-        icon = ICONS.pinDim;
-      } else if ((pos.status === 'at-station' && i < pos.currentIndex) ||
-                 (pos.status === 'en-route' && i < pos.fromIndex)) {
-        cls += ' past';
-        icon = ICONS.pinDim;
+  for (const [directionName, arrivalsList] of Object.entries(directionsMap)) {
+    if (arrivalsList.length === 0) continue; // Skip rendering empty headings
+
+    let directionCardsHtml = arrivalsList.map(({ r, idx }) => {
+      const trainSeed = `${r.serviceId}-${r.tag}-${r.departureMin}-${r.origin}-${r.destination}`;
+      const consist = getTrainConsist(trainSeed, r.serviceId, r.isExpress);
+
+      if (SINGLE_TRAIN_SHUTTLES.has(r.serviceId)) {
+        consist.model = 'MTC-T 110';
+        consist.cars = 2;
+        const fixed = FIXED_SHUTTLE_LEAD_CARS[r.serviceId] && FIXED_SHUTTLE_LEAD_CARS[r.serviceId][r.destination];
+        if (typeof fixed === 'number') consist.leadCar = fixed;
       }
 
-      const sched = formatTime24Full(st.scheduledArrivalSec);
-      const actual = formatTime24Full(st.actualArrivalSec);
-      const delayed = st.isDelayed && (actual !== sched);
-      const timeHtml = delayed
-        ? `<span class="scheduled">${sched}</span><span class="new-time">${actual}</span>`
-        : `<span>${actual}</span>`;
+      const stopTimes = calculateStopTimes(trainSeed, r.stops, r.departureMin, r.segmentTimes);
+      const pos = getTrainPosition(stopTimes, nowSeconds);
+      const minsText = (r.minsAway <= 0) ? 'Now' : `${Math.round(r.minsAway)} min`;
+      const trainId = `${r.serviceId}-${r.tag}-${r.departureMin}-${idx}`.replace(/[^a-zA-Z0-9_-]/g,'');
+      const isOpen = openDetails.has(trainId);
+      const isExpanded = expandedStops.has(trainId);
 
-      return `<li class="${cls}">
-        <span class="stop-icon">${icon}</span>
-        <div class="stop-time-main ${delayed ? 'delayed' : ''}">${timeHtml}</div>
-        <div class="stop-name">${st.name}</div>
-        <div class="stop-details">
-          <span class="detail-item">${ICONS.clock}<span>${st.isDelayed ? `Delayed ${Math.round(st.delaySeconds/60)}m` : 'On time'}</span></span>
+      const stopsHtml = stopTimes.stops.map((st, i) => {
+        let cls = 'stop-item';
+        let icon = ICONS.pinGray;
+
+        if (pos.status === 'at-station' && pos.currentIndex === i) {
+          cls += ' current' + (st.isDelayed ? ' delayed' : '');
+          icon = st.isDelayed ? ICONS.pinOrange : ICONS.pinGreen;
+        } else if (pos.status === 'en-route' && i === pos.toIndex) {
+          cls += ' en-route';
+          icon = ICONS.pinDim;
+        } else if ((pos.status === 'at-station' && i < pos.currentIndex) ||
+                   (pos.status === 'en-route' && i < pos.fromIndex)) {
+          cls += ' past';
+          icon = ICONS.pinDim;
+        }
+
+        const sched = formatTime24Full(st.scheduledArrivalSec);
+        const actual = formatTime24Full(st.actualArrivalSec);
+        const delayed = st.isDelayed && (actual !== sched);
+        const timeHtml = delayed
+          ? `<span class="scheduled">${sched}</span><span class="new-time">${actual}</span>`
+          : `<span>${actual}</span>`;
+
+        return `<li class="${cls}">
+          <span class="stop-icon">${icon}</span>
+          <div class="stop-time-main ${delayed ? 'delayed' : ''}">${timeHtml}</div>
+          <div class="stop-name">${st.name}</div>
+          <div class="stop-details">
+            <span class="detail-item">${ICONS.clock}<span>${st.isDelayed ? `Delayed ${Math.round(st.delaySeconds/60)}m` : 'On time'}</span></span>
+          </div>
+        </li>`;
+      }).join('');
+
+      const originStop = stopTimes.stops[0];
+      const destStop = stopTimes.stops[stopTimes.stops.length - 1];
+
+      let statusBanner = '';
+      if (pos.status === 'at-station') {
+        statusBanner = `<div class="en-route-banner">${ICONS.clock} At ${pos.currentStop}${pos.isDelayed ? ' (delayed)' : ''}</div>`;
+      } else if (pos.status === 'en-route') {
+        statusBanner = `<div class="en-route-banner">${ICONS.clock} En route: ${pos.fromStop} → ${pos.toStop}</div>`;
+      } else if (pos.status === 'not-started') {
+        statusBanner = `<div class="en-route-banner">${ICONS.clock} Not started yet</div>`;
+      }
+
+      const badge = lineBadgeHtml(r.serviceId, r.isExpress);
+      return `<details class="row" data-train-id="${trainId}" ${isOpen ? 'open' : ''}>
+        <summary style="list-style:none; cursor:pointer;">
+          <div>
+            <div class="lineTag" style="display:flex; align-items:center; gap:8px;">
+              ${badge} <span>Line</span>
+            </div>
+            <div class="dest">to ${r.destination}</div>
+          </div>
+          <div class="mins">${minsText}</div>
+        </summary>
+        <div style="margin-top:10px;">
+          <div class="train-info-box">
+            <div class="train-info-header">
+              <span class="route-code">${r.tag}</span>
+              <span>${r.origin} to ${r.destination}</span>
+            </div>
+            <div class="train-info-details">
+              <span class="model">${consist.model}</span>
+              <span>with ${consist.cars} Cars</span>
+              <span class="lead-car">Lead Car: ${consist.leadCar}</span>
+            </div>
+          </div>
+          ${statusBanner}
+          <div class="compact-view" id="compact-${trainId}" style="${isExpanded ? 'display:none;' : ''}">
+            <div class="compact-stop ${pos.status==='not-started'?'at-station':''}">
+              <div class="compact-time"><span class="scheduled">${formatTime24Full(originStop.actualArrivalSec)}</span></div>
+              <div class="compact-icon">${ICONS.pinDim}</div>
+              <div class="compact-name">${originStop.name}</div>
+            </div>
+            <button class="mid-stops-btn" data-action="expand" data-train-id="${trainId}">Show all stops</button>
+            <div class="compact-stop">
+              <div class="compact-time"><span class="scheduled">${formatTime24Full(destStop.actualArrivalSec)}</span></div>
+              <div class="compact-icon">${ICONS.pinDim}</div>
+              <div class="compact-name">${destStop.name}</div>
+            </div>
+          </div>
+          <div class="slide" id="full-${trainId}" style="${isExpanded ? 'display:block; max-height:none; opacity:1;' : 'display:none;'}">
+            <div class="subtle" style="margin-bottom:8px;">Making stops at…</div>
+            <ul class="stops-list">${stopsHtml}</ul>
+          </div>
         </div>
-      </li>`;
+      </details>`;
     }).join('');
 
-    const originStop = stopTimes.stops[0];
-    const destStop = stopTimes.stops[stopTimes.stops.length - 1];
-
-    let statusBanner = '';
-    if (pos.status === 'at-station') {
-      statusBanner = `<div class="en-route-banner">${ICONS.clock} At ${pos.currentStop}${pos.isDelayed ? ' (delayed)' : ''}</div>`;
-    } else if (pos.status === 'en-route') {
-      statusBanner = `<div class="en-route-banner">${ICONS.clock} En route: ${pos.fromStop} → ${pos.toStop}</div>`;
-    } else if (pos.status === 'not-started') {
-      statusBanner = `<div class="en-route-banner">${ICONS.clock} Not started yet</div>`;
-    }
-
-    const badge = lineBadgeHtml(r.serviceId, r.isExpress);
-    return `<details class="row" data-train-id="${trainId}" ${isOpen ? 'open' : ''}>
-      <summary style="list-style:none; cursor:pointer;">
-        <div>
-          <div class="lineTag" style="display:flex; align-items:center; gap:8px;">
-            ${badge} <span>Line</span>
-          </div>
-          <div class="dest">to ${r.destination}</div>
+    // Wrap directional group inside layout containers
+    fullContainerHtml += `
+      <div class="direction-group">
+        <div class="direction-title">
+          <span>${directionName} Departures</span>
         </div>
-        <div class="mins">${minsText}</div>
-      </summary>
-      <div style="margin-top:10px;">
-        <div class="train-info-box">
-          <div class="train-info-header">
-            <span class="route-code">${r.tag}</span>
-            <span>${r.origin} to ${r.destination}</span>
-          </div>
-          <div class="train-info-details">
-            <span class="model">${consist.model}</span>
-            <span>with ${consist.cars} Cars</span>
-            <span class="lead-car">Lead Car: ${consist.leadCar}</span>
-          </div>
-        </div>
-        ${statusBanner}
-        <div class="compact-view" id="compact-${trainId}" style="${isExpanded ? 'display:none;' : ''}">
-          <div class="compact-stop ${pos.status==='not-started'?'at-station':''}">
-            <div class="compact-time"><span class="scheduled">${formatTime24Full(originStop.actualArrivalSec)}</span></div>
-            <div class="compact-icon">${ICONS.pinDim}</div>
-            <div class="compact-name">${originStop.name}</div>
-          </div>
-          <button class="mid-stops-btn" data-action="expand" data-train-id="${trainId}">Show all stops</button>
-          <div class="compact-stop">
-            <div class="compact-time"><span class="scheduled">${formatTime24Full(destStop.actualArrivalSec)}</span></div>
-            <div class="compact-icon">${ICONS.pinDim}</div>
-            <div class="compact-name">${destStop.name}</div>
-          </div>
-        </div>
-        <div class="slide" id="full-${trainId}" style="${isExpanded ? 'display:block; max-height:none; opacity:1;' : 'display:none;'}">
-          <div class="subtle" style="margin-bottom:8px;">Making stops at…</div>
-          <ul class="stops-list">${stopsHtml}</ul>
-        </div>
+        <div class="list">${directionCardsHtml}</div>
       </div>
-    </details>`;
-  }).join('') || `<div class="subtle">No upcoming trains in the next 6 hours.</div>`;
+    `;
+  }
 
+  arrivalsEl.innerHTML = fullContainerHtml;
   wireUpEventListeners();
 }
 
@@ -1253,7 +1356,6 @@ stationSelect.addEventListener('change', () => {
 limitSelect.addEventListener('change', renderArrivals);
 refreshBtn.addEventListener('click', () => { renderClock(); renderArrivals(); });
 
-// Clean up splash screen from DOM after intro ends
 const splash = document.getElementById('splash-screen');
 if (splash) {
   splash.addEventListener('animationend', (e) => {
