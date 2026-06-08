@@ -38,9 +38,6 @@
         padding-bottom: calc(78px + env(safe-area-inset-bottom));
     }
 
-    /* ---------------------------------- */
-    /* INTRO SPLASH SCREEN STYLES        */
-    /* ---------------------------------- */
     #splash-screen {
       position: fixed;
       top: 0;
@@ -75,7 +72,6 @@
     @keyframes fadeOutSplash {
       to { opacity: 0; visibility: hidden; }
     }
-    /* ---------------------------------- */
 
     header {
       position: sticky; top: 0; z-index: 10;
@@ -100,10 +96,106 @@
       box-shadow: 0 0 0 2px rgba(255, 204, 0, 0.20) inset;
     }
 
+    .custom-select-container {
+      position: relative;
+      width: 100%;
+    }
+    .custom-select-trigger {
+      width: 100%;
+      min-height: 47px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: var(--card);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 10px 40px 10px 14px;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      user-select: none;
+    }
+    .custom-select-trigger::after {
+      content: "";
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 6px solid transparent;
+      border-top-color: var(--muted);
+      pointer-events: none;
+      transition: transform 0.2s ease;
+    }
+    .custom-select-container.open .custom-select-trigger::after {
+      transform: translateY(-50%) rotate(180deg);
+    }
+    .trigger-content {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .station-trigger-name {
+      font-weight: 500;
+    }
+    .custom-options-dropdown {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background: #181826;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 14px;
+      max-height: 340px;
+      overflow-y: auto;
+      z-index: 100;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+      display: none;
+    }
+    .custom-select-container.open .custom-options-dropdown {
+      display: block;
+    }
+    .custom-option-item {
+      padding: 12px 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid rgba(255,255,255,.04);
+      transition: background 0.15s ease;
+    }
+    .custom-option-item:last-child {
+      border-bottom: none;
+    }
+    .custom-option-item:hover {
+      background: rgba(255,255,255,.06);
+    }
+    .custom-option-item.selected {
+      background: rgba(138, 143, 255, 0.12);
+    }
+    .station-item-name {
+      font-size: 15px;
+      color: var(--text);
+    }
+    .station-item-badges {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .dropdown-badge-img {
+      width: 20px;
+      height: 20px;
+      border-radius: 5px;
+      object-fit: contain;
+      display: block;
+    }
+
     .grid { display: grid; gap: 12px; margin-top: 14px; }
     .card { background: linear-gradient(180deg, rgba(255,255,255,.03), transparent), var(--card); border: 5px solid rgba(255,255,255,.06); border-radius: 18px; padding: 14px; }
 
-    /* Directional Heading Header Styles */
     .direction-group {
       margin-top: 15px;
       margin-bottom: 25px;
@@ -210,6 +302,16 @@
     .stop-name {
       font-size: 14px;
       color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .accessible-icon-tiny {
+      width: 15px;
+      height: 15px;
+      object-fit: contain;
+      vertical-align: middle;
+      display: inline-block;
     }
     .stop-details {
       font-size: 11px;
@@ -256,7 +358,7 @@
       padding: 10px 12px;
       margin-bottom: 10px;
     }
-    .train-info-header {
+    .train-info-box .train-info-header {
       font-size: 13px;
       font-weight: 600;
       color: var(--text);
@@ -265,7 +367,7 @@
       align-items: center;
       gap: 6px;
     }
-    .train-info-header .route-code {
+    .train-info-box .train-info-header .route-code {
       background: rgba(255,255,255,0.1);
       border: 1px solid rgba(255,255,255,0.2);
       border-radius: 4px;
@@ -274,23 +376,23 @@
       font-weight: 700;
       letter-spacing: 0.5px;
     }
-    .train-info-details {
+    .train-info-box .train-info-details {
       font-size: 12px;
       color: var(--muted);
       display: flex;
       align-items: center;
       gap: 6px;
     }
-    .train-info-details svg {
+    .train-info-box .train-info-details svg {
       width: 14px;
       height: 14px;
       flex-shrink: 0;
     }
-    .train-info-details .model {
+    .train-info-box .train-info-details .model {
       color: var(--text);
       font-weight: 500;
     }
-    .train-info-details .lead-car {
+    .train-info-box .train-info-details .lead-car {
       color: var(--accent);
       font-weight: 600;
     }
@@ -428,7 +530,13 @@
       <div class="title">BORail Live Timetable</div>
       <div class="subtle" id="nowText">—</div>
       <div class="controls">
-        <select id="stationSelect" aria-label="Choose station"></select>
+        <div class="custom-select-container" id="stationDropdownContainer">
+          <div class="custom-select-trigger" id="stationDropdownTrigger">
+            <div class="trigger-content" id="stationTriggerContent">Loading Station...</div>
+          </div>
+          <div class="custom-options-dropdown" id="stationDropdownOptions"></div>
+        </div>
+        
         <div class="seg">
           <span class="pill" id="serviceState">Service: Normal</span>
           <button id="refreshBtn" title="Refresh">↻</button>
@@ -440,17 +548,33 @@
   <main class="wrap">
     <section class="grid">
       <div class="card">
-        <div class="banner" style="margin-bottom:12px;">
-          <div>Upcoming trains</div>
-          <div class="seg">
-            <label class="subtle" for="limitSelect">Show</label>
-            <select id="limitSelect">
-              <option value="5">5</option>
-              <option value="8">8</option>
-              <option value="12">12</option>
-            </select>
-          </div>
-        </div>
+<div class="banner" style="margin-bottom:12px;">
+  <div>Upcoming trains</div>
+  <div class="seg" style="display: flex; gap: 10px; align-items: center;">
+    <div style="display: flex; gap: 4px; align-items: center;">
+      <label class="subtle" for="dirFilterSelect">Direction Type</label>
+      <select id="dirFilterSelect" style="padding: 6px 30px 6px 10px; font-size: 13px; border-radius: 8px;">
+        <option value="ALL">All</option>
+      </select>
+    </div>
+    <div style="display: flex; gap: 4px; align-items: center;">
+      <label class="subtle" for="serviceTypeFilterSelect">Service Type</label>
+      <select id="serviceTypeFilterSelect" style="padding: 6px 30px 6px 10px; font-size: 13px; border-radius: 8px;">
+        <option value="ALL">All Services</option>
+        <option value="LOCAL">Local Only</option>
+        <option value="EXPRESS">Express Only</option>
+      </select>
+    </div>
+    <div style="display: flex; gap: 4px; align-items: center;">
+      <label class="subtle" for="limitSelect">Show</label>
+      <select id="limitSelect" style="padding: 6px 30px 6px 10px; font-size: 13px; border-radius: 8px;">
+        <option value="5">5</option>
+        <option value="8">8</option>
+        <option value="12">12</option>
+      </select>
+    </div>
+  </div>
+</div>
         <div id="arrivals"></div>
       </div>
 
@@ -479,7 +603,7 @@
     </section>
   </main>
 
-  <footer>© BORail • Built for iPhone • Works offline after first load | Version 49 (6/7/26)</footer>
+  <footer>© BORail • Built for iPhone • Works offline after first load | Version 50 (6/8/26)</footer>
   
   <nav class="tabbar" role="navigation" aria-label="Primary">
     <a class="active" href="index.html">
@@ -509,6 +633,23 @@
   </nav>
 
   <script>
+// Replace this placeholder link with your actual GitHub raw repository URL asset link path!
+const ACCESSIBLE_ICON_URL = "https://raw.githubusercontent.com/onedevlucas/onedevlucas.github.io/main/accessibletinyicon.png";
+
+// Setup list matching your specified dataset mapping rules
+const ACCESSIBLE_STATIONS = new Set([
+  'Newkirk', 'Newkirk - Oak Street', 'Hoganville', 'Bayview Park', 'Chelsea Bay', 'Berwick Hall',
+  'Bradford Square', 'Bradford Bay', 'Cambridge Central', 'Atkinson Junction', 'Kenilworth', 'La Vista',
+  'Brookfield Lawn', 'Boylston', 'Foxston', 'New Cottage', 'Whitebranch', 'Burlington - University of NCU',
+  'Willow Springs', 'Rockcastle', 'Cannon View', 'Ivory Knolls', 'Vanderburg', 'Ralston-Finch East',
+  'Atkins Bridge', 'Wychwood - Oakville City Airport', 'Veridia Nexus', 'Oakville Exchange', 'Oakville City Center',
+  'Oakville Plaza', 'Leighton Castle', 'Fort Meadow', 'Yoakum', 'Fernwood', 'Talmedge Hill', 'Mount River',
+  'Perry Road', 'Wood-by-Hike', 'New Salemview', 'Millford Heights', 'Roxbury Landing', 'East Heights',
+  'Alpherst', 'Scottsbury', 'Ameryville', 'Scottsdale', 'Brandywine', 'Santa Mora', 'Greens Corner',
+  'Doverville', 'Groveton', 'Madisonboro', 'Hutchinson Point', 'South Harrington', 'Harrington City',
+  'Carrollton', 'Hadleigh'
+]);
+
 const ICONS = {
   clock: `<svg class="clock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
     <circle cx="12" cy="12" r="10"/>
@@ -966,12 +1107,30 @@ function tripsForRoute(routeDef) {
 
   const branchSeed = `${routeDef.serviceId}-${routeDef.tag}-${routeDef.origin}-${routeDef.destination}`;
   const rng = seededRandom(branchSeed);
-  const offset = Math.floor(rng() * 3);
-  const deps = dep.map(t => t + offset);
+  const baseOffset = Math.floor(rng() * 3);
+  const deps = dep.map(t => t + baseOffset);
 
   const out = [];
   for (const t0 of deps) {
-    let cur = t0;
+    let slottedDepartureTime = t0;
+
+    if (!SINGLE_TRAIN_SHUTTLES.has(routeDef.serviceId)) {
+      if (routeDef.serviceId === 'F' && !routeDef.isExpress) {
+        if (routeDef.origin === 'Boylston') slottedDepartureTime += 3;
+      } else if (routeDef.serviceId === 'C') {
+        if (routeDef.destination === 'Oakville City Airport' || routeDef.origin === 'Oakville City Airport') {
+          slottedDepartureTime += 4;
+        }
+      } else if (routeDef.serviceId === 'A') {
+        if (routeDef.isExpress) slottedDepartureTime += 3;
+      } else if (routeDef.serviceId === 'B') {
+        if (routeDef.isExpress) slottedDepartureTime += 2;
+      } else if (routeDef.serviceId === 'S') {
+        if (routeDef.isExpress) slottedDepartureTime += 3;
+      }
+    }
+
+    let cur = slottedDepartureTime;
     for (let i = 0; i < routeDef.stops.length; i++) {
       out.push({
         station: routeDef.stops[i],
@@ -983,7 +1142,7 @@ function tripsForRoute(routeDef) {
         color: SERVICE_META[routeDef.serviceId].color,
         stops: routeDef.stops,
         segmentTimes: seg,
-        departureMin: t0,
+        departureMin: slottedDepartureTime,
         origin: routeDef.origin
       });
       if (i < seg.length) cur += seg[i];
@@ -992,11 +1151,7 @@ function tripsForRoute(routeDef) {
   return out;
 }
 
-/* ---------------------------------- */
-/* NEW CARDINAL DIRECTION ROUTER REGEX */
-/* ---------------------------------- */
 function getTrainDirection(serviceId, destination) {
-  // Overrides based on specified line behaviors
   if (destination === 'East Heights') {
     if (serviceId === 'C') return 'Northbound';
     if (serviceId === 'E') return 'Southbound';
@@ -1010,7 +1165,6 @@ function getTrainDirection(serviceId, destination) {
     if (destination === 'Harrington City' || destination === 'Hadleigh') return 'Northbound';
   }
 
-  // General terminal mappings
   switch(destination) {
     case 'Newkirk':
     case 'Burlington - University of NCU':
@@ -1033,7 +1187,7 @@ function getTrainDirection(serviceId, destination) {
     case 'Veridia Nexus':
       return 'Westbound';
     default:
-      return 'Northbound'; // Safe default fallback
+      return 'Northbound';
   }
 }
 
@@ -1093,25 +1247,108 @@ function arrivalsForStation(stationId, now = new Date()) {
   return out;
 }
 
-const stationSelect = document.getElementById('stationSelect');
+const dropdownContainer = document.getElementById('stationDropdownContainer');
+const dropdownTrigger = document.getElementById('stationDropdownTrigger');
+const dropdownTriggerContent = document.getElementById('stationTriggerContent');
+const dropdownOptionsPanel = document.getElementById('stationDropdownOptions');
+
 const arrivalsEl = document.getElementById('arrivals');
 const nowText = document.getElementById('nowText');
 const limitSelect = document.getElementById('limitSelect');
+const dirFilterSelect = document.getElementById('dirFilterSelect');
+const serviceTypeFilterSelect = document.getElementById('serviceTypeFilterSelect');
 const refreshBtn = document.getElementById('refreshBtn');
-const serviceState = document.getElementById('serviceState');
 
 const openDetails = new Set();
 const expandedStops = new Set();
+let activeStationId = '';
 
-function renderStations() {
+function getBadgesForStation(stationId) {
+  const linesMap = {};
+  ROUTES.forEach(route => {
+    if (route.stops.includes(stationId)) {
+      if (!linesMap[route.serviceId]) {
+        linesMap[route.serviceId] = { local: false, express: false };
+      }
+      if (route.isExpress) {
+        linesMap[route.serviceId].express = true;
+      } else {
+        linesMap[route.serviceId].local = true;
+      }
+    }
+  });
+
+  let htmlString = '';
+  const sortedServiceIds = Object.keys(linesMap).sort();
+  sortedServiceIds.forEach(serviceId => {
+    const meta = SERVICE_META[serviceId];
+    if (!meta) return;
+    if (linesMap[serviceId].local && meta.localIcon) {
+      htmlString += `<img class="dropdown-badge-img" src="${meta.localIcon}" alt="(${serviceId})">`;
+    }
+    if (linesMap[serviceId].express && meta.expressIcon) {
+      htmlString += `<img class="dropdown-badge-img" src="${meta.expressIcon}" alt="<${serviceId}>">`;
+    }
+  });
+  return htmlString;
+}
+
+function renderCustomStationsDropdown() {
   const sorted = [...STATIONS].sort((a, b) =>
     a.name.localeCompare(b.name, 'en', { sensitivity: 'base' })
   );
-  stationSelect.innerHTML = sorted
-    .map(s => `<option value="${s.id}">${s.name}</option>`)
-    .join('');
-  stationSelect.value = sorted[0].id;
+
+  if (!activeStationId) {
+    activeStationId = sorted[0].id;
+  }
+
+  let optionsHtml = '';
+  sorted.forEach(s => {
+    const badgeImages = getBadgesForStation(s.id);
+    const isSelectedClass = (s.id === activeStationId) ? 'selected' : '';
+    optionsHtml += `
+      <div class="custom-option-item ${isSelectedClass}" data-value="${s.id}">
+        <span class="station-item-name">${s.name}</span>
+        <div class="station-item-badges">${badgeImages}</div>
+      </div>
+    `;
+  });
+  dropdownOptionsPanel.innerHTML = optionsHtml;
+
+  const activeStationObj = sorted.find(s => s.id === activeStationId) || sorted[0];
+  dropdownTriggerContent.innerHTML = `
+    <span class="station-trigger-name">${activeStationObj.name}</span>
+    <div class="station-item-badges">${getBadgesForStation(activeStationObj.id)}</div>
+  `;
+
+  dropdownOptionsPanel.querySelectorAll('.custom-option-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+      activeStationId = item.dataset.value;
+      const selectedName = item.querySelector('.station-item-name').textContent;
+      const selectedBadgesHtml = item.querySelector('.station-item-badges').innerHTML;
+      dropdownTriggerContent.innerHTML = `
+        <span class="station-trigger-name">${selectedName}</span>
+        <div class="station-item-badges">${selectedBadgesHtml}</div>
+      `;
+      dropdownContainer.classList.remove('open');
+      openDetails.clear();
+      expandedStops.clear();
+      renderCustomStationsDropdown();
+      renderArrivals();
+    });
+  });
 }
+
+dropdownTrigger.addEventListener('click', (e) => {
+  e.stopPropagation();
+  dropdownContainer.classList.toggle('open');
+});
+
+document.addEventListener('click', (e) => {
+  if (!dropdownContainer.contains(e.target)) {
+    dropdownContainer.classList.remove('open');
+  }
+});
 
 function renderClock() {
   const now = new Date();
@@ -1144,22 +1381,63 @@ function slideDown(el) {
   el.style.opacity = '1';
 }
 
-/* ---------------------------------- */
-/* CATEGORIZED ARRIVALS RENDER ENGINE  */
-/* ---------------------------------- */
 function renderArrivals() {
   const now = new Date();
-  const station = stationSelect.value;
+  const station = activeStationId;
   const limit = Number(limitSelect.value || 8);
-  const rows = arrivalsForStation(station, now).slice(0, limit);
+  
+  const allRawRows = arrivalsForStation(station, now);
   const nowSeconds = now.getHours()*3600 + now.getMinutes()*60 + now.getSeconds();
 
-  if (rows.length === 0) {
+  if (allRawRows.length === 0) {
+    dirFilterSelect.innerHTML = '<option value="ALL">All</option>';
     arrivalsEl.innerHTML = `<div class="subtle">No upcoming trains in the next 6 hours.</div>`;
     return;
   }
 
-  // Group sorting bins
+  const availableDirections = new Set();
+  allRawRows.forEach(r => {
+    const bound = getTrainDirection(r.serviceId, r.destination);
+    availableDirections.add(bound);
+  });
+
+  const currentFilterValue = dirFilterSelect.value || 'ALL';
+  let filterHtml = '<option value="ALL">All Directions</option>';
+  [...availableDirections].sort().forEach(dir => {
+    filterHtml += `<option value="${dir}">${dir}</option>`;
+  });
+  dirFilterSelect.innerHTML = filterHtml;
+
+  if (availableDirections.has(currentFilterValue) || currentFilterValue === 'ALL') {
+    dirFilterSelect.value = currentFilterValue;
+  } else {
+    dirFilterSelect.value = 'ALL';
+  }
+
+  const activeFilter = dirFilterSelect.value;
+  const activeServiceType = serviceTypeFilterSelect.value;
+
+  const filteredRows = allRawRows.filter(r => {
+    let matchDir = true;
+    if (activeFilter !== 'ALL') {
+      matchDir = (getTrainDirection(r.serviceId, r.destination) === activeFilter);
+    }
+    let matchService = true;
+    if (activeServiceType === 'LOCAL') {
+      matchService = !r.isExpress;
+    } else if (activeServiceType === 'EXPRESS') {
+      matchService = r.isExpress;
+    }
+    return matchDir && matchService;
+  });
+  
+  const rows = filteredRows.slice(0, limit);
+
+  if (rows.length === 0) {
+    arrivalsEl.innerHTML = `<div class="subtle">No upcoming ${activeFilter} trains found.</div>`;
+    return;
+  }
+
   const directionsMap = {
     'Northbound': [],
     'Southbound': [],
@@ -1173,9 +1451,8 @@ function renderArrivals() {
   });
 
   let fullContainerHtml = '';
-
   for (const [directionName, arrivalsList] of Object.entries(directionsMap)) {
-    if (arrivalsList.length === 0) continue; // Skip rendering empty headings
+    if (arrivalsList.length === 0) continue;
 
     let directionCardsHtml = arrivalsList.map(({ r, idx }) => {
       const trainSeed = `${r.serviceId}-${r.tag}-${r.departureMin}-${r.origin}-${r.destination}`;
@@ -1218,10 +1495,15 @@ function renderArrivals() {
           ? `<span class="scheduled">${sched}</span><span class="new-time">${actual}</span>`
           : `<span>${actual}</span>`;
 
+        // Check if current item station qualifies for accessibility layout injection
+        const accessIconHtml = ACCESSIBLE_STATIONS.has(st.name) 
+          ? `<img class="accessible-icon-tiny" src="${ACCESSIBLE_ICON_URL}" alt="Accessible station" />` 
+          : '';
+
         return `<li class="${cls}">
           <span class="stop-icon">${icon}</span>
           <div class="stop-time-main ${delayed ? 'delayed' : ''}">${timeHtml}</div>
-          <div class="stop-name">${st.name}</div>
+          <div class="stop-name">${st.name} ${accessIconHtml}</div>
           <div class="stop-details">
             <span class="detail-item">${ICONS.clock}<span>${st.isDelayed ? `Delayed ${Math.round(st.delaySeconds/60)}m` : 'On time'}</span></span>
           </div>
@@ -1285,7 +1567,6 @@ function renderArrivals() {
       </details>`;
     }).join('');
 
-    // Wrap directional group inside layout containers
     fullContainerHtml += `
       <div class="direction-group">
         <div class="direction-title">
@@ -1339,7 +1620,7 @@ function wireUpEventListeners() {
   });
 }
 
-renderStations();
+renderCustomStationsDropdown();
 renderClock();
 renderArrivals();
 
@@ -1348,12 +1629,9 @@ setInterval(() => {
   renderArrivals();
 }, 5000);
 
-stationSelect.addEventListener('change', () => {
-  openDetails.clear();
-  expandedStops.clear();
-  renderArrivals();
-});
 limitSelect.addEventListener('change', renderArrivals);
+dirFilterSelect.addEventListener('change', renderArrivals);
+serviceTypeFilterSelect.addEventListener('change', renderArrivals);
 refreshBtn.addEventListener('click', () => { renderClock(); renderArrivals(); });
 
 const splash = document.getElementById('splash-screen');
