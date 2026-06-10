@@ -315,12 +315,19 @@ const expandDepartures = periods => {
   return out;
 };
 
-function getTrainDelayInfo(trainSeed) {
+const BASE_DELAY_RATE = 0.10;
+const RUSH_HOUR_DELAY_MULTIPLIER = 1.09;
+
+function getTrainDelayInfo(trainSeed, mode = 'local') {
   const rng = seededRandom(trainSeed + '-delay');
   const roll = rng();
-  if (roll < 0.90) {
+  const isRushHour = mode === 'rushAM' || mode === 'rushPM';
+  const delayRate = BASE_DELAY_RATE * (isRushHour ? RUSH_HOUR_DELAY_MULTIPLIER : 1);
+  const oneMinuteDelayThreshold = 1 - (BASE_DELAY_RATE * 0.20);
+
+  if (roll < 1 - delayRate) {
     return { isDelayed: false, delaySeconds: 0, delayStartStop: -1 };
-  } else if (roll < 0.98) {
+  } else if (roll < oneMinuteDelayThreshold) {
     const startStop = Math.floor(rng() * 2) + 2;
     return { isDelayed: true, delaySeconds: 60, delayStartStop: startStop };
   } else {
@@ -330,9 +337,9 @@ function getTrainDelayInfo(trainSeed) {
   }
 }
 
-function calculateStopTimes(trainSeed, stops, departureMinutes, customSegmentTimes = null) {
+function calculateStopTimes(trainSeed, stops, departureMinutes, customSegmentTimes = null, mode = 'local') {
   const rng = seededRandom(trainSeed);
-  const delayInfo = getTrainDelayInfo(trainSeed);
+  const delayInfo = getTrainDelayInfo(trainSeed, mode);
   const result = [];
   const defaultSegmentSeconds = DEFAULT_SEGMENT_TIME * 60;
   let cumulativeSeconds = 0;
@@ -830,7 +837,7 @@ function renderArrivals() {
         if (typeof fixed === 'number') consist.leadCar = fixed;
       }
 
-      const stopTimes = calculateStopTimes(trainSeed, r.stops, r.departureMin, r.segmentTimes);
+      const stopTimes = calculateStopTimes(trainSeed, r.stops, r.departureMin, r.segmentTimes, r.mode);
       const pos = getTrainPosition(stopTimes, nowSeconds);
       const minsText = (r.minsAway <= 0) ? 'Now' : `${Math.round(r.minsAway)} min`;
       const trainId = `${r.serviceId}-${r.tag}-${r.departureMin}-${idx}`.replace(/[^a-zA-Z0-9_-]/g,'');
