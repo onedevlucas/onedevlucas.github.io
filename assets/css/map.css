@@ -1,0 +1,142 @@
+:root {
+      --bg: #0b0b10;
+      --card: #141421;
+      --muted: #a0a3ad;
+      --text: #f3f4f8;
+      --accent: #8a8fff;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Inter, Helvetica, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 50% -200px, #151528, #0a0a12) fixed;
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      /* space for fixed tab bar (matches index.html) */
+      padding-bottom: calc(78px + env(safe-area-inset-bottom));
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+    header {
+      position: sticky; top: 0; z-index: 10;
+      backdrop-filter: saturate(180%) blur(14px);
+      background: rgba(10,10,18,.65);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      padding-top: env(safe-area-inset-top);
+    }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 12px 16px; }
+    .title { font-weight: 800; letter-spacing: .2px; font-size: 20px; }
+    .bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .btn {
+      display:inline-block;
+      padding:8px 16px;
+      font-size:14px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,0.2);
+      background:rgba(255,255,255,0.08);
+      color:#f3f4f8;
+      text-decoration:none;
+    }
+    .muted { color: var(--muted); font-size: 12px; }
+    .viewer {
+      height: 100%;
+      width: 100%;
+      border: 0;
+      background: var(--bg);
+    }
+    .fallback {
+      height: 100%;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 24px;
+      background: linear-gradient(180deg, rgba(255,255,255,.03), transparent), var(--card);
+      border-top: 1px solid rgba(255,255,255,.06);
+    }
+
+    /* --- Bottom tab bar (same style as index) --- */
+    .tabbar {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      z-index: 20;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr); /* 4 items: Timetable, Map, Status, Information */
+      align-items: end;
+      gap: 6px;
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+      border-top: 1px solid rgba(255,255,255,.08);
+      background: rgba(180,180,180,0.20); /* grayish background */
+      backdrop-filter: saturate(180%) blur(14px);
+    }
+    .tabbar a {
+      text-decoration: none;
+      color: var(--muted);
+      text-align: center;
+    }
+    .tabbar .item {
+      display: grid;
+      gap: 6px;
+      justify-items: center;
+      font-size: 12px;
+    }
+    .tabbar .item img {
+      width: 26px; height: 26px;
+      display: block;
+      opacity: .8;
+      filter: grayscale(100%);
+    }
+    .tabbar a.active { color: var(--accent); }
+    .tabbar a.active img { opacity: 1; filter: none; }
+
+    /* --- Centered map buttons --- */
+.centerwrap {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 16px 90px; /* extra bottom space for tab bar */
+  display: grid;
+  place-items: center;
+}
+
+.map-buttons {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+}
+
+@media (min-width: 720px) {
+  .map-buttons { grid-template-columns: repeat(3, 1fr); }
+}
+
+.map-card {
+  background: linear-gradient(180deg, rgba(255,255,255,.03), transparent), var(--card);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px;
+  padding: 18px;
+  text-align: center;
+}
+
+.mapbtn {
+  display: inline-block;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.08);
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.map-caption {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.mapbtn.unavailable {
+  cursor: not-allowed;
+  opacity: 0.55;
+}

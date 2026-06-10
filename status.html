@@ -4,94 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>BORail Line & Elevator Status</title>
-  <link rel="icon" type="image/png" href="favicon.png">
-  <style>
-    :root{
-      --bg:#0b0b10;
-      --card:#141421;
-      --muted:#a0a3ad;
-      --text:#f3f4f8;
-      --accent:#8a8fff;
-      --ok:#34c759;           /* green text for OK */
-      --warn:#ffcc00;         /* orange–yellow for Minor */
-      --bad:#ff3b30;          /* red for Major / No Service */
-      --line-Red:#ff3b30;
-      --line-Gold:#ffcc00;
-      --line-Green:#34c759;
-      --line-Orange:#ff9500;
-      --line-Blue:#007aff;
-      --line-Pink:#ff2d55;
-      --line-Brown:#a2845e;
-      --line-Silver:#c0c0c0;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Inter,Helvetica,Arial,sans-serif;
-      background:radial-gradient(1200px 600px at 50% -200px,#151528,#0a0a12) fixed;
-      color:var(--text);
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
-      padding-bottom:calc(78px + env(safe-area-inset-bottom)); /* room for tab bar */
-    }
-    header{
-      position:sticky;top:0;z-index:10;
-      backdrop-filter:saturate(180%) blur(14px);
-      background:rgba(10,10,18,.65);
-      border-bottom:1px solid rgba(255,255,255,.08);
-      padding-top:env(safe-area-inset-top);
-    }
-    .wrap{max-width:860px;margin:0 auto;padding:12px 16px;}
-    .title{font-weight:800;letter-spacing:.2px;font-size:22px;}
-    .subtle{color:var(--muted);font-size:12px;}
-    .card{background:linear-gradient(180deg,rgba(255,255,255,.03),transparent),var(--card);border:5px solid rgba(255,255,255,.06);border-radius:18px;padding:14px;}
-    .grid{display:grid;gap:12px;margin-top:14px;}
-
-    /* status list rows */
-    .status-list{display:grid;gap:10px;}
-    .row, .srow summary{
-      display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;
-      padding:16px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);
-      list-style:none;cursor:default;
-    }
-    .srow{border:1px solid rgba(255,255,255,.06);border-radius:14px;background:rgba(255,255,255,.02);}
-    .srow summary{cursor:pointer;}
-    .srow summary::-webkit-details-marker{display:none}
-    .srow[open] summary .arrow{transform:rotate(90deg)}
-    .name{font-weight:600;letter-spacing:.2px}
-    .dot{width:14px;height:14px;border-radius:50%;box-shadow:0 0 0 3px rgba(255,255,255,.08) inset}
-    .lnicon{width:28px;height:28px;object-fit:contain;display:block}
-
-    .pill{
-      font-weight:600;
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(255,255,255,.04);
-      padding:6px 10px;border-radius:999px;font-size:12px;white-space:nowrap;
-    }
-    .ok{color:var(--ok)}
-    .warn{color:var(--warn)}
-    .bad{color:var(--bad)}
-    .nosvc{color:var(--bad);font-weight:800;letter-spacing:.4px;}
-    .arrow{display:inline-block;transition:transform .2s ease;margin-left:6px;opacity:.8}
-
-    .reason{padding:0 16px 12px 44px;color:#fff;line-height:1.5}
-
-    /* --- Bottom tab bar (same as other pages) --- */
-    .tabbar{
-      position:fixed;left:0;right:0;bottom:0;z-index:20;
-      display:grid;grid-template-columns:repeat(4,1fr);align-items:end;gap:6px;
-      padding:10px 12px calc(10px + env(safe-area-inset-bottom));
-      border-top:1px solid rgba(255,255,255,.08);
-      background:rgba(180,180,180,.20);
-      backdrop-filter:saturate(180%) blur(14px);
-    }
-    .tabbar a{text-decoration:none;color:var(--muted);text-align:center;}
-    .tabbar .item{display:grid;gap:6px;justify-items:center;font-size:12px;}
-    .tabbar .item img{width:26px;height:26px;display:block;opacity:.8;filter:grayscale(100%);}
-    .tabbar a.active{color:var(--accent);}
-    .tabbar a.active img{opacity:1;filter:none;}
-  </style>
+  <link rel="icon" type="image/png" href="assets/images/branding/favicon.png">
+  <link rel="stylesheet" href="assets/css/status.css">
 </head>
 <body>
   <header>
@@ -121,301 +35,32 @@
     <!-- Timetable -->
     <a href="index.html">
       <div class="item">
-        <img src="timetableicon.png" alt="" width="26" height="26" />
+        <img src="assets/images/navigation/timetable.png" alt="" width="26" height="26" />
         <span>Timetable</span>
       </div>
     </a>
     <!-- Map -->
     <a href="map.html">
       <div class="item">
-        <img src="mapicon.png" alt="" width="26" height="26" />
+        <img src="assets/images/navigation/map.png" alt="" width="26" height="26" />
         <span>Map</span>
       </div>
     </a>
     <!-- Information (external) -->
     <a href="https://sites.google.com/view/borail-mc/home" target="_blank" rel="noopener">
       <div class="item">
-        <img src="websiteicon.png" alt="" width="26" height="26" />
+        <img src="assets/images/navigation/information.png" alt="" width="26" height="26" />
         <span>Information</span>
       </div>
     </a>
     <!-- Status (current) -->
     <a class="active" href="status.html">
       <div class="item">
-        <img src="statusicon.png" alt="" width="26" height="26" />
+        <img src="assets/images/navigation/status.png" alt="" width="26" height="26" />
         <span>Status</span>
       </div>
     </a>
   </nav>
-
-  <script>
-    // ----- base line probabilities (shared by local/express variants) -----
-    const BASE_LINES = [
-      { letter:'A', color:'var(--line-Green)',  probs:{ ok:90, minor:3, major:5, none:2 } }, // formerly Green
-      { letter:'F', color:'var(--line-Red)',    probs:{ ok:85, minor:9, major:4, none:2 } }, // formerly Red
-      { letter:'G', color:'var(--line-Gold)',   probs:{ ok:95, minor:2, major:2, none:1 } }, // formerly Gold
-      { letter:'D', color:'var(--line-Orange)', probs:{ ok:99, minor:0, major:0, none:1 } }, // formerly Orange
-      { letter:'B', color:'var(--line-Blue)',   probs:{ ok:80, minor:4, major:15, none:1 } }, // formerly Blue
-      { letter:'C', color:'var(--line-Pink)',   probs:{ ok:86, minor:4, major:5, none:5 } }, // formerly Pink
-      { letter:'E', color:'var(--line-Brown)',  probs:{ ok:86, minor:1, major:9, none:4 } }, // formerly Brown
-      // new Silver Line
-      { letter:'S', color:'var(--line-Silver)', probs:{ ok:90, minor:4, major:4, none:2 } },
-    ];
-    const BASE = Object.fromEntries(BASE_LINES.map(x => [x.letter, x]));
-
-    // ----- services shown on the status page -----
-    // nameHtml is inserted via innerHTML
-    const SERVICES = [
-      // A (Green) - Local + Express
-      { id:'A-local',   nameHtml:'Line',        icon:'ALocalIcon.png',    letter:'A', mode:'local'   },
-      { id:'A-express', nameHtml:'Line',  icon:'AExpressIcon.png',  letter:'A', mode:'express' },
-
-      // F (Red) - Local + Express
-      { id:'F-local',   nameHtml:'Line',        icon:'FLocalIcon.png',    letter:'F', mode:'local'   },
-      { id:'F-express', nameHtml:'Line',  icon:'FExpressIcon.png',  letter:'F', mode:'express' },
-
-      // G (Gold) - Local
-      { id:'G-local',   nameHtml:'Line',        icon:'GLocalIcon.png',    letter:'G', mode:'local'   },
-
-      // D (Orange) - Local
-      { id:'D-local',   nameHtml:'Line',        icon:'DLocalIcon.png',    letter:'D', mode:'local'   },
-
-      // B (Blue) - Local
-      { id:'B-local',   nameHtml:'Line',        icon:'BLocalIcon.png',    letter:'B', mode:'local'   },
-
-      // C (Pink) - Local
-      { id:'C-local',   nameHtml:'Line',        icon:'CLocalIcon.png',    letter:'C', mode:'local'   },
-
-      // E (Brown) - Local
-      { id:'E-local',   nameHtml:'Line',        icon:'ELocalIcon.png',    letter:'E', mode:'local'   },
-
-      // S (Silver) - Local + Express
-      { id:'S-local',   nameHtml:'Line',        icon:'SLocalIcon.png',    letter:'S', mode:'local'   },
-      { id:'S-express', nameHtml:'Line',  icon:'SExpressIcon.png',  letter:'S', mode:'express' },
-    ].map(s => ({ ...s, ...BASE[s.letter] }));
-
-    // 3 reasons per type (white text in details)
-    const REASONS = {
-      minor: [
-        'Signal Maintenance - Causing Reduced Speed On Tracks',
-        'Track Inspection In Progress - Possible Track Damage, Crews Assisting.',
-        'Platform Crowding - Passengers Delaying Trains at Platform.'
-      ],
-      major: [
-        'Disabled Train On Tracks — Crews Assisting; Expect Extended Delays.',
-        'Switch Malfunction Near A Junction - Single-Tracking Through The Area.',
-        'Police Activity At A Station - Trains Are Bypassing Station.'
-      ],
-      none: [
-        'Severe Weather Impacted — Service Suspended until further notice.',
-        'Electrical Outage on track - Service Suspended until further notice.',
-        'Emergency Track Repair - Service Suspended until further notice.',
-        'Signal System Fault - Service Suspended until further notice.',
-        'Staff Shortage - Service Suspended until further notice.',
-        'Fire/Smoke Incident - Service Suspended until further notice.'
-      ]
-    };
-
-    // ----- time-based service rules (uses the viewer's local time) -----
-    const SCHEDULE = {
-      morningRushStart: 6*60 + 30,   // 6:30 AM
-      morningRushEnd:   9*60 + 30,   // 9:30 AM
-      eveningRushStart: 17*60 + 0,   // 5:00 PM
-      eveningRushEnd:   19*60 + 30,  // 7:30 PM
-      lateNightStart:   22*60 + 30,  // 10:30 PM
-      lateNightEnd:     6*60 + 30    // 6:30 AM
-    };
-
-    const LATE_NIGHT_OFF = new Set(['S-local','S-express','G-local','D-local']);
-
-    function minutesNowLocal(){
-      const d = new Date();
-      return d.getHours()*60 + d.getMinutes();
-    }
-
-    function getScheduleState(){
-      const m = minutesNowLocal();
-      const late = (m >= SCHEDULE.lateNightStart) || (m < SCHEDULE.lateNightEnd);
-      const morningRush = (m >= SCHEDULE.morningRushStart) && (m < SCHEDULE.morningRushEnd);
-      const eveningRush = (m >= SCHEDULE.eveningRushStart) && (m < SCHEDULE.eveningRushEnd);
-      const rush = morningRush || eveningRush;
-      return { m, late, rush };
-    }
-
-    function scheduleKey(){
-      const s = getScheduleState();
-      return s.late ? 'late' : (s.rush ? 'rush' : 'noexpress');
-    }
-
-    function scheduledOverride(service){
-      const s = getScheduleState();
-
-      // Late night shutdown (10:30 PM–6:30 AM): S (local+express), G, D
-      if (s.late && LATE_NIGHT_OFF.has(service.id)) {
-        return {
-          cls: 'nosvc',
-          label: 'NO SERVICE',
-          reason: 'Service does not operate 10:30 PM–6:30 AM (your local time).'
-        };
-      }
-
-      // Express only during rush windows
-      if (service.mode === 'express' && !s.rush) {
-        return {
-          cls: 'nosvc',
-          label: 'NO SERVICE',
-          reason: 'Express service operates only 6:30 AM–9:30 AM and 5:00 PM–7:30 PM (your local time).'
-        };
-      }
-
-      return null;
-    }
-
-    function pickStatus(p){
-      // returns one of: 'ok' | 'minor' | 'major' | 'none'
-      const r = Math.random()*100;
-      if (r < p.ok) return 'ok';
-      if (r < p.ok + p.minor) return 'minor';
-      if (r < p.ok + p.minor + p.major) return 'major';
-      return 'none';
-    }
-
-    function renderStatus(state){
-      const host = document.getElementById('statusList');
-      host.innerHTML = state.statuses.map((stObj) => {
-        const svcName = stObj.nameHtml;
-        const st = stObj.type; // 'ok' | 'minor' | 'major' | 'none'
-
-        const icon = `<img class="lnicon" src="${stObj.icon}" alt="${stObj.letter} ${stObj.mode}" loading="lazy" onerror="this.style.display='none'">`;
-        const left = `<div class="name">${svcName}</div>`;
-
-        const forced = scheduledOverride(stObj);
-        if (forced){
-          // schedule-based "NO SERVICE" row (clickable for explanation)
-          return `
-            <details class="srow">
-              <summary>
-                ${icon}
-                ${left}
-                <span class="pill ${forced.cls}">${forced.label}<span class="arrow">▸</span></span>
-              </summary>
-              <div class="reason">${forced.reason}</div>
-            </details>`;
-        }
-
-        if (st === 'ok'){
-          // plain row (not clickable)
-          return `
-            <div class="row">
-              ${icon}
-              ${left}
-              <span class="pill ok">No Disruptions</span>
-            </div>`;
-        } else {
-          // details row (clickable)
-          const cls = st==='minor' ? 'warn' : (st==='major' ? 'bad' : 'nosvc');
-          const label =
-            st==='minor' ? 'Minor Disruptions' :
-            st==='major' ? 'Major Disruptions' : 'NO SERVICE';
-
-          // fixed reason pulled from the stored reasonIndex
-          const pool =
-            st==='minor' ? REASONS.minor :
-            st==='major' ? REASONS.major : REASONS.none;
-          const reasonText = pool[stObj.reasonIndex] || pool[0];
-
-          return `
-            <details class="srow">
-              <summary>
-                ${icon}
-                ${left}
-                <span class="pill ${cls}">${label}<span class="arrow">▸</span></span>
-              </summary>
-              <div class="reason">${reasonText}</div>
-            </details>`;
-        }
-      }).join('');
-    }
-
-    // --- 12-hour persistence (per device) ---
-    const WINDOW_MS = 12 * 60 * 60 * 1000; // 12 hours
-    const STORAGE_KEY = 'borail_status_window_v3';
-
-    // Load previously saved state, or null
-    function loadStatusState() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        return raw ? JSON.parse(raw) : null;
-      } catch { return null; }
-    }
-
-    function saveStatusState(state) {
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-      catch { /* ignore */ }
-    }
-
-    function createNewStatusState() {
-      // One disruption status per letter, shared across local/express variants.
-      const byLetter = {};
-      for (const ln of BASE_LINES) {
-        const type = pickStatus(ln.probs); // 'ok' | 'minor' | 'major' | 'none'
-        let reasonIndex = -1;
-        if (type !== 'ok') {
-          const pool =
-            type === 'minor' ? REASONS.minor :
-            type === 'major' ? REASONS.major : REASONS.none;
-          reasonIndex = Math.floor(Math.random() * pool.length);
-        }
-        byLetter[ln.letter] = { type, reasonIndex };
-      }
-
-      return {
-        start: Date.now(),
-        statuses: SERVICES.map(svc => {
-          const shared = byLetter[svc.letter] || { type: 'ok', reasonIndex: -1 };
-          return {
-            id: svc.id,
-            nameHtml: svc.nameHtml,
-            icon: svc.icon,
-            letter: svc.letter,
-            mode: svc.mode,
-            color: svc.color,
-            type: shared.type,
-            reasonIndex: shared.reasonIndex
-          };
-        })
-      };
-    }
-
-    // Get state: reuse if under 12h, otherwise create/replace
-    function getOrCreateStatusState() {
-      const cur = loadStatusState();
-      if (!cur) {
-        const fresh = createNewStatusState();
-        saveStatusState(fresh);
-        return fresh;
-      }
-      const age = Date.now() - cur.start;
-      if (age >= WINDOW_MS) {
-        const fresh = createNewStatusState();
-        saveStatusState(fresh);
-        return fresh;
-      }
-      return cur;
-    }
-
-    const STATUS_STATE = getOrCreateStatusState();
-    renderStatus(STATUS_STATE);
-
-    // Re-render when we cross into a different service window (based on viewer's local time).
-    let _lastKey = scheduleKey();
-    setInterval(() => {
-      const k = scheduleKey();
-      if (k !== _lastKey){
-        _lastKey = k;
-        renderStatus(STATUS_STATE);
-      }
-    }, 30 * 1000);
-</script>
+  <script src="assets/js/status.js"></script>
 </body>
 </html>
