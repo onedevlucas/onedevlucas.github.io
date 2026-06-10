@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v50c-organized';
+const CACHE_NAME = 'borail-v51-workbench';
 
 const CORE_ASSETS = [
   './',
@@ -6,12 +6,16 @@ const CORE_ASSETS = [
   'home.html',
   'map.html',
   'status.html',
+  'workbench.html',
   'assets/css/home.css',
   'assets/css/map.css',
   'assets/css/status.css',
   'assets/css/timetable.css',
+  'assets/css/workbench.css',
   'assets/js/status.js',
   'assets/js/timetable.js',
+  'assets/js/workbench-core.js',
+  'assets/js/workbench.js',
   'assets/images/ads/sponsor.png',
   'assets/images/ads/youtube-promo.png',
   'assets/images/branding/borail-logo.png',

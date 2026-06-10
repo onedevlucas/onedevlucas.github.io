@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#08140d">
+  <title>BoRail Architect Workbench</title>
+  <link rel="icon" type="image/png" href="assets/images/branding/favicon.png">
+  <link rel="stylesheet" href="assets/css/workbench.css">
+</head>
+<body>
+  <div class="workbench" id="workbench">
+    <header class="topbar">
+      <div class="brand-block">
+        <img src="assets/images/branding/borail-logo.png" alt="BORail" class="brand-logo">
+        <div>
+          <div class="eyebrow">Internal planning studio</div>
+          <h1>Architect Workbench</h1>
+        </div>
+      </div>
+
+      <div class="mode-switch" role="group" aria-label="Workbench mode">
+        <button class="mode-button active" data-mode="architect">Architect</button>
+        <button class="mode-button" data-mode="preview">Public Preview</button>
+      </div>
+
+      <div class="top-actions">
+        <button class="button secondary" id="undoButton" title="Undo (Ctrl+Z)">Undo</button>
+        <button class="button secondary" id="redoButton" title="Redo (Ctrl+Shift+Z)">Redo</button>
+        <button class="button secondary" id="validateButton">Validate</button>
+        <button class="button secondary" id="saveButton">Save Draft</button>
+        <button class="button secondary" id="importButton">Import</button>
+        <button class="button primary" id="exportButton">Export</button>
+        <button class="button danger-quiet" id="resetButton">Reset Demo</button>
+        <input type="file" id="importFile" accept=".json,.borail.json,application/json" hidden>
+      </div>
+    </header>
+
+    <main class="main-layout">
+      <aside class="toolbar panel" aria-label="Map tools">
+        <div class="panel-heading">
+          <span>Build tools</span>
+          <button class="icon-button mobile-panel-toggle" data-toggle="toolbar" aria-label="Toggle tools">+</button>
+        </div>
+        <div class="tool-list panel-body">
+          <button class="tool active" data-tool="select"><span class="tool-icon">↖</span><span>Select</span></button>
+          <button class="tool" data-tool="station"><span class="tool-icon">●</span><span>Place Station</span></button>
+          <button class="tool" data-tool="rail"><span class="tool-icon">╱</span><span>Draw Rail</span></button>
+          <button class="tool" data-tool="land"><span class="tool-icon">⬡</span><span>Draw Land</span></button>
+          <button class="tool" data-tool="water"><span class="tool-icon">≈</span><span>Draw Water</span></button>
+          <button class="tool" data-tool="region"><span class="tool-icon">▱</span><span>Draw Region</span></button>
+          <button class="tool" data-tool="label"><span class="tool-icon">T</span><span>Add Label</span></button>
+          <button class="tool" data-tool="terrain"><span class="tool-icon">△</span><span>Terrain Zone</span></button>
+        </div>
+        <div class="tool-help panel-body">
+          <strong id="toolHelpTitle">Select objects</strong>
+          <p id="toolHelpText">Click a station, track, label, or area to edit it. Drag stations and labels to move them.</p>
+          <div class="drawing-actions" id="drawingActions" hidden>
+            <button class="button primary compact" id="finishDrawingButton">Finish</button>
+            <button class="button secondary compact" id="cancelDrawingButton">Cancel</button>
+          </div>
+        </div>
+      </aside>
+
+      <section class="map-workspace" aria-label="BoRail map editor">
+        <div class="map-header">
+          <div>
+            <span class="map-kicker">Green Line starter world</span>
+            <strong id="worldNameDisplay">BORail Flatlands: Green Line</strong>
+          </div>
+          <div class="map-controls">
+            <label class="search-control preview-only" hidden>
+              <span>Find station</span>
+              <input type="search" id="stationSearch" placeholder="Search Green Line">
+            </label>
+            <label class="line-filter preview-only" hidden>
+              <input type="checkbox" id="greenLineFilter" checked>
+              <span class="line-chip"><img src="assets/images/line-icons/a-local.png" alt=""> Green Line</span>
+            </label>
+            <button class="icon-button" id="zoomInButton" aria-label="Zoom in">+</button>
+            <button class="icon-button" id="zoomOutButton" aria-label="Zoom out">−</button>
+            <button class="icon-button wide" id="fitButton">Fit world</button>
+          </div>
+        </div>
+
+        <div class="map-frame" id="mapFrame">
+          <svg id="mapCanvas" viewBox="0 0 10000 7000" role="img" aria-label="Interactive fictional BORail map">
+            <defs>
+              <pattern id="minorGrid" width="250" height="250" patternUnits="userSpaceOnUse">
+                <path d="M 250 0 L 0 0 0 250" fill="none" stroke="rgba(255,255,255,.035)" stroke-width="8"></path>
+              </pattern>
+              <pattern id="majorGrid" width="1000" height="1000" patternUnits="userSpaceOnUse">
+                <rect width="1000" height="1000" fill="url(#minorGrid)"></rect>
+                <path d="M 1000 0 L 0 0 0 1000" fill="none" stroke="rgba(255,255,255,.075)" stroke-width="12"></path>
+              </pattern>
+              <filter id="stationShadow" x="-100%" y="-100%" width="300%" height="300%">
+                <feDropShadow dx="0" dy="18" stdDeviation="20" flood-color="#000" flood-opacity=".45"></feDropShadow>
+              </filter>
+            </defs>
+            <rect class="map-background" width="10000" height="7000"></rect>
+            <rect class="map-grid" width="10000" height="7000" fill="url(#majorGrid)"></rect>
+            <g id="terrainLayer"></g>
+            <g id="landLayer"></g>
+            <g id="waterLayer"></g>
+            <g id="regionLayer"></g>
+            <g id="railLayer"></g>
+            <g id="labelLayer"></g>
+            <g id="stationLayer"></g>
+            <g id="drawingLayer"></g>
+          </svg>
+
+          <div class="map-status-card">
+            <span class="status-dot"></span>
+            <div>
+              <strong id="modeStatus">Architect Mode</strong>
+              <span id="coordinateStatus">BoRail XY • 10,000 × 7,000</span>
+            </div>
+          </div>
+
+          <div class="preview-welcome preview-only" hidden>
+            <img src="assets/images/line-icons/a-local.png" alt="Green Line local">
+            <div><strong>Green Line</strong><span>Newkirk ↔ Mount River</span></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="inspector panel" id="inspectorPanel">
+        <div class="panel-heading">
+          <span id="inspectorHeading">World inspector</span>
+          <button class="icon-button mobile-panel-toggle" data-toggle="inspector" aria-label="Toggle inspector">+</button>
+        </div>
+        <div class="panel-body inspector-content" id="inspectorContent"></div>
+      </aside>
+    </main>
+
+    <section class="bottom-panel panel" id="bottomPanel">
+      <div class="bottom-tabs" role="tablist">
+        <button class="bottom-tab active" data-bottom-tab="validation">Validation <span id="issueCountBadge">0</span></button>
+        <button class="bottom-tab" data-bottom-tab="changes">Recent actions</button>
+        <button class="bottom-tab" data-bottom-tab="stats">World statistics</button>
+        <button class="icon-button bottom-collapse" id="bottomCollapseButton" aria-label="Collapse bottom panel">−</button>
+      </div>
+      <div class="bottom-content" id="bottomContent"></div>
+    </section>
+  </div>
+
+  <div class="toast-region" id="toastRegion" aria-live="polite"></div>
+
+  <script src="assets/js/workbench-core.js"></script>
+  <script src="assets/js/workbench.js"></script>
+</body>
+</html>
