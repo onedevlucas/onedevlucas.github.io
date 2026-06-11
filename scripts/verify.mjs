@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const htmlFiles = ['index.html', 'home.html', 'map.html', 'status.html', 'workbench.html'];
-const scriptFiles = ['assets/js/timetable.js', 'assets/js/status.js', 'assets/js/workbench-core.js', 'assets/js/workbench.js', 'sw.js'];
+const scriptFiles = ['assets/js/trip-planner-core.js', 'assets/js/timetable.js', 'assets/js/status.js', 'assets/js/workbench-core.js', 'assets/js/workbench.js', 'sw.js'];
 const webFiles = [...htmlFiles, ...scriptFiles];
 
 const references = [];

@@ -226,16 +226,21 @@ const ROUTES = [
 ];
 
 const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
-function timeMode(now = new Date()) {
-  const nowMin = now.getHours() * 60 + now.getMinutes();
-  const rushAM = (nowMin >= toMin('06:00') && nowMin < toMin('09:30'));
-  const rushPM = (nowMin >= toMin('17:00') && nowMin < toMin('19:30'));
-  const overnight = (nowMin >= toMin('22:30') || nowMin < toMin('03:59'));
+function timeModeForMinutes(nowMin) {
+  const normalized = ((nowMin % 1440) + 1440) % 1440;
+  const rushAM = (normalized >= toMin('06:00') && normalized < toMin('09:30'));
+  const rushPM = (normalized >= toMin('17:00') && normalized < toMin('19:30'));
+  const overnight = (normalized >= toMin('22:30') || normalized < toMin('03:59'));
 
   if (overnight) return 'overnight';
   if (rushAM) return 'rushAM';
   if (rushPM) return 'rushPM';
   return 'local';
+}
+
+function timeMode(now = new Date()) {
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  return timeModeForMinutes(nowMin);
 }
 
 function isServiceAllowed(route, mode) {
@@ -257,6 +262,23 @@ function isServiceAllowed(route, mode) {
     if (route.serviceId === 'B' && route.isExpress) return false;
   }
   return true;
+}
+
+function getEffectiveRoutePattern(route, mode) {
+  const stops = [...route.stops];
+  const segmentTimes = route.segmentTimes ? [...route.segmentTimes] : segFor(stops);
+  const isRush = mode === 'rushAM' || mode === 'rushPM';
+
+  if (route.serviceId === 'A' && !route.isExpress && !isRush) {
+    const radcliffIndex = stops.indexOf('Radcliff Fields');
+    if (radcliffIndex > 0 && radcliffIndex < stops.length - 1) {
+      const combinedTravelTime = segmentTimes[radcliffIndex - 1] + segmentTimes[radcliffIndex];
+      stops.splice(radcliffIndex, 1);
+      segmentTimes.splice(radcliffIndex - 1, 2, combinedTravelTime);
+    }
+  }
+
+  return { stops, segmentTimes };
 }
 
 const LINE_SERVICE = {
@@ -371,6 +393,7 @@ function calculateStopTimes(trainSeed, stops, departureMinutes, customSegmentTim
       name: stops[i],
       stopIndex: i,
       scheduledArrivalSec,
+      scheduledDepartureSec: scheduledArrivalSec + dwellTime,
       actualArrivalSec,
       actualDepartureSec,
       isDelayed: isStopDelayed,
@@ -411,8 +434,12 @@ const FIXED_SHUTTLE_LEAD_CARS = {
 };
 
 const SHUTTLE_EVENTS_CACHE = new Map();
-function getShuttleEventsForToday(serviceId) {
-  const dayKey = new Date().toISOString().slice(0, 10);
+function localDateKey(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function getShuttleEventsForToday(serviceId, date = new Date()) {
+  const dayKey = localDateKey(date);
   const key = `${serviceId}-${dayKey}`;
   if (SHUTTLE_EVENTS_CACHE.has(key)) return SHUTTLE_EVENTS_CACHE.get(key);
 
@@ -472,27 +499,23 @@ function getShuttleEventsForToday(serviceId) {
   return events;
 }
 
-function tripsForRoute(routeDef) {
+function getRouteDepartureMinutes(routeDef) {
   const periods = LINE_SERVICE[routeDef.serviceId]?.all || [];
   const dep = expandDepartures(periods);
-  const seg = routeDef.segmentTimes ? routeDef.segmentTimes : segFor(routeDef.stops);
 
   const branchSeed = `${routeDef.serviceId}-${routeDef.tag}-${routeDef.origin}-${routeDef.destination}`;
   const rng = seededRandom(branchSeed);
   const baseOffset = Math.floor(rng() * 3);
   const deps = dep.map(t => t + baseOffset);
 
-  const out = [];
-  for (const t0 of deps) {
+  return deps.map(t0 => {
     let slottedDepartureTime = t0;
 
     if (!SINGLE_TRAIN_SHUTTLES.has(routeDef.serviceId)) {
       if (routeDef.serviceId === 'F' && !routeDef.isExpress) {
         if (routeDef.origin === 'Boylston') slottedDepartureTime += 3;
       } else if (routeDef.serviceId === 'C') {
-        if (routeDef.destination === 'Oakville City Airport' || routeDef.origin === 'Oakville City Airport') {
-          slottedDepartureTime += 4;
-        }
+        if (routeDef.destination === 'Oakville City Airport' || routeDef.origin === 'Oakville City Airport') slottedDepartureTime += 4;
       } else if (routeDef.serviceId === 'A') {
         if (routeDef.isExpress) slottedDepartureTime += 3;
       } else if (routeDef.serviceId === 'B') {
@@ -501,18 +524,29 @@ function tripsForRoute(routeDef) {
         if (routeDef.isExpress) slottedDepartureTime += 3;
       }
     }
+    return slottedDepartureTime;
+  });
+}
 
+function tripsForRoute(routeDef, mode = 'local') {
+  const deps = getRouteDepartureMinutes(routeDef);
+  const effectiveRoute = getEffectiveRoutePattern(routeDef, mode);
+  const seg = effectiveRoute.segmentTimes;
+  const stops = effectiveRoute.stops;
+
+  const out = [];
+  for (const slottedDepartureTime of deps) {
     let cur = slottedDepartureTime;
-    for (let i = 0; i < routeDef.stops.length; i++) {
+    for (let i = 0; i < stops.length; i++) {
       out.push({
-        station: routeDef.stops[i],
+        station: stops[i],
         time: cur,
         destination: routeDef.destination,
         serviceId: routeDef.serviceId,
         isExpress: routeDef.isExpress,
         tag: routeDef.tag,
         color: SERVICE_META[routeDef.serviceId].color,
-        stops: routeDef.stops,
+        stops,
         segmentTimes: seg,
         departureMin: slottedDepartureTime,
         origin: routeDef.origin
@@ -598,7 +632,7 @@ function arrivalsForStation(stationId, now = new Date()) {
       return;
     }
 
-    const trips = tripsForRoute(r);
+    const trips = tripsForRoute(r, mode);
     for (const trip of trips) {
       if (trip.station !== stationName) continue;
       let arr = trip.time;
@@ -619,6 +653,174 @@ function arrivalsForStation(stationId, now = new Date()) {
   return out;
 }
 
+const INACTIVE_STATION_FALLBACKS = {
+  'Foxston': 'Boylston',
+  'New Cottage': 'Boylston',
+  'Whitebranch': 'Boylston',
+  'Port Williamson': 'Willow Springs',
+  'Radcliff Fields': 'Oakville City Airport',
+  'Carrollton': 'Harrington City',
+  'Hadleigh': 'Harrington City'
+};
+
+function buildScheduledRuns(planningDate, includeExpress = true) {
+  const runs = [];
+
+  ROUTES.forEach(route => {
+    if (SINGLE_TRAIN_SHUTTLES.has(route.serviceId)) return;
+    if (!includeExpress && route.isExpress) return;
+
+    getRouteDepartureMinutes(route).forEach(departureMin => {
+      const mode = timeModeForMinutes(departureMin);
+      if (!isServiceAllowed(route, mode)) return;
+      const effectiveRoute = getEffectiveRoutePattern(route, mode);
+      const trainSeed = `${route.serviceId}-${route.tag}-${departureMin}-${route.origin}-${route.destination}`;
+      const stopTimes = calculateStopTimes(trainSeed, effectiveRoute.stops, departureMin, effectiveRoute.segmentTimes, mode);
+      runs.push({
+        id: `${trainSeed}-${localDateKey(planningDate)}`,
+        serviceId: route.serviceId,
+        isExpress: route.isExpress,
+        tag: route.tag,
+        origin: route.origin,
+        destination: route.destination,
+        departureMin,
+        mode,
+        trainSeed,
+        hasDelay: stopTimes.hasDelay,
+        delaySeconds: stopTimes.delaySeconds,
+        stops: stopTimes.stops
+      });
+    });
+  });
+
+  SINGLE_TRAIN_SHUTTLES.forEach(serviceId => {
+    const originEvents = getShuttleEventsForToday(serviceId, planningDate)
+      .filter(event => event.station === event.origin);
+    originEvents.forEach(event => {
+      const mode = timeModeForMinutes(event.departureMin);
+      const trainSeed = `${event.serviceId}-${event.tag}-${event.departureMin}-${event.origin}-${event.destination}`;
+      const stopTimes = calculateStopTimes(trainSeed, event.stops, event.departureMin, event.segmentTimes, mode);
+      runs.push({
+        id: `${trainSeed}-${localDateKey(planningDate)}`,
+        serviceId: event.serviceId,
+        isExpress: false,
+        tag: event.tag,
+        origin: event.origin,
+        destination: event.destination,
+        departureMin: event.departureMin,
+        mode,
+        trainSeed,
+        hasDelay: stopTimes.hasDelay,
+        delaySeconds: stopTimes.delaySeconds,
+        stops: stopTimes.stops
+      });
+    });
+  });
+
+  return runs;
+}
+
+function stationHasActiveService(stationName, mode, includeExpress = true) {
+  return ROUTES.some(route => {
+    if (!includeExpress && route.isExpress) return false;
+    if (!isServiceAllowed(route, mode)) return false;
+    return getEffectiveRoutePattern(route, mode).stops.includes(stationName);
+  });
+}
+
+function resolvePlanningStation(stationName, mode) {
+  if (stationHasActiveService(stationName, mode, true)) {
+    return { requested: stationName, effective: stationName, fallback: false };
+  }
+  const fallbackStation = INACTIVE_STATION_FALLBACKS[stationName];
+  if (fallbackStation && stationHasActiveService(fallbackStation, mode, true)) {
+    return { requested: stationName, effective: fallbackStation, fallback: true };
+  }
+  return { requested: stationName, effective: stationName, fallback: false, unavailable: true };
+}
+
+function planBORailTrip(originName, destinationName, planningDate) {
+  const startTimeSec = planningDate.getHours() * 3600 + planningDate.getMinutes() * 60 + planningDate.getSeconds();
+  const mode = timeMode(planningDate);
+  const origin = resolvePlanningStation(originName, mode);
+  const destination = resolvePlanningStation(destinationName, mode);
+
+  if (origin.effective === destination.effective) {
+    return { journeys: [], mode, origin, destination, sameEffectiveStation: true, planningDate };
+  }
+
+  const allRuns = buildScheduledRuns(planningDate, true);
+  const localRuns = allRuns.filter(run => !run.isExpress);
+  const departureOffsets = [0, 5, 10, 15, 20, 30].map(minutes => minutes * 60);
+  const collectJourneys = runs => {
+    const collected = [];
+    const signatures = new Set();
+    departureOffsets.forEach(offsetSec => {
+      const variants = BORailTripPlanner.planJourneys({
+        runs,
+        origin: origin.effective,
+        destination: destination.effective,
+        startTimeSec: startTimeSec + offsetSec,
+        minTransferSec: 120,
+        maxTransfers: 5,
+        maxResults: 12,
+        searchHorizonSec: 8 * 3600
+      });
+      variants.forEach(journey => {
+        if (signatures.has(journey.signature)) return;
+        signatures.add(journey.signature);
+        journey.requestedDepartureSec = startTimeSec;
+        journey.durationSec = journey.arrivalSec - startTimeSec;
+        collected.push(journey);
+      });
+    });
+    return collected.sort((a, b) => a.arrivalSec - b.arrivalSec || a.transfers - b.transfers || a.departureSec - b.departureSec);
+  };
+  const allJourneys = collectJourneys(allRuns);
+  const localJourneys = collectJourneys(localRuns);
+  const journeys = BORailTripPlanner.selectRecommendedJourneys(localJourneys, allJourneys, {
+    expressMinimumGainSec: 120,
+    limit: 3
+  });
+
+  journeys.forEach(journey => {
+    journey.originFallback = origin.fallback ? origin : null;
+    journey.destinationFallback = destination.fallback ? destination : null;
+    journey.mode = mode;
+  });
+
+  return { journeys, mode, origin, destination, planningDate, allRuns, localJourneys, allJourneys };
+}
+
+function tripEscape(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[char]);
+}
+
+function formatTripClock(totalSeconds) {
+  const normalized = ((Math.round(totalSeconds) % 86400) + 86400) % 86400;
+  const hour24 = Math.floor(normalized / 3600);
+  const minute = Math.floor((normalized % 3600) / 60);
+  const suffix = hour24 >= 12 ? 'PM' : 'AM';
+  const hour12 = hour24 % 12 || 12;
+  return `${hour12}:${String(minute).padStart(2, '0')} ${suffix}`;
+}
+
+function formatTripDuration(totalSeconds) {
+  const totalMinutes = Math.max(0, Math.round(totalSeconds / 60));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return hours ? `${hours} hr ${minutes ? `${minutes} min` : ''}`.trim() : `${minutes} min`;
+}
+
+function plannerModeLabel(mode) {
+  if (mode === 'rushAM') return 'AM Rush';
+  if (mode === 'rushPM') return 'PM Rush';
+  if (mode === 'overnight') return 'Overnight';
+  return 'Local Only';
+}
+
 const dropdownContainer = document.getElementById('stationDropdownContainer');
 const dropdownTrigger = document.getElementById('stationDropdownTrigger');
 const dropdownTriggerContent = document.getElementById('stationTriggerContent');
@@ -630,10 +832,28 @@ const limitSelect = document.getElementById('limitSelect');
 const dirFilterSelect = document.getElementById('dirFilterSelect');
 const serviceTypeFilterSelect = document.getElementById('serviceTypeFilterSelect');
 const refreshBtn = document.getElementById('refreshBtn');
+const upcomingTab = document.getElementById('upcomingTab');
+const tripPlannerTab = document.getElementById('tripPlannerTab');
+const upcomingView = document.getElementById('upcomingView');
+const tripPlannerView = document.getElementById('tripPlannerView');
+const upcomingHeaderControls = document.getElementById('upcomingHeaderControls');
+const plannerServiceState = document.getElementById('plannerServiceState');
+const tripOriginSelect = document.getElementById('tripOriginSelect');
+const tripDestinationSelect = document.getElementById('tripDestinationSelect');
+const swapTripStations = document.getElementById('swapTripStations');
+const departNowButton = document.getElementById('departNowButton');
+const departLaterButton = document.getElementById('departLaterButton');
+const futureDepartureFields = document.getElementById('futureDepartureFields');
+const tripDateInput = document.getElementById('tripDateInput');
+const tripTimeInput = document.getElementById('tripTimeInput');
+const findTripsButton = document.getElementById('findTripsButton');
+const tripPlannerResults = document.getElementById('tripPlannerResults');
 
 const openDetails = new Set();
 const expandedStops = new Set();
 let activeStationId = '';
+let activeTimetableView = 'upcoming';
+let tripDepartureMode = 'now';
 
 function getBadgesForStation(stationId) {
   const linesMap = {};
@@ -751,6 +971,221 @@ function slideDown(el) {
   el.classList.add('open');
   el.style.maxHeight = el.scrollHeight + 'px';
   el.style.opacity = '1';
+}
+
+function setTimetableView(view) {
+  activeTimetableView = view;
+  const plannerActive = view === 'planner';
+  upcomingView.hidden = plannerActive;
+  tripPlannerView.hidden = !plannerActive;
+  upcomingHeaderControls.hidden = plannerActive;
+  upcomingTab.classList.toggle('active', !plannerActive);
+  tripPlannerTab.classList.toggle('active', plannerActive);
+  upcomingTab.setAttribute('aria-selected', String(!plannerActive));
+  tripPlannerTab.setAttribute('aria-selected', String(plannerActive));
+  if (plannerActive) updatePlannerServiceState(getTripPlanningDate(false) || new Date());
+}
+
+function inputDateValue(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function inputTimeValue(date) {
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
+function initializeTripPlanner() {
+  const options = [...STATIONS]
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map(station => `<option value="${tripEscape(station.id)}">${tripEscape(station.name)}</option>`)
+    .join('');
+  tripOriginSelect.innerHTML = options;
+  tripDestinationSelect.innerHTML = options;
+  tripOriginSelect.value = 'Newkirk';
+  tripDestinationSelect.value = 'New Halifax';
+
+  const now = new Date();
+  tripDateInput.value = inputDateValue(now);
+  tripDateInput.min = inputDateValue(now);
+  tripTimeInput.value = inputTimeValue(new Date(now.getTime() + 15 * 60000));
+  updatePlannerServiceState(now);
+}
+
+function setTripDepartureMode(mode) {
+  tripDepartureMode = mode;
+  const leaveLater = mode === 'later';
+  departNowButton.classList.toggle('active', !leaveLater);
+  departLaterButton.classList.toggle('active', leaveLater);
+  futureDepartureFields.hidden = !leaveLater;
+  updatePlannerServiceState(getTripPlanningDate(false) || new Date());
+}
+
+function getTripPlanningDate(showError = true) {
+  if (tripDepartureMode === 'now') return new Date();
+  if (!tripDateInput.value || !tripTimeInput.value) {
+    if (showError) renderTripPlannerMessage('Choose a departure date and time.', 'The planner needs both fields before it can search.');
+    return null;
+  }
+  const date = new Date(`${tripDateInput.value}T${tripTimeInput.value}:00`);
+  if (Number.isNaN(date.getTime())) {
+    if (showError) renderTripPlannerMessage('That departure time is invalid.', 'Please choose another date and time.');
+    return null;
+  }
+  if (date.getTime() < Date.now() - 60000) {
+    if (showError) renderTripPlannerMessage('That departure time has already passed.', 'Choose Depart Now or a future time.');
+    return null;
+  }
+  return date;
+}
+
+function updatePlannerServiceState(date) {
+  const mode = timeMode(date);
+  plannerServiceState.textContent = `Service: ${plannerModeLabel(mode)}`;
+  plannerServiceState.classList.toggle('late-night', mode === 'overnight');
+}
+
+function routePillHtml(leg) {
+  const meta = SERVICE_META[leg.serviceId];
+  return `<span class="route-pill" style="--route-color:${meta.color}">
+    <img src="${iconFor(leg.serviceId, leg.isExpress)}" alt="${tripEscape(serviceLabel(leg.serviceId, leg.isExpress))}">
+    <span>${tripEscape(leg.destination)}</span>
+  </span>`;
+}
+
+function fallbackNoticeHtml(result) {
+  const notices = [];
+  if (result.origin.fallback) {
+    notices.push(`<div class="fallback-notice"><span>↗</span><span>No active trains depart ${tripEscape(result.origin.requested)} during ${tripEscape(plannerModeLabel(result.mode))}. Begin at ${tripEscape(result.origin.effective)} by walking/alternate transportation.</span></div>`);
+  }
+  if (result.destination.fallback) {
+    notices.push(`<div class="fallback-notice"><span>↗</span><span>No active trains reach ${tripEscape(result.destination.requested)} during ${tripEscape(plannerModeLabel(result.mode))}. Rail service ends at ${tripEscape(result.destination.effective)}; continue by walking/alternate transportation.</span></div>`);
+  }
+  return notices.join('');
+}
+
+function transferSummaryHtml(journey) {
+  if (!journey.transfers) return 'Direct train';
+  const stations = journey.legs.slice(0, -1).map(leg => leg.alightStation);
+  return `Transfer at ${stations.map(tripEscape).join(', then ')}`;
+}
+
+function renderTripLeg(leg, nextLeg) {
+  const meta = SERVICE_META[leg.serviceId];
+  const consist = getTrainConsist(leg.trainSeed, leg.serviceId, leg.isExpress);
+  if (SINGLE_TRAIN_SHUTTLES.has(leg.serviceId)) {
+    consist.model = 'MTC-T 110';
+    consist.cars = 2;
+    const fixed = FIXED_SHUTTLE_LEAD_CARS[leg.serviceId] && FIXED_SHUTTLE_LEAD_CARS[leg.serviceId][leg.destination];
+    if (typeof fixed === 'number') consist.leadCar = fixed;
+  }
+
+  const stopsHtml = leg.stops.map((stop, index) => {
+    const endpoint = index === 0 || index === leg.stops.length - 1;
+    const delayed = stop.isDelayed && stop.actualArrivalSec !== stop.scheduledArrivalSec;
+    return `<div class="trip-stop ${endpoint ? 'endpoint' : ''}">
+      <span class="trip-stop-time">${formatTripClock(index === 0 ? stop.actualDepartureSec : stop.actualArrivalSec)}</span>
+      <span>${tripEscape(stop.name)}${delayed ? ` <small style="color:var(--warning)">+${Math.round(stop.delaySeconds / 60)}m</small>` : ''}</span>
+    </div>`;
+  }).join('');
+
+  let transferHtml = '';
+  if (nextLeg) {
+    const waitSeconds = nextLeg.actualDepartureSec - leg.actualArrivalSec;
+    const tight = waitSeconds <= 4 * 60;
+    transferHtml = `<div class="transfer-block ${tight ? 'tight' : ''}">
+      <span class="transfer-icon">⇄</span>
+      <div><strong>Transfer at ${tripEscape(leg.alightStation)} • ${formatTripDuration(waitSeconds)}</strong>
+      <span>${tight ? 'Train may not wait' : `Next train departs at ${formatTripClock(nextLeg.actualDepartureSec)}`}</span></div>
+    </div>`;
+  }
+
+  return `<div class="trip-leg">
+    <div class="trip-leg-card">
+      <img src="${iconFor(leg.serviceId, leg.isExpress)}" alt="${tripEscape(serviceLabel(leg.serviceId, leg.isExpress))}">
+      <div><strong>Train toward ${tripEscape(leg.destination)}</strong><span>${tripEscape(consist.model)} • ${consist.cars} cars • Lead car ${consist.leadCar}</span></div>
+      <div class="trip-leg-time"><strong>${formatTripClock(leg.actualDepartureSec)}</strong><span>${tripEscape(leg.boardStation)}</span></div>
+    </div>
+    <div class="trip-stop-timeline" style="--leg-color:${meta.color}">${stopsHtml}</div>
+    ${transferHtml}
+  </div>`;
+}
+
+function renderJourneyCard(journey, index, result) {
+  const first = journey.legs[0];
+  const waitSeconds = journey.departureSec - journey.requestedDepartureSec;
+  const tightTransfer = journey.legs.slice(1).some(leg => leg.transferWaitSec <= 4 * 60);
+  const pills = journey.legs.map((leg, legIndex) => `${legIndex ? '<span class="route-pill-arrow">›</span>' : ''}${routePillHtml(leg)}`).join('');
+  const details = journey.legs.map((leg, legIndex) => renderTripLeg(leg, journey.legs[legIndex + 1])).join('');
+  const rush = result.mode === 'rushAM' || result.mode === 'rushPM';
+
+  return `<details class="trip-option ${index === 0 ? 'fastest' : ''}" ${index === 0 ? 'open' : ''}>
+    <summary>
+      <div class="trip-option-top">
+        <div>
+          <div class="trip-time-range">${formatTripClock(journey.departureSec)} <span>–</span> ${formatTripClock(journey.arrivalSec)}</div>
+          <div class="trip-badges">
+            ${index === 0 ? '<span class="trip-badge fastest">Fastest</span>' : ''}
+            ${journey.hasDelay ? '<span class="trip-badge delay">Delay included</span>' : ''}
+            ${rush ? `<span class="trip-badge rush">${plannerModeLabel(result.mode)}</span>` : ''}
+          </div>
+        </div>
+        <div class="trip-departs-in">${waitSeconds < 60 ? 'departing now' : `in ${Math.max(1, Math.round(waitSeconds / 60))} min`}</div>
+      </div>
+      <div class="trip-pill-chain">${pills}</div>
+      <div class="trip-transfer-summary">${transferSummaryHtml(journey)}</div>
+      <div class="trip-meta"><span>${formatTripDuration(journey.rideDurationSec)} total</span><span>${journey.transfers} transfer${journey.transfers === 1 ? '' : 's'}</span><span>${journey.legs.reduce((sum, leg) => sum + leg.stops.length - 1, 0)} stops</span></div>
+      ${tightTransfer ? '<div class="journey-warning"><span>⇄</span><span>One connection is tight. Train may not wait, so be ready to transfer.</span></div>' : ''}
+      ${journey.hasDelay ? '<div class="journey-warning delay-warning"><span>!</span><span>Delay is included in this estimate. The shown connections remain catchable, but conditions can change.</span></div>' : ''}
+      ${fallbackNoticeHtml(result)}
+    </summary>
+    <div class="trip-details">
+      ${result.origin.fallback ? `<div class="alternate-final-step"><strong>Before boarding:</strong> Continue from ${tripEscape(result.origin.requested)} to ${tripEscape(result.origin.effective)} by walking/alternate transportation.</div>` : ''}
+      ${details}
+      ${result.destination.fallback ? `<div class="alternate-final-step"><strong>After the train:</strong> Continue from ${tripEscape(result.destination.effective)} to ${tripEscape(result.destination.requested)} by walking/alternate transportation.</div>` : ''}
+    </div>
+  </details>`;
+}
+
+function renderTripPlannerMessage(title, message) {
+  tripPlannerResults.innerHTML = `<div class="trip-no-results"><strong>${tripEscape(title)}</strong><span>${tripEscape(message)}</span></div>`;
+}
+
+function findAndRenderTrips() {
+  const origin = tripOriginSelect.value;
+  const destination = tripDestinationSelect.value;
+  if (!origin || !destination) {
+    renderTripPlannerMessage('Choose both stations.', 'Select where you are leaving from and where you want to go.');
+    return;
+  }
+  if (origin === destination) {
+    renderTripPlannerMessage('You are already there.', 'Choose two different stations to plan a trip.');
+    return;
+  }
+  const planningDate = getTripPlanningDate(true);
+  if (!planningDate) return;
+  updatePlannerServiceState(planningDate);
+  findTripsButton.disabled = true;
+  findTripsButton.textContent = 'Planning…';
+
+  requestAnimationFrame(() => {
+    const result = planBORailTrip(origin, destination, planningDate);
+    findTripsButton.disabled = false;
+    findTripsButton.textContent = 'Find Trips';
+
+    if (result.origin.unavailable || result.destination.unavailable) {
+      renderTripPlannerMessage('No active service found.', 'BORail could not find an active station or approved fallback for this trip.');
+      return;
+    }
+    if (result.sameEffectiveStation) {
+      renderTripPlannerMessage('Use alternate transportation.', `${result.origin.requested} and ${result.destination.requested} use the same active fallback station: ${result.origin.effective}.`);
+      return;
+    }
+    if (!result.journeys.length) {
+      renderTripPlannerMessage('No catchable trip found.', 'No trains can complete this journey within the next eight hours. Try a different departure time.');
+      return;
+    }
+    tripPlannerResults.innerHTML = result.journeys.map((journey, index) => renderJourneyCard(journey, index, result)).join('');
+  });
 }
 
 function renderArrivals() {
@@ -993,18 +1428,40 @@ function wireUpEventListeners() {
 }
 
 renderCustomStationsDropdown();
+initializeTripPlanner();
 renderClock();
 renderArrivals();
 
 setInterval(() => {
   renderClock();
   renderArrivals();
+  if (activeTimetableView === 'planner' && tripDepartureMode === 'now') updatePlannerServiceState(new Date());
 }, 5000);
 
 limitSelect.addEventListener('change', renderArrivals);
 dirFilterSelect.addEventListener('change', renderArrivals);
 serviceTypeFilterSelect.addEventListener('change', renderArrivals);
 refreshBtn.addEventListener('click', () => { renderClock(); renderArrivals(); });
+upcomingTab.addEventListener('click', () => setTimetableView('upcoming'));
+tripPlannerTab.addEventListener('click', () => setTimetableView('planner'));
+departNowButton.addEventListener('click', () => setTripDepartureMode('now'));
+departLaterButton.addEventListener('click', () => setTripDepartureMode('later'));
+tripDateInput.addEventListener('change', () => updatePlannerServiceState(getTripPlanningDate(false) || new Date()));
+tripTimeInput.addEventListener('change', () => updatePlannerServiceState(getTripPlanningDate(false) || new Date()));
+swapTripStations.addEventListener('click', () => {
+  const origin = tripOriginSelect.value;
+  tripOriginSelect.value = tripDestinationSelect.value;
+  tripDestinationSelect.value = origin;
+});
+findTripsButton.addEventListener('click', findAndRenderTrips);
+
+window.BORailTripDebug = {
+  planBORailTrip,
+  buildScheduledRuns,
+  resolvePlanningStation,
+  getEffectiveRoutePattern,
+  timeModeForMinutes
+};
 
 const splash = document.getElementById('splash-screen');
 if (splash) {

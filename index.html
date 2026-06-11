@@ -21,7 +21,11 @@
     <div class="wrap">
       <div class="title">BORail Live Timetable</div>
       <div class="subtle" id="nowText">—</div>
-      <div class="controls">
+      <div class="view-tabs" role="tablist" aria-label="Timetable views">
+        <button class="view-tab active" id="upcomingTab" data-view="upcoming" role="tab" aria-selected="true">Upcoming Trains</button>
+        <button class="view-tab" id="tripPlannerTab" data-view="planner" role="tab" aria-selected="false">Plan a Trip</button>
+      </div>
+      <div class="controls" id="upcomingHeaderControls">
         <div class="custom-select-container" id="stationDropdownContainer">
           <div class="custom-select-trigger" id="stationDropdownTrigger">
             <div class="trigger-content" id="stationTriggerContent">Loading Station...</div>
@@ -39,7 +43,8 @@
 
   <main class="wrap">
     <section class="grid">
-      <div class="card">
+      <div class="card timetable-main-card">
+<div id="upcomingView">
 <div class="banner filters-banner" style="margin-bottom:12px;">
   <div>Upcoming trains</div>
   <div class="seg" style="display: flex; gap: 10px; align-items: center;">
@@ -68,6 +73,54 @@
   </div>
 </div>
         <div id="arrivals"></div>
+</div>
+
+<div id="tripPlannerView" hidden>
+  <div class="trip-planner-heading">
+    <div>
+      <span class="trip-planner-kicker">Schedule-aware directions</span>
+      <h2>Where are you going?</h2>
+    </div>
+    <span class="pill" id="plannerServiceState">Current service</span>
+  </div>
+
+  <div class="trip-search-card">
+    <div class="trip-station-fields">
+      <label class="trip-station-field origin-field">
+        <span>From</span>
+        <select id="tripOriginSelect" aria-label="Origin station"></select>
+      </label>
+      <button class="swap-stations-button" id="swapTripStations" title="Swap origin and destination" aria-label="Swap origin and destination">⇅</button>
+      <label class="trip-station-field destination-field">
+        <span>To</span>
+        <select id="tripDestinationSelect" aria-label="Destination station"></select>
+      </label>
+    </div>
+
+    <div class="depart-controls">
+      <div class="depart-choice" role="group" aria-label="Departure time choice">
+        <button class="depart-choice-button active" id="departNowButton" data-depart-mode="now">Depart Now</button>
+        <button class="depart-choice-button" id="departLaterButton" data-depart-mode="later">Leave Later</button>
+      </div>
+      <div class="future-departure-fields" id="futureDepartureFields" hidden>
+        <label><span>Date</span><input type="date" id="tripDateInput"></label>
+        <label><span>Time</span><input type="time" id="tripTimeInput" step="60"></label>
+      </div>
+      <button class="find-trips-button" id="findTripsButton">Find Trips</button>
+    </div>
+  </div>
+
+  <div class="trip-planner-note">
+    Routes use the current BORail timetable, active local/express service, simulated delays, and a minimum two-minute transfer window.
+  </div>
+  <div id="tripPlannerResults" class="trip-results">
+    <div class="trip-empty-state">
+      <div class="trip-empty-icon">↗</div>
+      <strong>Select an origin and destination</strong>
+      <span>We’ll compare up to three of the fastest trips.</span>
+    </div>
+  </div>
+</div>
       </div>
 
       <aside class="card">
@@ -95,7 +148,7 @@
     </section>
   </main>
 
-  <footer>© BORail • Built for iPhone • Works offline after first load | Version 50C (6/8/26)</footer>
+  <footer>© BORail • Built for iPhone • Works offline after first load | Version 52 (6/11/26)</footer>
   
   <nav class="tabbar" role="navigation" aria-label="Primary">
     <a class="active" href="index.html">
@@ -123,6 +176,7 @@
       </div>
     </a>
   </nav>
+  <script src="assets/js/trip-planner-core.js"></script>
   <script src="assets/js/timetable.js"></script>
 </body>
 </html>

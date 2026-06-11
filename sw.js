@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v51-workbench';
+const CACHE_NAME = 'borail-v52-trip-planner';
 
 const CORE_ASSETS = [
   './',
@@ -13,6 +13,7 @@ const CORE_ASSETS = [
   'assets/css/timetable.css',
   'assets/css/workbench.css',
   'assets/js/status.js',
+  'assets/js/trip-planner-core.js',
   'assets/js/timetable.js',
   'assets/js/workbench-core.js',
   'assets/js/workbench.js',

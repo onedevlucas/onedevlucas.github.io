@@ -2,6 +2,8 @@
 
 Live timetable, service status, system maps, and a local-first Architect Workbench for the fictional BORail Flatlands rail system. The site is published with GitHub Pages.
 
+The timetable also includes a schedule-aware trip planner that compares current trains, transfers, delays, rush-hour express service, and approved fallback stations when limited-service stops are inactive.
+
 ## Repository structure
 
 - `index.html` - live timetable entry page
@@ -17,6 +19,8 @@ Live timetable, service status, system maps, and a local-first Architect Workben
 - `scripts/verify.mjs` - checks JavaScript syntax, asset links, and repository layout
 - `scripts/workbench-test.mjs` - tests the Workbench seed world, coordinates, validation, and JSON roundtrip
 - `scripts/workbench-browser-test.mjs` - exercises the rendered editor through a local headless Chrome session
+- `scripts/trip-planner-test.mjs` - tests time-dependent routing, transfer windows, delay handling, and express recommendations
+- `scripts/timetable-trip-browser-test.mjs` - tests the live timetable tabs, example journeys, Radcliff Fields rules, and trip cards in Chrome
 - `CNAME` - GitHub Pages custom domain configuration
 
 ## Local preview
