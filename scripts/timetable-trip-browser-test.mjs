@@ -135,6 +135,12 @@ await wait(900);
 assert.equal(await evaluate(`document.querySelectorAll('.trip-option').length`), 3);
 assert.ok(await evaluate(`document.querySelectorAll('.route-pill').length`) > 0);
 assert.equal(await evaluate(`document.querySelector('.trip-badge.fastest').textContent`), 'Fastest');
+assert.equal(await evaluate(`document.querySelectorAll('.trip-badge.fastest').length`), 1);
+assert.equal(await evaluate(`(() => {
+  const totals = Array.from(document.querySelectorAll('.trip-option .trip-meta span:first-child'))
+    .map(element => Number.parseInt(element.textContent, 10));
+  return totals[0] === Math.min(...totals);
+})()`), true);
 assert.ok(await evaluate(`document.querySelector('.transfer-icon svg path') !== null`));
 assert.equal(await evaluate(`Math.round(document.querySelector('.transfer-icon').getBoundingClientRect().width)`), 40);
 
@@ -166,6 +172,54 @@ if (process.env.BORAIL_SCREENSHOT) {
 await evaluate(`document.getElementById('upcomingTab').click()`);
 assert.equal(await evaluate(`document.getElementById('upcomingView').hidden`), false);
 assert.ok(await evaluate(`document.querySelectorAll('#arrivals details.row').length`) > 0);
+
+await evaluate(`(() => {
+  localStorage.setItem('borail_status_window_v3', JSON.stringify({
+    start: Date.now(),
+    statuses: [
+      { id: 'A-local', letter: 'A', mode: 'local', type: 'major', reasonIndex: 1 },
+      { id: 'A-express', letter: 'A', mode: 'express', type: 'ok', reasonIndex: -1 },
+      { id: 'B-local', letter: 'B', mode: 'local', type: 'minor', reasonIndex: 2 }
+    ]
+  }));
+  return true;
+})()`);
+await send('Page.navigate', { url: 'http://127.0.0.1:8766/status.html' });
+await wait(700);
+const pairedStatuses = await evaluate(`(() => {
+  const byId = Object.fromEntries(BORailStatusDebug.statusState.statuses.map(service => [service.id, service]));
+  return {
+    hasBExpress: BORailStatusDebug.services.some(service => service.id === 'B-express'),
+    aLocal: byId['A-local'],
+    aExpress: byId['A-express'],
+    bLocal: byId['B-local'],
+    bExpress: byId['B-express'],
+    renderedBExpress: Boolean(document.querySelector('[data-service-id="B-express"]')),
+    aLocalPill: document.querySelector('[data-service-id="A-local"] .pill')?.textContent.trim(),
+    aExpressPill: document.querySelector('[data-service-id="A-express"] .pill')?.textContent.trim(),
+    bLocalPill: document.querySelector('[data-service-id="B-local"] .pill')?.textContent.trim(),
+    bExpressPill: document.querySelector('[data-service-id="B-express"] .pill')?.textContent.trim(),
+    aLocalReason: document.querySelector('[data-service-id="A-local"] .reason')?.textContent.trim(),
+    aExpressReason: document.querySelector('[data-service-id="A-express"] .reason')?.textContent.trim(),
+    bLocalReason: document.querySelector('[data-service-id="B-local"] .reason')?.textContent.trim(),
+    bExpressReason: document.querySelector('[data-service-id="B-express"] .reason')?.textContent.trim()
+  };
+})()`);
+assert.equal(pairedStatuses.hasBExpress, true);
+assert.equal(pairedStatuses.renderedBExpress, true);
+assert.equal(pairedStatuses.aLocal.type, pairedStatuses.aExpress.type);
+assert.equal(pairedStatuses.aLocal.reasonIndex, pairedStatuses.aExpress.reasonIndex);
+assert.equal(pairedStatuses.bLocal.type, pairedStatuses.bExpress.type);
+assert.equal(pairedStatuses.bLocal.reasonIndex, pairedStatuses.bExpress.reasonIndex);
+assert.equal(pairedStatuses.aLocalPill, pairedStatuses.aExpressPill);
+assert.equal(pairedStatuses.bLocalPill, pairedStatuses.bExpressPill);
+assert.equal(pairedStatuses.aLocalReason, pairedStatuses.aExpressReason);
+assert.equal(pairedStatuses.bLocalReason, pairedStatuses.bExpressReason);
+
+if (process.env.BORAIL_STATUS_SCREENSHOT) {
+  const statusScreenshot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true });
+  fs.writeFileSync(process.env.BORAIL_STATUS_SCREENSHOT, Buffer.from(statusScreenshot.data, 'base64'));
+}
 
 console.log(JSON.stringify(routeExamples));
 socket.close();

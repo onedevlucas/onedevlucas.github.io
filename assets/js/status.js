@@ -29,8 +29,9 @@
       // D (Orange) - Local
       { id:'D-local',   nameHtml:'Line',        icon:'assets/images/line-icons/d-local.png',    letter:'D', mode:'local'   },
 
-      // B (Blue) - Local
+      // B (Blue) - Local + Express
       { id:'B-local',   nameHtml:'Line',        icon:'assets/images/line-icons/b-local.png',    letter:'B', mode:'local'   },
+      { id:'B-express', nameHtml:'Line',        icon:'assets/images/line-icons/b-express.png',  letter:'B', mode:'express' },
 
       // C (Pink) - Local
       { id:'C-local',   nameHtml:'Line',        icon:'assets/images/line-icons/c-local.png',    letter:'C', mode:'local'   },
@@ -104,7 +105,8 @@
         return {
           cls: 'nosvc',
           label: 'NO SERVICE',
-          reason: 'Service does not operate 10:30 PM–6:30 AM (your local time).'
+          reason: 'Service does not operate 10:30 PM–6:30 AM (your local time).',
+          always: true
         };
       }
 
@@ -113,7 +115,8 @@
         return {
           cls: 'nosvc',
           label: 'NO SERVICE',
-          reason: 'Express service operates only 6:30 AM–9:30 AM and 5:00 PM–7:30 PM (your local time).'
+          reason: 'Express service operates only 6:30 AM–9:30 AM and 5:00 PM–7:30 PM (your local time).',
+          always: false
         };
       }
 
@@ -139,10 +142,10 @@
         const left = `<div class="name">${svcName}</div>`;
 
         const forced = scheduledOverride(stObj);
-        if (forced){
+        if (forced && (forced.always || st === 'ok')){
           // schedule-based "NO SERVICE" row (clickable for explanation)
           return `
-            <details class="srow">
+            <details class="srow" data-service-id="${stObj.id}" data-status-type="${st}">
               <summary>
                 ${icon}
                 ${left}
@@ -155,7 +158,7 @@
         if (st === 'ok'){
           // plain row (not clickable)
           return `
-            <div class="row">
+            <div class="row" data-service-id="${stObj.id}" data-status-type="${st}">
               ${icon}
               ${left}
               <span class="pill ok">No Disruptions</span>
@@ -174,7 +177,7 @@
           const reasonText = pool[stObj.reasonIndex] || pool[0];
 
           return `
-            <details class="srow">
+            <details class="srow" data-service-id="${stObj.id}" data-status-type="${st}">
               <summary>
                 ${icon}
                 ${left}
@@ -236,6 +239,36 @@
       };
     }
 
+    function normalizeStatusState(state) {
+      const existing = Array.isArray(state?.statuses) ? state.statuses : [];
+      const byLetter = {};
+
+      for (const service of existing) {
+        if (!service?.letter || byLetter[service.letter]) continue;
+        byLetter[service.letter] = {
+          type: service.type || 'ok',
+          reasonIndex: Number.isInteger(service.reasonIndex) ? service.reasonIndex : -1
+        };
+      }
+
+      return {
+        start: Number(state?.start) || Date.now(),
+        statuses: SERVICES.map(service => {
+          const shared = byLetter[service.letter] || { type: 'ok', reasonIndex: -1 };
+          return {
+            id: service.id,
+            nameHtml: service.nameHtml,
+            icon: service.icon,
+            letter: service.letter,
+            mode: service.mode,
+            color: service.color,
+            type: shared.type,
+            reasonIndex: shared.reasonIndex
+          };
+        })
+      };
+    }
+
     // Get state: reuse if under 12h, otherwise create/replace
     function getOrCreateStatusState() {
       const cur = loadStatusState();
@@ -250,11 +283,19 @@
         saveStatusState(fresh);
         return fresh;
       }
-      return cur;
+      const normalized = normalizeStatusState(cur);
+      saveStatusState(normalized);
+      return normalized;
     }
 
     const STATUS_STATE = getOrCreateStatusState();
     renderStatus(STATUS_STATE);
+
+    window.BORailStatusDebug = {
+      services: SERVICES,
+      statusState: STATUS_STATE,
+      normalizeStatusState
+    };
 
     // Re-render when we cross into a different service window (based on viewer's local time).
     let _lastKey = scheduleKey();

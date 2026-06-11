@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v53-planner-dropdowns';
+const CACHE_NAME = 'borail-v54-fastest-status';
 
 const CORE_ASSETS = [
   './',

@@ -1234,13 +1234,15 @@ function renderJourneyCard(journey, index, result) {
   const details = journey.legs.map((leg, legIndex) => renderTripLeg(leg, journey.legs[legIndex + 1])).join('');
   const rush = result.mode === 'rushAM' || result.mode === 'rushPM';
 
-  return `<details class="trip-option ${index === 0 ? 'fastest' : ''}" ${index === 0 ? 'open' : ''}>
+  const isFastest = index === 0;
+
+  return `<details class="trip-option ${isFastest ? 'fastest' : ''}" ${index === 0 ? 'open' : ''}>
     <summary>
       <div class="trip-option-top">
         <div>
           <div class="trip-time-range">${formatTripClock(journey.departureSec)} <span>–</span> ${formatTripClock(journey.arrivalSec)}</div>
           <div class="trip-badges">
-            ${index === 0 ? '<span class="trip-badge fastest">Fastest</span>' : ''}
+            ${isFastest ? '<span class="trip-badge fastest">Fastest</span>' : ''}
             ${journey.hasDelay ? '<span class="trip-badge delay">Delay included</span>' : ''}
             ${rush ? `<span class="trip-badge rush">${plannerModeLabel(result.mode)}</span>` : ''}
           </div>

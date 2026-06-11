@@ -43,6 +43,18 @@ const localOnly = Planner.planJourneys({ runs: [runs[0]], origin: 'A', destinati
 const filtered = Planner.selectRecommendedJourneys(localOnly, weakAll, { expressMinimumGainSec: 120, limit: 3 });
 assert.equal(filtered.some(item => item.hasExpress), false);
 
+const earlierButLonger = {
+  signature: 'earlier-longer', hasExpress: false, departureSec: 0, arrivalSec: 33 * 60,
+  durationSec: 33 * 60, rideDurationSec: 33 * 60, transfers: 2
+};
+const laterButFaster = {
+  signature: 'later-faster', hasExpress: false, departureSec: 2 * 60, arrivalSec: 34 * 60,
+  durationSec: 34 * 60, rideDurationSec: 32 * 60, transfers: 2
+};
+const durationRanked = Planner.selectRecommendedJourneys([earlierButLonger, laterButFaster], [], { limit: 3 });
+assert.equal(durationRanked[0].signature, 'later-faster');
+assert.equal(durationRanked[0].rideDurationSec, 32 * 60);
+
 const delayedFeeder = run('delayed-feeder', 'A', false, 'C', [['A', 0], ['C', 16]]);
 delayedFeeder.hasDelay = true;
 delayedFeeder.delaySeconds = 60;

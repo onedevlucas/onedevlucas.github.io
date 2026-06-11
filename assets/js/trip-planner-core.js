@@ -182,12 +182,15 @@
     sorted.forEach(journey => {
       const dominated = useful.some(existing =>
         existing.arrivalSec <= journey.arrivalSec &&
+        existing.rideDurationSec <= journey.rideDurationSec &&
         existing.transfers <= journey.transfers &&
         Math.abs(existing.departureSec - journey.departureSec) < 5 * 60
       );
       if (!dominated) useful.push(journey);
     });
-    return useful.slice(0, limit);
+    return useful
+      .sort((a, b) => a.rideDurationSec - b.rideDurationSec || a.arrivalSec - b.arrivalSec || a.transfers - b.transfers)
+      .slice(0, limit);
   }
 
   return { buildBoardIndex, itinerarySignature, planJourneys, selectRecommendedJourneys };
