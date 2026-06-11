@@ -86,15 +86,31 @@
 
   <div class="trip-search-card">
     <div class="trip-station-fields">
-      <label class="trip-station-field origin-field">
+      <div class="trip-station-field origin-field">
         <span>From</span>
-        <select id="tripOriginSelect" aria-label="Origin station"></select>
-      </label>
-      <button class="swap-stations-button" id="swapTripStations" title="Swap origin and destination" aria-label="Swap origin and destination">⇅</button>
-      <label class="trip-station-field destination-field">
+        <div class="custom-select-container trip-custom-select" id="tripOriginDropdownContainer">
+          <button type="button" class="custom-select-trigger" id="tripOriginDropdownTrigger" aria-label="Choose origin station" aria-expanded="false">
+            <span class="trigger-content" id="tripOriginTriggerContent">Loading station...</span>
+          </button>
+          <div class="custom-options-dropdown" id="tripOriginDropdownOptions" role="listbox" aria-label="Origin stations"></div>
+          <input type="hidden" id="tripOriginSelect" value="Newkirk">
+        </div>
+      </div>
+      <button class="swap-stations-button" id="swapTripStations" title="Swap origin and destination" aria-label="Swap origin and destination">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M8 4v15m0 0-3.5-3.5M8 19l3.5-3.5M16 20V5m0 0-3.5 3.5M16 5l3.5 3.5"/>
+        </svg>
+      </button>
+      <div class="trip-station-field destination-field">
         <span>To</span>
-        <select id="tripDestinationSelect" aria-label="Destination station"></select>
-      </label>
+        <div class="custom-select-container trip-custom-select" id="tripDestinationDropdownContainer">
+          <button type="button" class="custom-select-trigger" id="tripDestinationDropdownTrigger" aria-label="Choose destination station" aria-expanded="false">
+            <span class="trigger-content" id="tripDestinationTriggerContent">Loading station...</span>
+          </button>
+          <div class="custom-options-dropdown" id="tripDestinationDropdownOptions" role="listbox" aria-label="Destination stations"></div>
+          <input type="hidden" id="tripDestinationSelect" value="New Halifax">
+        </div>
+      </div>
     </div>
 
     <div class="depart-controls">
@@ -148,7 +164,7 @@
     </section>
   </main>
 
-  <footer>© BORail • Built for iPhone • Works offline after first load | Version 52 (6/11/26)</footer>
+  <footer>© BORail • Built for iPhone • Works offline after first load | Version 53 (6/11/26)</footer>
   
   <nav class="tabbar" role="navigation" aria-label="Primary">
     <a class="active" href="index.html">

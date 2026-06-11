@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v52-trip-planner';
+const CACHE_NAME = 'borail-v53-planner-dropdowns';
 
 const CORE_ASSETS = [
   './',

@@ -840,6 +840,14 @@ const upcomingHeaderControls = document.getElementById('upcomingHeaderControls')
 const plannerServiceState = document.getElementById('plannerServiceState');
 const tripOriginSelect = document.getElementById('tripOriginSelect');
 const tripDestinationSelect = document.getElementById('tripDestinationSelect');
+const tripOriginDropdownContainer = document.getElementById('tripOriginDropdownContainer');
+const tripOriginDropdownTrigger = document.getElementById('tripOriginDropdownTrigger');
+const tripOriginTriggerContent = document.getElementById('tripOriginTriggerContent');
+const tripOriginDropdownOptions = document.getElementById('tripOriginDropdownOptions');
+const tripDestinationDropdownContainer = document.getElementById('tripDestinationDropdownContainer');
+const tripDestinationDropdownTrigger = document.getElementById('tripDestinationDropdownTrigger');
+const tripDestinationTriggerContent = document.getElementById('tripDestinationTriggerContent');
+const tripDestinationDropdownOptions = document.getElementById('tripDestinationDropdownOptions');
 const swapTripStations = document.getElementById('swapTripStations');
 const departNowButton = document.getElementById('departNowButton');
 const departLaterButton = document.getElementById('departLaterButton');
@@ -854,8 +862,10 @@ const expandedStops = new Set();
 let activeStationId = '';
 let activeTimetableView = 'upcoming';
 let tripDepartureMode = 'now';
+let tripOriginDropdown;
+let tripDestinationDropdown;
 
-function getBadgesForStation(stationId) {
+function getBadgesForStation(stationId, { serviceOrder = null, expressFirst = false } = {}) {
   const linesMap = {};
   ROUTES.forEach(route => {
     if (route.stops.includes(stationId)) {
@@ -871,18 +881,116 @@ function getBadgesForStation(stationId) {
   });
 
   let htmlString = '';
-  const sortedServiceIds = Object.keys(linesMap).sort();
+  const sortedServiceIds = Object.keys(linesMap).sort((left, right) => {
+    if (!serviceOrder) return left.localeCompare(right);
+    const leftIndex = serviceOrder.indexOf(left);
+    const rightIndex = serviceOrder.indexOf(right);
+    return (leftIndex < 0 ? serviceOrder.length : leftIndex) - (rightIndex < 0 ? serviceOrder.length : rightIndex);
+  });
   sortedServiceIds.forEach(serviceId => {
     const meta = SERVICE_META[serviceId];
     if (!meta) return;
-    if (linesMap[serviceId].local && meta.localIcon) {
-      htmlString += `<img class="dropdown-badge-img" src="${meta.localIcon}" alt="(${serviceId})">`;
-    }
-    if (linesMap[serviceId].express && meta.expressIcon) {
-      htmlString += `<img class="dropdown-badge-img" src="${meta.expressIcon}" alt="<${serviceId}>">`;
-    }
+    const localBadge = linesMap[serviceId].local && meta.localIcon
+      ? `<img class="dropdown-badge-img" src="${meta.localIcon}" alt="(${serviceId})">`
+      : '';
+    const expressBadge = linesMap[serviceId].express && meta.expressIcon
+      ? `<img class="dropdown-badge-img" src="${meta.expressIcon}" alt="<${serviceId}>">`
+      : '';
+    htmlString += expressFirst ? expressBadge + localBadge : localBadge + expressBadge;
   });
   return htmlString;
+}
+
+function getPlannerBadgesForStation(stationId) {
+  return getBadgesForStation(stationId, {
+    serviceOrder: ['F', 'A', 'S', 'B', 'C', 'D', 'E', 'G'],
+    expressFirst: true
+  });
+}
+
+function closeStationDropdowns(except = null) {
+  document.querySelectorAll('.custom-select-container.open').forEach(container => {
+    if (container === except) return;
+    container.classList.remove('open');
+    container.querySelector('.custom-select-trigger')?.setAttribute('aria-expanded', 'false');
+  });
+  syncTripDropdownLayer();
+}
+
+function syncTripDropdownLayer() {
+  document.body.classList.toggle('trip-dropdown-open', Boolean(document.querySelector('.trip-custom-select.open')));
+}
+
+function createTripStationDropdown({ container, trigger, triggerContent, optionsPanel, input, initialValue }) {
+  const sortedStations = [...STATIONS].sort((a, b) =>
+    a.name.localeCompare(b.name, 'en', { sensitivity: 'base' })
+  );
+
+  const controller = {
+    get value() {
+      return input.value;
+    },
+    setValue(value) {
+      const station = sortedStations.find(item => item.id === value);
+      if (!station) return false;
+      input.value = station.id;
+      render();
+      return true;
+    }
+  };
+
+  function render() {
+    const selected = sortedStations.find(station => station.id === input.value) || sortedStations[0];
+    input.value = selected.id;
+    triggerContent.innerHTML = `
+      <span class="station-trigger-name">${tripEscape(selected.name)}</span>
+      <span class="station-item-badges">${getPlannerBadgesForStation(selected.id)}</span>
+    `;
+    optionsPanel.innerHTML = sortedStations.map(station => `
+      <button type="button" class="custom-option-item ${station.id === selected.id ? 'selected' : ''}"
+        data-value="${tripEscape(station.id)}" role="option" aria-selected="${station.id === selected.id}">
+        <span class="station-item-name">${tripEscape(station.name)}</span>
+        <span class="station-item-badges">${getPlannerBadgesForStation(station.id)}</span>
+      </button>
+    `).join('');
+
+    optionsPanel.querySelectorAll('.custom-option-item').forEach(option => {
+      option.addEventListener('click', event => {
+        event.stopPropagation();
+        controller.setValue(option.dataset.value);
+        container.classList.remove('open');
+        trigger.setAttribute('aria-expanded', 'false');
+        syncTripDropdownLayer();
+        trigger.focus();
+      });
+    });
+  }
+
+  trigger.addEventListener('click', event => {
+    event.stopPropagation();
+    const shouldOpen = !container.classList.contains('open');
+    closeStationDropdowns(container);
+    container.classList.toggle('open', shouldOpen);
+    trigger.setAttribute('aria-expanded', String(shouldOpen));
+    syncTripDropdownLayer();
+    if (shouldOpen) {
+      requestAnimationFrame(() => {
+        const selectedOption = optionsPanel.querySelector('.custom-option-item.selected');
+        if (!selectedOption) return;
+        optionsPanel.scrollTop = Math.max(0, selectedOption.offsetTop - (optionsPanel.clientHeight - selectedOption.offsetHeight) / 2);
+      });
+    }
+  });
+
+  trigger.addEventListener('keydown', event => {
+    if (event.key !== 'Escape') return;
+    container.classList.remove('open');
+    trigger.setAttribute('aria-expanded', 'false');
+    syncTripDropdownLayer();
+  });
+
+  controller.setValue(initialValue);
+  return controller;
 }
 
 function renderCustomStationsDropdown() {
@@ -933,13 +1041,13 @@ function renderCustomStationsDropdown() {
 
 dropdownTrigger.addEventListener('click', (e) => {
   e.stopPropagation();
-  dropdownContainer.classList.toggle('open');
+  const shouldOpen = !dropdownContainer.classList.contains('open');
+  closeStationDropdowns(dropdownContainer);
+  dropdownContainer.classList.toggle('open', shouldOpen);
 });
 
 document.addEventListener('click', (e) => {
-  if (!dropdownContainer.contains(e.target)) {
-    dropdownContainer.classList.remove('open');
-  }
+  if (!e.target.closest('.custom-select-container')) closeStationDropdowns();
 });
 
 function renderClock() {
@@ -995,14 +1103,22 @@ function inputTimeValue(date) {
 }
 
 function initializeTripPlanner() {
-  const options = [...STATIONS]
-    .sort((a, b) => a.name.localeCompare(b.name))
-    .map(station => `<option value="${tripEscape(station.id)}">${tripEscape(station.name)}</option>`)
-    .join('');
-  tripOriginSelect.innerHTML = options;
-  tripDestinationSelect.innerHTML = options;
-  tripOriginSelect.value = 'Newkirk';
-  tripDestinationSelect.value = 'New Halifax';
+  tripOriginDropdown = createTripStationDropdown({
+    container: tripOriginDropdownContainer,
+    trigger: tripOriginDropdownTrigger,
+    triggerContent: tripOriginTriggerContent,
+    optionsPanel: tripOriginDropdownOptions,
+    input: tripOriginSelect,
+    initialValue: 'Newkirk'
+  });
+  tripDestinationDropdown = createTripStationDropdown({
+    container: tripDestinationDropdownContainer,
+    trigger: tripDestinationDropdownTrigger,
+    triggerContent: tripDestinationTriggerContent,
+    optionsPanel: tripDestinationDropdownOptions,
+    input: tripDestinationSelect,
+    initialValue: 'New Halifax'
+  });
 
   const now = new Date();
   tripDateInput.value = inputDateValue(now);
@@ -1093,8 +1209,8 @@ function renderTripLeg(leg, nextLeg) {
     const waitSeconds = nextLeg.actualDepartureSec - leg.actualArrivalSec;
     const tight = waitSeconds <= 4 * 60;
     transferHtml = `<div class="transfer-block ${tight ? 'tight' : ''}">
-      <span class="transfer-icon">⇄</span>
-      <div><strong>Transfer at ${tripEscape(leg.alightStation)} • ${formatTripDuration(waitSeconds)}</strong>
+      <span class="transfer-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h4.2c3.8 0 3.8 10 7.6 10H20m-3-3 3 3-3 3M4 17h4.2c3.8 0 3.8-10 7.6-10H20m-3-3 3 3-3 3"/></svg></span>
+      <div class="transfer-block-copy"><strong>Transfer at ${tripEscape(leg.alightStation)} • ${formatTripDuration(waitSeconds)}</strong>
       <span>${tight ? 'Train may not wait' : `Next train departs at ${formatTripClock(nextLeg.actualDepartureSec)}`}</span></div>
     </div>`;
   }
@@ -1450,8 +1566,8 @@ tripDateInput.addEventListener('change', () => updatePlannerServiceState(getTrip
 tripTimeInput.addEventListener('change', () => updatePlannerServiceState(getTripPlanningDate(false) || new Date()));
 swapTripStations.addEventListener('click', () => {
   const origin = tripOriginSelect.value;
-  tripOriginSelect.value = tripDestinationSelect.value;
-  tripDestinationSelect.value = origin;
+  tripOriginDropdown.setValue(tripDestinationSelect.value);
+  tripDestinationDropdown.setValue(origin);
 });
 findTripsButton.addEventListener('click', findAndRenderTrips);
 
@@ -1460,7 +1576,10 @@ window.BORailTripDebug = {
   buildScheduledRuns,
   resolvePlanningStation,
   getEffectiveRoutePattern,
-  timeModeForMinutes
+  timeModeForMinutes,
+  setTripStations(origin, destination) {
+    return tripOriginDropdown.setValue(origin) && tripDestinationDropdown.setValue(destination);
+  }
 };
 
 const splash = document.getElementById('splash-screen');

@@ -104,6 +104,7 @@
       justify-content: space-between;
       position: relative;
       user-select: none;
+      text-align: left;
     }
     .custom-select-trigger::after {
       content: "";
@@ -146,6 +147,7 @@
       display: block;
     }
     .custom-option-item {
+      width: 100%;
       padding: 12px 14px;
       cursor: pointer;
       display: flex;
@@ -154,6 +156,13 @@
       gap: 12px;
       border-bottom: 1px solid rgba(255,255,255,.04);
       transition: background 0.15s ease;
+      border-top: 0;
+      border-right: 0;
+      border-left: 0;
+      border-radius: 0;
+      background: transparent;
+      color: inherit;
+      text-align: left;
     }
     .custom-option-item:last-child {
       border-bottom: none;
@@ -582,12 +591,21 @@
       border-radius: 16px;
       background: rgba(255,255,255,.025);
     }
+    .trip-dropdown-open .trip-search-card {
+      position: relative;
+      z-index: 30;
+    }
+    .trip-dropdown-open .timetable-main-card {
+      position: relative;
+      z-index: 30;
+    }
     .trip-station-fields {
       position: relative;
       display: grid;
       gap: 8px;
     }
     .trip-station-field {
+      position: relative;
       display: grid;
       grid-template-columns: 52px minmax(0,1fr);
       align-items: center;
@@ -614,15 +632,44 @@
       background: var(--accent);
     }
     .destination-field::before { background: var(--success); }
-    .trip-station-field select {
+    .trip-custom-select {
+      position: static;
       min-width: 0;
-      padding: 8px 28px 8px 20px;
+    }
+    .trip-custom-select .custom-select-trigger {
+      min-height: 40px;
+      padding: 6px 34px 6px 20px;
       border: 0;
+      border-radius: 9px;
       background: transparent;
       font-size: 16px;
       font-weight: 650;
     }
-    .trip-station-field select:focus { outline: 1px solid rgba(138,143,255,.5); }
+    .trip-custom-select .custom-select-trigger:focus-visible {
+      outline: 2px solid rgba(138,143,255,.65);
+      outline-offset: 1px;
+    }
+    .trip-custom-select .custom-select-trigger::after { right: 10px; }
+    .trip-custom-select .trigger-content {
+      min-width: 0;
+      flex-wrap: nowrap;
+      gap: 7px;
+    }
+    .trip-custom-select .dropdown-badge-img { width: 18px; height: 18px; }
+    .trip-custom-select .station-trigger-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 700;
+    }
+    .trip-custom-select .custom-options-dropdown {
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      max-height: 320px;
+      z-index: 120;
+    }
+    .trip-station-field:has(.trip-custom-select.open) { z-index: 30; }
     .swap-stations-button {
       position: absolute;
       z-index: 2;
@@ -638,8 +685,16 @@
       border: 1px solid rgba(138,143,255,.35);
       background: #292a3b;
       color: var(--accent);
-      font-size: 23px;
       cursor: pointer;
+    }
+    .swap-stations-button svg {
+      width: 24px;
+      height: 24px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
     .depart-controls {
       display: grid;
@@ -807,10 +862,12 @@
       border-top: 1px solid rgba(255,255,255,.09);
       border-bottom: 1px solid rgba(255,255,255,.09);
     }
-    .transfer-icon { width: 35px; height: 35px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 10px; background: #2a2b3b; color: var(--accent); font-size: 18px; }
-    .transfer-block strong, .transfer-block span { display: block; }
-    .transfer-block span { margin-top: 2px; color: var(--muted); font-size: 11px; }
-    .transfer-block.tight span { color: var(--warning); font-weight: 700; }
+    .transfer-icon { width: 40px; height: 40px; display: grid; place-items: center; flex: 0 0 40px; border-radius: 11px; background: #2a2b3b; color: var(--accent); }
+    .transfer-icon svg { width: 25px; height: 25px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .transfer-block-copy { min-width: 0; }
+    .transfer-block-copy strong, .transfer-block-copy > span { display: block; }
+    .transfer-block-copy > span { margin-top: 2px; color: var(--muted); font-size: 11px; }
+    .transfer-block.tight .transfer-block-copy > span { color: var(--warning); font-weight: 700; }
     .alternate-final-step {
       margin-top: 13px;
       padding: 12px;
@@ -833,8 +890,9 @@
   .future-departure-fields { width: 100%; }
   .find-trips-button { width: 100%; }
   .trip-time-range { font-size: 17px; }
-  .trip-station-field { grid-template-columns: 44px minmax(0,1fr); padding-left: 7px; }
-  .trip-station-field::before { left: 58px; }
+  .trip-station-field { grid-template-columns: 38px minmax(0,1fr); gap: 7px; padding: 7px 44px 7px 7px; }
+  .trip-station-field::before { left: 50px; }
   .trip-station-field > span { font-size: 11px; }
+  .trip-custom-select .custom-select-trigger { padding: 6px 26px 6px 12px; }
   .route-pill { font-size: 11px; }
 }

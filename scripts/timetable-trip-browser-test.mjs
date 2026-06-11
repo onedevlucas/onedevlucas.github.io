@@ -41,6 +41,7 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 await send('Runtime.enable');
 await send('Page.enable');
+await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
 await send('Page.navigate', { url: 'http://127.0.0.1:8766/index.html' });
 await wait(3600);
 
@@ -106,9 +107,24 @@ assert.ok(await evaluate(`arrivalsForStation('Radcliff Fields', new Date('2026-0
 
 await evaluate(`document.getElementById('tripPlannerTab').click()`);
 assert.equal(await evaluate(`document.getElementById('tripPlannerView').hidden`), false);
+assert.equal(await evaluate(`tripOriginSelect.type`), 'hidden');
+assert.equal(await evaluate(`document.querySelectorAll('#tripOriginTriggerContent .dropdown-badge-img').length`), 4);
+assert.equal(await evaluate(`document.querySelectorAll('#tripDestinationTriggerContent .dropdown-badge-img').length`), 1);
+assert.deepEqual(await evaluate(`Array.from(document.querySelectorAll('#tripOriginTriggerContent .dropdown-badge-img')).map(image => image.alt)`), ['<F>', '(F)', '(A)', '<S>']);
+assert.equal(await evaluate(`document.querySelector('#tripOriginTriggerContent .station-trigger-name').textContent`), 'Newkirk');
+assert.equal(await evaluate(`document.querySelector('#tripDestinationTriggerContent .station-trigger-name').textContent`), 'New Halifax');
+await evaluate(`document.getElementById('tripOriginDropdownTrigger').click()`);
+assert.equal(await evaluate(`document.getElementById('tripOriginDropdownContainer').classList.contains('open')`), true);
+assert.equal(await evaluate(`getComputedStyle(document.querySelector('.trip-search-card')).zIndex`), '30');
+assert.equal(await evaluate(`getComputedStyle(document.getElementById('tripOriginDropdownOptions')).backgroundColor`), 'rgb(24, 24, 38)');
+assert.notEqual(await evaluate(`getComputedStyle(document.querySelector('#tripOriginDropdownOptions .custom-option-item')).color`), 'rgb(255, 255, 255, 0)');
+await evaluate(`document.getElementById('tripOriginDropdownTrigger').click()`);
+await evaluate(`document.getElementById('swapTripStations').click()`);
+assert.equal(await evaluate(`tripOriginSelect.value`), 'New Halifax');
+assert.equal(await evaluate(`document.querySelector('#tripOriginTriggerContent .station-trigger-name').textContent`), 'New Halifax');
+await evaluate(`document.getElementById('swapTripStations').click()`);
 await evaluate(`(() => {
-  tripOriginSelect.value = 'Newkirk';
-  tripDestinationSelect.value = 'New Halifax';
+  BORailTripDebug.setTripStations('Newkirk', 'New Halifax');
   document.getElementById('departLaterButton').click();
   tripDateInput.value = '2026-06-12';
   tripTimeInput.value = '07:00';
@@ -119,10 +135,11 @@ await wait(900);
 assert.equal(await evaluate(`document.querySelectorAll('.trip-option').length`), 3);
 assert.ok(await evaluate(`document.querySelectorAll('.route-pill').length`) > 0);
 assert.equal(await evaluate(`document.querySelector('.trip-badge.fastest').textContent`), 'Fastest');
+assert.ok(await evaluate(`document.querySelector('.transfer-icon svg path') !== null`));
+assert.equal(await evaluate(`Math.round(document.querySelector('.transfer-icon').getBoundingClientRect().width)`), 40);
 
 await evaluate(`(() => {
-  tripOriginSelect.value = 'Kenilworth';
-  tripDestinationSelect.value = 'Hadleigh';
+  BORailTripDebug.setTripStations('Kenilworth', 'Hadleigh');
   tripDateInput.value = '2026-06-12';
   tripTimeInput.value = '12:00';
   document.getElementById('findTripsButton').click();
@@ -136,6 +153,12 @@ await evaluate(`document.getElementById('departNowButton').click()`);
 assert.equal(await evaluate(`document.getElementById('futureDepartureFields').hidden`), true);
 
 if (process.env.BORAIL_SCREENSHOT) {
+  await evaluate(`(() => {
+    BORailTripDebug.setTripStations('Newkirk', 'New Halifax');
+    document.getElementById('tripOriginDropdownTrigger').click();
+    return true;
+  })()`);
+  await wait(250);
   const screenshot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true });
   fs.writeFileSync(process.env.BORAIL_SCREENSHOT, Buffer.from(screenshot.data, 'base64'));
 }
