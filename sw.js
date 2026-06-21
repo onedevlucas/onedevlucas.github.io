@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v54-fastest-status';
+const CACHE_NAME = 'borail-v55-route-map';
 
 const CORE_ASSETS = [
   './',
@@ -17,6 +17,9 @@ const CORE_ASSETS = [
   'assets/js/timetable.js',
   'assets/js/workbench-core.js',
   'assets/js/workbench.js',
+  'assets/maps/borail-flatlands-regular-service-map.pdf',
+  'assets/maps/borail-flatlands-route-map.pdf',
+  'assets/maps/borail-flatlands-rush-hour-map.pdf',
   'assets/images/ads/sponsor.png',
   'assets/images/ads/youtube-promo.png',
   'assets/images/branding/borail-logo.png',
