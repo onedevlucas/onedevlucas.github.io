@@ -220,9 +220,9 @@ const ROUTES = [
   { serviceId:'B', isExpress:false, tag:'LCL', dir:'SB', origin:'Harrington City', destination:'Leighton Castle',
     stops:['Harrington City','South Harrington','Vanwood','Hutchinson Point','Madisonboro','Groveton','Orchard Ridge','Doverville','Greens Corner','Mount Hindsboro','Perry Road','Oakville Exchange','Oakville City Center','Oakville Plaza', 'Leighton Castle'] },
   { serviceId:'B', isExpress:true, tag:'EXP', dir:'NB', origin:'Leighton Castle', destination:'Hadleigh',
-    stops:['Leighton Castle','Oakville Plaza','Oakville City Center','Oakville Exchange','Greens Corner','Doverville','Orchard Ridge','Groveton','Madisonboro','Hutchinson Point','Vanwood','South Harrington','Harrington City','Carrollton','Hadleigh'] },
+    stops:['Leighton Castle','Oakville Plaza','Oakville City Center','Oakville Exchange','Greens Corner','Madisonboro','Harrington City','Carrollton','Hadleigh'] },
   { serviceId:'B', isExpress:true, tag:'EXP', dir:'SB', origin:'Hadleigh', destination:'Leighton Castle',
-    stops:['Hadleigh','Carrollton','Harrington City','South Harrington','Vanwood','Hutchinson Point','Madisonboro','Groveton','Orchard Ridge','Doverville','Greens Corner','Oakville Exchange','Oakville City Center','Oakville Plaza', 'Leighton Castle'] }
+    stops:['Hadleigh','Carrollton','Harrington City','Madisonboro','Greens Corner','Oakville Exchange','Oakville City Center','Oakville Plaza','Leighton Castle'] }
 ];
 
 const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
@@ -1579,6 +1579,7 @@ window.BORailTripDebug = {
   resolvePlanningStation,
   getEffectiveRoutePattern,
   timeModeForMinutes,
+  getBadgesForStation,
   setTripStations(origin, destination) {
     return tripOriginDropdown.setValue(origin) && tripDestinationDropdown.setValue(destination);
   }
@@ -1586,11 +1587,20 @@ window.BORailTripDebug = {
 
 const splash = document.getElementById('splash-screen');
 if (splash) {
-  splash.addEventListener('animationend', (e) => {
-    if (e.animationName === 'fadeOutSplash') {
-      splash.remove();
-    }
-  });
+  const navEntry = performance.getEntriesByType?.('navigation')?.[0];
+  const isReload = navEntry?.type === 'reload';
+  const splashSeen = sessionStorage.getItem('borailTimetableSplashSeen') === 'true';
+
+  if (splashSeen && !isReload) {
+    splash.remove();
+  } else {
+    sessionStorage.setItem('borailTimetableSplashSeen', 'true');
+    splash.addEventListener('animationend', (e) => {
+      if (e.animationName === 'fadeOutSplash') {
+        splash.remove();
+      }
+    });
+  }
 }
 
 if ('serviceWorker' in navigator) {

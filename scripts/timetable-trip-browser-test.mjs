@@ -59,10 +59,10 @@ const routeExamples = await evaluate(`(() => {
     fallbackDestination: result.destination.fallback
   });
   return {
-    newkirk: summarize(BORailTripDebug.planBORailTrip('Newkirk', 'New Halifax', new Date('2026-06-12T07:00:00'))),
-    harrington: summarize(BORailTripDebug.planBORailTrip('Harrington City', 'Kenilworth', new Date('2026-06-12T17:10:00'))),
-    bradford: summarize(BORailTripDebug.planBORailTrip('Bradford Bay', 'Willow Springs', new Date('2026-06-12T12:00:00'))),
-    hadleigh: summarize(BORailTripDebug.planBORailTrip('Kenilworth', 'Hadleigh', new Date('2026-06-12T12:00:00')))
+    newkirk: summarize(BORailTripDebug.planBORailTrip('Newkirk', 'New Halifax', new Date('2026-07-01T07:00:00'))),
+    harrington: summarize(BORailTripDebug.planBORailTrip('Harrington City', 'Kenilworth', new Date('2026-07-01T17:10:00'))),
+    bradford: summarize(BORailTripDebug.planBORailTrip('Bradford Bay', 'Willow Springs', new Date('2026-07-01T12:00:00'))),
+    hadleigh: summarize(BORailTripDebug.planBORailTrip('Kenilworth', 'Hadleigh', new Date('2026-07-01T12:00:00')))
   };
 })()`);
 
@@ -102,8 +102,43 @@ assert.equal(radcliffRules.atkinsToAirportMinutes, 3);
 assert.equal(radcliffRules.offPeakFallback.effective, 'Oakville City Airport');
 assert.equal(radcliffRules.offPeakFallback.fallback, true);
 assert.equal(radcliffRules.rushFallback.fallback, false);
-assert.equal(await evaluate(`arrivalsForStation('Radcliff Fields', new Date('2026-06-12T12:00:00')).length`), 0);
-assert.ok(await evaluate(`arrivalsForStation('Radcliff Fields', new Date('2026-06-12T07:00:00')).length`) > 0);
+assert.equal(await evaluate(`arrivalsForStation('Radcliff Fields', new Date('2026-07-01T12:00:00')).length`), 0);
+assert.ok(await evaluate(`arrivalsForStation('Radcliff Fields', new Date('2026-07-01T07:00:00')).length`) > 0);
+
+const bExpressRules = await evaluate(`(() => {
+  const northbound = ROUTES.find(route => route.serviceId === 'B' && route.isExpress && route.origin === 'Leighton Castle');
+  const southbound = ROUTES.find(route => route.serviceId === 'B' && route.isExpress && route.origin === 'Hadleigh');
+  return {
+    northbound: northbound.stops,
+    southbound: southbound.stops,
+    dovervilleBadges: Array.from(new DOMParser().parseFromString(BORailTripDebug.getBadgesForStation('Doverville'), 'text/html').querySelectorAll('img')).map(image => image.alt),
+    madisonboroBadges: Array.from(new DOMParser().parseFromString(BORailTripDebug.getBadgesForStation('Madisonboro'), 'text/html').querySelectorAll('img')).map(image => image.alt)
+  };
+})()`);
+assert.deepEqual(bExpressRules.northbound, [
+  'Leighton Castle',
+  'Oakville Plaza',
+  'Oakville City Center',
+  'Oakville Exchange',
+  'Greens Corner',
+  'Madisonboro',
+  'Harrington City',
+  'Carrollton',
+  'Hadleigh'
+]);
+assert.deepEqual(bExpressRules.southbound, [
+  'Hadleigh',
+  'Carrollton',
+  'Harrington City',
+  'Madisonboro',
+  'Greens Corner',
+  'Oakville Exchange',
+  'Oakville City Center',
+  'Oakville Plaza',
+  'Leighton Castle'
+]);
+assert.deepEqual(bExpressRules.dovervilleBadges.filter(badge => badge.includes('B')), ['(B)']);
+assert.deepEqual(bExpressRules.madisonboroBadges.filter(badge => badge.includes('B')), ['(B)', '<B>']);
 
 await evaluate(`document.getElementById('tripPlannerTab').click()`);
 assert.equal(await evaluate(`document.getElementById('tripPlannerView').hidden`), false);
@@ -126,7 +161,7 @@ await evaluate(`document.getElementById('swapTripStations').click()`);
 await evaluate(`(() => {
   BORailTripDebug.setTripStations('Newkirk', 'New Halifax');
   document.getElementById('departLaterButton').click();
-  tripDateInput.value = '2026-06-12';
+  tripDateInput.value = '2026-07-01';
   tripTimeInput.value = '07:00';
   document.getElementById('findTripsButton').click();
   return true;
@@ -137,16 +172,15 @@ assert.ok(await evaluate(`document.querySelectorAll('.route-pill').length`) > 0)
 assert.equal(await evaluate(`document.querySelector('.trip-badge.fastest').textContent`), 'Fastest');
 assert.equal(await evaluate(`document.querySelectorAll('.trip-badge.fastest').length`), 1);
 assert.equal(await evaluate(`(() => {
-  const totals = Array.from(document.querySelectorAll('.trip-option .trip-meta span:first-child'))
-    .map(element => Number.parseInt(element.textContent, 10));
-  return totals[0] === Math.min(...totals);
+  const result = BORailTripDebug.planBORailTrip('Newkirk', 'New Halifax', new Date('2026-07-01T07:00:00'));
+  return result.journeys[0].arrivalSec === Math.min(...result.journeys.map(journey => journey.arrivalSec));
 })()`), true);
 assert.ok(await evaluate(`document.querySelector('.transfer-icon svg path') !== null`));
 assert.equal(await evaluate(`Math.round(document.querySelector('.transfer-icon').getBoundingClientRect().width)`), 40);
 
 await evaluate(`(() => {
   BORailTripDebug.setTripStations('Kenilworth', 'Hadleigh');
-  tripDateInput.value = '2026-06-12';
+  tripDateInput.value = '2026-07-01';
   tripTimeInput.value = '12:00';
   document.getElementById('findTripsButton').click();
   return true;
@@ -172,6 +206,23 @@ if (process.env.BORAIL_SCREENSHOT) {
 await evaluate(`document.getElementById('upcomingTab').click()`);
 assert.equal(await evaluate(`document.getElementById('upcomingView').hidden`), false);
 assert.ok(await evaluate(`document.querySelectorAll('#arrivals details.row').length`) > 0);
+assert.deepEqual(await evaluate(`(() => {
+  const findOption = (panel, stationName) => Array.from(panel.querySelectorAll('.custom-option-item'))
+    .find(item => item.querySelector('.station-item-name')?.textContent.trim() === stationName);
+  const upcomingDoverville = findOption(document.getElementById('stationDropdownOptions'), 'Doverville');
+  document.getElementById('tripPlannerTab').click();
+  const tripDoverville = findOption(document.getElementById('tripOriginDropdownOptions'), 'Doverville');
+  return {
+    upcoming: Array.from(upcomingDoverville.querySelectorAll('.dropdown-badge-img')).map(image => image.alt).filter(alt => alt.includes('B')),
+    planner: Array.from(tripDoverville.querySelectorAll('.dropdown-badge-img')).map(image => image.alt).filter(alt => alt.includes('B'))
+  };
+})()`), { upcoming: ['(B)'], planner: ['(B)'] });
+
+await send('Page.navigate', { url: 'http://127.0.0.1:8766/map.html' });
+await wait(300);
+await send('Page.navigate', { url: 'http://127.0.0.1:8766/index.html' });
+await wait(200);
+assert.equal(await evaluate(`document.getElementById('splash-screen') === null`), true);
 
 await evaluate(`(() => {
   localStorage.setItem('borail_status_window_v3', JSON.stringify({
