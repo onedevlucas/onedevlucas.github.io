@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v55-route-map';
+const CACHE_NAME = 'borail-v56-map-refresh';
 
 const CORE_ASSETS = [
   './',
