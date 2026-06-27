@@ -1,18 +1,21 @@
-const CACHE_NAME = 'borail-v57-b-express-splash';
+const CACHE_NAME = 'borail-v58-mybocard';
 
 const CORE_ASSETS = [
   './',
   'index.html',
   'home.html',
   'map.html',
+  'mybocard.html',
   'status.html',
   'workbench.html',
   'assets/css/home.css',
   'assets/css/map.css',
+  'assets/css/mybocard.css',
   'assets/css/status.css',
   'assets/css/timetable.css',
   'assets/css/workbench.css',
   'assets/js/status.js',
+  'assets/js/mybocard.js',
   'assets/js/trip-planner-core.js',
   'assets/js/timetable.js',
   'assets/js/workbench-core.js',
@@ -26,6 +29,7 @@ const CORE_ASSETS = [
   'assets/images/branding/favicon.png',
   'assets/images/navigation/information.png',
   'assets/images/navigation/map.png',
+  'assets/images/navigation/mybocard.svg',
   'assets/images/navigation/status.png',
   'assets/images/navigation/timetable.png',
   'assets/images/ui/accessibility.png',

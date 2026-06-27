@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="MyBOCard ticket">
+  <defs>
+    <linearGradient id="ticketGradient" x1="10" y1="8" x2="54" y2="56" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8a8fff"/>
+      <stop offset="1" stop-color="#34c759"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#ticketGradient)" d="M10 18a6 6 0 0 1 6-6h32a6 6 0 0 1 6 6v8a6 6 0 0 0 0 12v8a6 6 0 0 1-6 6H16a6 6 0 0 1-6-6v-8a6 6 0 0 0 0-12v-8Z"/>
+  <path fill="rgba(255,255,255,.82)" d="M20 20h17a3 3 0 0 1 0 6H20a3 3 0 0 1 0-6Zm0 18h24a3 3 0 0 1 0 6H20a3 3 0 0 1 0-6Z"/>
+  <path fill="rgba(255,255,255,.48)" d="M45 17h3v6h-3v-6Zm0 9h3v6h-3v-6Zm0 9h3v6h-3v-6Zm0 9h3v3h-3v-3Z"/>
+</svg>

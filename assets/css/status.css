@@ -72,14 +72,14 @@
     /* --- Bottom tab bar (same as other pages) --- */
     .tabbar{
       position:fixed;left:0;right:0;bottom:0;z-index:20;
-      display:grid;grid-template-columns:repeat(4,1fr);align-items:end;gap:6px;
-      padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+      display:grid;grid-template-columns:repeat(5,1fr);align-items:end;gap:4px;
+      padding:10px 10px calc(10px + env(safe-area-inset-bottom));
       border-top:1px solid rgba(255,255,255,.08);
       background:rgba(180,180,180,.20);
       backdrop-filter:saturate(180%) blur(14px);
     }
     .tabbar a{text-decoration:none;color:var(--muted);text-align:center;}
-    .tabbar .item{display:grid;gap:6px;justify-items:center;font-size:12px;}
-    .tabbar .item img{width:26px;height:26px;display:block;opacity:.8;filter:grayscale(100%);}
+    .tabbar .item{display:grid;gap:5px;justify-items:center;font-size:11px;font-weight:650;}
+    .tabbar .item img{width:25px;height:25px;display:block;opacity:.8;filter:grayscale(100%);}
     .tabbar a.active{color:var(--accent);}
     .tabbar a.active img{opacity:1;filter:none;}

@@ -519,13 +519,14 @@
 
     .tabbar .item {
       display: grid;
-      gap: 6px;
+      gap: 5px;
       justify-items: center;
-      font-size: 12px;
+      font-size: 11px;
+      font-weight: 650;
     }
 
     .tabbar .item img {
-      width: 26px; height: 26px;
+      width: 25px; height: 25px;
       display: block;
       opacity: .8;
       filter: grayscale(100%);

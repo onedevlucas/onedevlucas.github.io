@@ -3,13 +3,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const htmlFiles = ['index.html', 'home.html', 'map.html', 'status.html', 'workbench.html'];
-const scriptFiles = ['assets/js/trip-planner-core.js', 'assets/js/timetable.js', 'assets/js/status.js', 'assets/js/workbench-core.js', 'assets/js/workbench.js', 'sw.js'];
+const htmlFiles = ['index.html', 'home.html', 'map.html', 'mybocard.html', 'status.html', 'workbench.html'];
+const scriptFiles = ['assets/js/trip-planner-core.js', 'assets/js/timetable.js', 'assets/js/mybocard.js', 'assets/js/status.js', 'assets/js/workbench-core.js', 'assets/js/workbench.js', 'sw.js'];
 const webFiles = [...htmlFiles, ...scriptFiles];
 
 const references = [];
 const htmlRefPattern = /(?:src|href)=["']([^"'#]+)["']/g;
-const assetRefPattern = /["'`](assets\/[^"'`]+\.(?:css|js|png|pdf))["'`]/g;
+const assetRefPattern = /["'`](assets\/[^"'`]+\.(?:css|js|png|pdf|svg))["'`]/g;
 
 for (const file of webFiles) {
   const content = fs.readFileSync(path.join(root, file), 'utf8');

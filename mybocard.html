@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>MyBOCard</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="MyBOCard" />
+  <link rel="icon" type="image/png" href="assets/images/branding/favicon.png">
+  <link rel="stylesheet" href="assets/css/mybocard.css">
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="title">MyBOCard</div>
+      <div class="subtle">Stored value for fictional BORail travel. Tap the card to pay a $2.50 fare.</div>
+    </div>
+  </header>
+
+  <main class="wrap wallet-shell" id="walletShell">
+    <section class="hero-card card">
+      <div class="bocard-stage" id="bocardStage">
+        <button class="bocard-button" id="tapCardButton" type="button" aria-label="Tap MyBOCard to pay fare">
+          <span class="card-glow"></span>
+          <span class="card-topline">
+            <span>MyBOCard</span>
+            <span class="card-chip" aria-hidden="true"></span>
+          </span>
+          <span class="card-brand">BORail</span>
+          <span class="card-number">**** **** **** 2714</span>
+          <span class="card-bottom">
+            <span>Stored Value</span>
+            <span id="cardBalanceText">$0.00</span>
+          </span>
+        </button>
+        <div class="tap-status" id="tapStatus" aria-live="polite">
+          <span class="tap-icon" aria-hidden="true">+</span>
+          <span>Tap card to pay fare</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="wallet-details" id="walletDetails">
+      <section class="balance-grid">
+        <div class="card balance-card">
+          <div class="section-kicker">Current balance</div>
+          <div class="balance-value" id="balanceValue">$0.00</div>
+          <div class="balance-meta">
+            <span>$2.50 fare</span>
+            <span>Max $500.00</span>
+          </div>
+          <div class="meter" aria-label="Balance max meter">
+            <span id="balanceMeter"></span>
+          </div>
+        </div>
+
+        <div class="card last-card">
+          <div class="section-kicker">Last card tap</div>
+          <div class="last-station" id="lastStation">No taps yet</div>
+          <div class="subtle" id="lastTapTime">Add value or tap the card to begin.</div>
+        </div>
+      </section>
+
+      <section class="card add-value-card">
+        <div class="section-heading">
+          <div>
+            <div class="section-kicker">Add money</div>
+            <h2>Select Amount of Money</h2>
+          </div>
+          <span class="pill">Secure reload</span>
+        </div>
+        <div class="amount-grid" id="amountGrid" role="group" aria-label="Reload amount">
+          <button type="button" data-amount="2.5">$2.50</button>
+          <button type="button" data-amount="5">$5</button>
+          <button type="button" data-amount="10">$10</button>
+          <button type="button" data-amount="20">$20</button>
+          <button type="button" data-amount="50">$50</button>
+          <button type="button" data-amount="100">$100</button>
+        </div>
+        <button class="confirm-button" id="confirmPaymentButton" type="button" disabled>Confirm Payment</button>
+        <div class="inline-alert" id="reloadAlert" aria-live="polite"></div>
+      </section>
+
+      <section class="card history-card">
+        <div class="section-heading">
+          <div>
+            <div class="section-kicker">Recent station use</div>
+            <h2>BOCard Activity</h2>
+          </div>
+          <span class="pill" id="historyCount">0 taps</span>
+        </div>
+        <div class="history-list" id="historyList"></div>
+      </section>
+    </div>
+  </main>
+
+  <div class="payment-modal" id="paymentModal" hidden>
+    <div class="payment-panel" role="status" aria-live="polite">
+      <div class="spinner" id="paymentSpinner"></div>
+      <div class="payment-check" id="paymentCheck" hidden></div>
+      <strong id="paymentTitle">Authorizing payment</strong>
+      <span id="paymentMessage">Contacting BOCard payment network...</span>
+    </div>
+  </div>
+
+  <nav class="tabbar" role="navigation" aria-label="Primary">
+    <a href="index.html">
+      <div class="item">
+        <img src="assets/images/navigation/timetable.png" alt="" width="26" height="26" />
+        <span>Timetable</span>
+      </div>
+    </a>
+    <a class="active" href="mybocard.html">
+      <div class="item">
+        <img src="assets/images/navigation/mybocard.svg" alt="" width="26" height="26" />
+        <span>MyBOCard</span>
+      </div>
+    </a>
+    <a href="map.html">
+      <div class="item">
+        <img src="assets/images/navigation/map.png" alt="" width="26" height="26" />
+        <span>Map</span>
+      </div>
+    </a>
+    <a href="https://sites.google.com/view/borail-mc/home" target="_blank" rel="noopener">
+      <div class="item">
+        <img src="assets/images/navigation/information.png" alt="" width="26" height="26" />
+        <span>Information</span>
+      </div>
+    </a>
+    <a href="status.html">
+      <div class="item">
+        <img src="assets/images/navigation/status.png" alt="" width="26" height="26" />
+        <span>Status</span>
+      </div>
+    </a>
+  </nav>
+
+  <script src="assets/js/mybocard.js"></script>
+</body>
+</html>
