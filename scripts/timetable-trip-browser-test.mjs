@@ -175,6 +175,7 @@ assert.equal(await evaluate(`(() => {
   const result = BORailTripDebug.planBORailTrip('Newkirk', 'New Halifax', new Date('2026-07-01T07:00:00'));
   return result.journeys[0].arrivalSec === Math.min(...result.journeys.map(journey => journey.arrivalSec));
 })()`), true);
+assert.ok(await evaluate(`document.querySelectorAll('.trip-stop-name .accessible-icon-tiny').length`) > 0);
 assert.ok(await evaluate(`document.querySelector('.transfer-icon svg path') !== null`));
 assert.equal(await evaluate(`Math.round(document.querySelector('.transfer-icon').getBoundingClientRect().width)`), 40);
 
@@ -206,6 +207,30 @@ if (process.env.BORAIL_SCREENSHOT) {
 await evaluate(`document.getElementById('upcomingTab').click()`);
 assert.equal(await evaluate(`document.getElementById('upcomingView').hidden`), false);
 assert.ok(await evaluate(`document.querySelectorAll('#arrivals details.row').length`) > 0);
+const upcomingTimelineStyle = await evaluate(`(() => {
+  const row = document.querySelector('#arrivals details.row');
+  row.querySelector('summary').click();
+  const button = row.querySelector('[data-action="expand"]');
+  if (button) button.click();
+  const list = row.querySelector('.stops-list');
+  const firstStop = row.querySelector('.stop-item');
+  const firstIcon = row.querySelector('.stop-icon');
+  const activeIcon = document.querySelector('.tabbar a.active img');
+  return {
+    borderLeftWidth: getComputedStyle(list).borderLeftWidth,
+    borderLeftColor: getComputedStyle(list).borderLeftColor,
+    stopIconDisplay: getComputedStyle(firstIcon).display,
+    stopBeforeLeft: getComputedStyle(firstStop, '::before').left,
+    activeNavFilter: getComputedStyle(activeIcon).filter,
+    stopCount: row.querySelectorAll('.stop-item').length
+  };
+})()`);
+assert.equal(upcomingTimelineStyle.borderLeftWidth, '3px');
+assert.notEqual(upcomingTimelineStyle.borderLeftColor, 'rgba(0, 0, 0, 0)');
+assert.equal(upcomingTimelineStyle.stopIconDisplay, 'none');
+assert.equal(upcomingTimelineStyle.stopBeforeLeft, '-28px');
+assert.notEqual(upcomingTimelineStyle.activeNavFilter, 'none');
+assert.ok(upcomingTimelineStyle.stopCount > 1);
 assert.deepEqual(await evaluate(`(() => {
   const findOption = (panel, stationName) => Array.from(panel.querySelectorAll('.custom-option-item'))
     .find(item => item.querySelector('.station-item-name')?.textContent.trim() === stationName);
@@ -266,6 +291,25 @@ assert.equal(pairedStatuses.aLocalPill, pairedStatuses.aExpressPill);
 assert.equal(pairedStatuses.bLocalPill, pairedStatuses.bExpressPill);
 assert.equal(pairedStatuses.aLocalReason, pairedStatuses.aExpressReason);
 assert.equal(pairedStatuses.bLocalReason, pairedStatuses.bExpressReason);
+await evaluate(`BORailStatusDebug.renderStatus(BORailStatusDebug.statusState, {
+  A: {
+    type: 'minor',
+    delayed: 4,
+    total: 8,
+    maxDelaySeconds: 180,
+    reason: 'Timetable is showing 4 delayed trains on the A line within the active service window. Longest delay: 3 min.'
+  }
+})`);
+const delayOverride = await evaluate(`(() => ({
+  localType: document.querySelector('[data-service-id="A-local"]').dataset.statusType,
+  expressType: document.querySelector('[data-service-id="A-express"]').dataset.statusType,
+  localReason: document.querySelector('[data-service-id="A-local"] .reason')?.textContent.trim(),
+  expressReason: document.querySelector('[data-service-id="A-express"] .reason')?.textContent.trim()
+}))()`);
+assert.equal(delayOverride.localType, 'minor');
+assert.equal(delayOverride.expressType, 'minor');
+assert.match(delayOverride.localReason, /4 delayed trains/);
+assert.equal(delayOverride.localReason, delayOverride.expressReason);
 
 if (process.env.BORAIL_STATUS_SCREENSHOT) {
   const statusScreenshot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true });

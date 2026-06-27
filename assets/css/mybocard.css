@@ -93,11 +93,29 @@ header {
   transition: transform 360ms ease, box-shadow 360ms ease, filter 220ms ease;
 }
 
+.bocard-button:disabled {
+  cursor: default;
+}
+
 .bocard-button:hover,
 .bocard-button:focus-visible {
   transform: translateY(-2px);
   box-shadow: 0 28px 62px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.24);
   outline: none;
+}
+
+.wallet-shell.tap-disabled .bocard-button:hover,
+.wallet-shell.tap-disabled .bocard-button:focus-visible {
+  transform: none;
+  box-shadow: 0 24px 55px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.22);
+}
+
+.wallet-shell.tap-disabled .tap-status {
+  color: var(--muted);
+}
+
+.wallet-shell.tap-disabled .tap-icon {
+  color: var(--muted);
 }
 
 .bocard-button::after {
@@ -562,7 +580,7 @@ header {
 
 .tabbar a.active img {
   opacity: 1;
-  filter: none;
+  filter: brightness(0) saturate(100%) invert(61%) sepia(39%) saturate(1470%) hue-rotate(203deg) brightness(101%) contrast(101%);
 }
 
 .shake {

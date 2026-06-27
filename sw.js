@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v58-mybocard';
+const CACHE_NAME = 'borail-v59-status-timeline-polish';
 
 const CORE_ASSETS = [
   './',

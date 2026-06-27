@@ -1198,9 +1198,12 @@ function renderTripLeg(leg, nextLeg) {
   const stopsHtml = leg.stops.map((stop, index) => {
     const endpoint = index === 0 || index === leg.stops.length - 1;
     const delayed = stop.isDelayed && stop.actualArrivalSec !== stop.scheduledArrivalSec;
+    const accessIconHtml = ACCESSIBLE_STATIONS.has(stop.name)
+      ? `<img class="accessible-icon-tiny trip-accessible-icon" src="${ACCESSIBLE_ICON_URL}" alt="Accessible station" />`
+      : '';
     return `<div class="trip-stop ${endpoint ? 'endpoint' : ''}">
       <span class="trip-stop-time">${formatTripClock(index === 0 ? stop.actualDepartureSec : stop.actualArrivalSec)}</span>
-      <span>${tripEscape(stop.name)}${delayed ? ` <small style="color:var(--warning)">+${Math.round(stop.delaySeconds / 60)}m</small>` : ''}</span>
+      <span class="trip-stop-name">${tripEscape(stop.name)}${accessIconHtml}${delayed ? ` <small style="color:var(--warning)">+${Math.round(stop.delaySeconds / 60)}m</small>` : ''}</span>
     </div>`;
   }).join('');
 
@@ -1486,7 +1489,7 @@ function renderArrivals() {
           </div>
           <div class="slide" id="full-${trainId}" style="${isExpanded ? 'display:block; max-height:none; opacity:1;' : 'display:none;'}">
             <div class="subtle" style="margin-bottom:8px;">Making stops at…</div>
-            <ul class="stops-list">${stopsHtml}</ul>
+            <ul class="stops-list" style="--stop-line-color:${r.color}">${stopsHtml}</ul>
           </div>
         </div>
       </details>`;

@@ -44,6 +44,7 @@ await send('Storage.clearDataForOrigin', {
   origin: 'http://127.0.0.1:8766',
   storageTypes: 'all'
 });
+await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
 await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
 await send('Page.navigate', { url: 'http://127.0.0.1:8766/mybocard.html' });
 await wait(900);
@@ -60,6 +61,7 @@ assert.deepEqual(await evaluate(`Array.from(document.querySelectorAll('.tabbar s
 ]);
 assert.equal(await evaluate(`document.querySelector('.tabbar a.active span').textContent.trim()`), 'MyBOCard');
 assert.equal(await evaluate(`getComputedStyle(document.getElementById('paymentModal')).display`), 'none');
+assert.notEqual(await evaluate(`getComputedStyle(document.querySelector('.tabbar a.active img')).filter`), 'none');
 assert.equal(await evaluate(`MyBOCardDebug.constants.STATIONS.length`), 70);
 assert.equal(await evaluate(`MyBOCardDebug.getState().balance`), 12.5);
 assert.equal(await evaluate(`MyBOCardDebug.getState().history.length`), 3);
@@ -109,6 +111,17 @@ await evaluate(`(() => {
 await wait(300);
 assert.equal(await evaluate(`MyBOCardDebug.getState().balance`), 499);
 assert.match(await evaluate(`document.getElementById('reloadAlert').textContent`), /card limit/);
+
+await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+await send('Emulation.setDeviceMetricsOverride', { width: 1180, height: 820, deviceScaleFactor: 1, mobile: false });
+await send('Page.navigate', { url: 'http://127.0.0.1:8766/mybocard.html?desktop=1' });
+await wait(900);
+await evaluate(`MyBOCardDebug.setState({ balance: 10, history: [] })`);
+assert.equal(await evaluate(`document.getElementById('tapCardButton').disabled`), true);
+assert.match(await evaluate(`document.getElementById('tapStatus').textContent`), /mobile devices/);
+await evaluate(`document.getElementById('tapCardButton').click()`);
+await wait(2600);
+assert.equal(await evaluate(`MyBOCardDebug.getState().balance`), 10);
 
 socket.close();
 console.log('MyBOCard browser smoke test passed.');

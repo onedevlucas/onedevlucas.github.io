@@ -77,6 +77,54 @@
     };
 
     const LATE_NIGHT_OFF = new Set(['S-local','S-express','G-local','D-local']);
+    const STATUS_DELAY_THRESHOLD_MIN_TRAINS = 3;
+    const STATUS_DELAY_THRESHOLD_RATIO = 0.25;
+    const STATUS_DELAY_LOOKBACK_MIN = 45;
+    const STATUS_DELAY_LOOKAHEAD_MIN = 120;
+    const STATUS_BASE_DELAY_RATE = 0.10;
+    const STATUS_RUSH_DELAY_MULTIPLIER = 1.09;
+
+    const STATUS_LINE_SERVICE = {
+      A: [{ start: '04:00', end: '05:59', every: 20 }, { start: '06:00', end: '09:29', every: 7 }, { start: '09:30', end: '16:59', every: 15 }, { start: '17:00', end: '19:29', every: 7 }, { start: '19:30', end: '22:29', every: 20 }],
+      F: [{ start: '04:00', end: '05:59', every: 20 }, { start: '06:00', end: '09:29', every: 7 }, { start: '09:30', end: '16:59', every: 15 }, { start: '17:00', end: '19:29', every: 7 }, { start: '19:30', end: '22:29', every: 20 }],
+      B: [{ start: '04:00', end: '05:59', every: 25 }, { start: '06:00', end: '09:29', every: 5 }, { start: '09:30', end: '16:59', every: 15 }, { start: '17:00', end: '19:29', every: 5 }, { start: '19:30', end: '22:29', every: 25 }],
+      C: [{ start: '04:00', end: '05:59', every: 20 }, { start: '06:00', end: '09:29', every: 7 }, { start: '09:30', end: '16:59', every: 15 }, { start: '17:00', end: '19:29', every: 7 }, { start: '19:30', end: '22:29', every: 20 }],
+      E: [{ start: '04:00', end: '05:59', every: 25 }, { start: '06:00', end: '09:29', every: 5 }, { start: '09:30', end: '16:59', every: 15 }, { start: '17:00', end: '19:29', every: 5 }, { start: '19:30', end: '22:29', every: 25 }],
+      S: [{ start: '04:00', end: '05:59', every: 20 }, { start: '06:00', end: '09:29', every: 7 }, { start: '09:30', end: '16:59', every: 15 }, { start: '17:00', end: '19:29', every: 7 }, { start: '19:30', end: '22:29', every: 20 }],
+      D: [{ start: '05:30', end: '22:30', every: 12 }],
+      G: [{ start: '05:30', end: '22:30', every: 12 }]
+    };
+
+    const STATUS_DELAY_ROUTES = [
+      { serviceId:'F', isExpress:false, tag:'LCL', origin:'Kenilworth', destination:'Newkirk', stopCount:10 },
+      { serviceId:'F', isExpress:false, tag:'LCL', origin:'Boylston', destination:'Newkirk', stopCount:11 },
+      { serviceId:'F', isExpress:false, tag:'LCL', origin:'Newkirk', destination:'Kenilworth', stopCount:10 },
+      { serviceId:'F', isExpress:false, tag:'LCL', origin:'Newkirk', destination:'Boylston', stopCount:11 },
+      { serviceId:'F', isExpress:true, tag:'EXP', origin:'Whitebranch', destination:'Newkirk', stopCount:10 },
+      { serviceId:'F', isExpress:true, tag:'EXP', origin:'Newkirk', destination:'Whitebranch', stopCount:10 },
+      { serviceId:'G', isExpress:false, tag:'LCL', origin:'Bradford Bay', destination:'Berwick Hall', stopCount:4 },
+      { serviceId:'G', isExpress:false, tag:'LCL', origin:'Berwick Hall', destination:'Bradford Bay', stopCount:4 },
+      { serviceId:'S', isExpress:false, tag:'LCL', origin:'Ralston-Finch East', destination:'Burlington - University of NCU', stopCount:8 },
+      { serviceId:'S', isExpress:false, tag:'LCL', origin:'Burlington - University of NCU', destination:'Ralston-Finch East', stopCount:8 },
+      { serviceId:'S', isExpress:true, tag:'EXP', origin:'Ralston-Finch East', destination:'Newkirk', stopCount:7, peak:'AM' },
+      { serviceId:'S', isExpress:true, tag:'EXP', origin:'Newkirk', destination:'Ralston-Finch East', stopCount:7, peak:'PM' },
+      { serviceId:'A', isExpress:false, tag:'LCL', origin:'Mount River', destination:'Newkirk', stopCount:10, hasRadcliff:true },
+      { serviceId:'A', isExpress:false, tag:'LCL', origin:'Newkirk', destination:'Mount River', stopCount:10, hasRadcliff:true },
+      { serviceId:'A', isExpress:true, tag:'EXP', origin:'Mount River', destination:'Port Williamson', stopCount:9 },
+      { serviceId:'A', isExpress:true, tag:'EXP', origin:'Port Williamson', destination:'Mount River', stopCount:8 },
+      { serviceId:'D', isExpress:false, tag:'LCL', origin:'Oakville City Airport', destination:'Veridia Nexus', stopCount:2 },
+      { serviceId:'D', isExpress:false, tag:'LCL', origin:'Veridia Nexus', destination:'Oakville City Airport', stopCount:2 },
+      { serviceId:'C', isExpress:false, tag:'LCL', origin:'East Heights', destination:'Oakville City Airport', stopCount:8 },
+      { serviceId:'C', isExpress:false, tag:'LCL', origin:'East Heights', destination:'Fernwood', stopCount:15 },
+      { serviceId:'C', isExpress:false, tag:'LCL', origin:'Oakville City Airport', destination:'East Heights', stopCount:8 },
+      { serviceId:'C', isExpress:false, tag:'LCL', origin:'Fernwood', destination:'East Heights', stopCount:15 },
+      { serviceId:'E', isExpress:false, tag:'LCL', origin:'Santa Mora', destination:'East Heights', stopCount:12 },
+      { serviceId:'E', isExpress:false, tag:'LCL', origin:'East Heights', destination:'Santa Mora', stopCount:10 },
+      { serviceId:'B', isExpress:false, tag:'LCL', origin:'Leighton Castle', destination:'Harrington City', stopCount:15 },
+      { serviceId:'B', isExpress:false, tag:'LCL', origin:'Harrington City', destination:'Leighton Castle', stopCount:15 },
+      { serviceId:'B', isExpress:true, tag:'EXP', origin:'Leighton Castle', destination:'Hadleigh', stopCount:9 },
+      { serviceId:'B', isExpress:true, tag:'EXP', origin:'Hadleigh', destination:'Leighton Castle', stopCount:9 }
+    ];
 
     function minutesNowLocal(){
       const d = new Date();
@@ -95,6 +143,159 @@
     function scheduleKey(){
       const s = getScheduleState();
       return s.late ? 'late' : (s.rush ? 'rush' : 'noexpress');
+    }
+
+    function seededRandom(seed) {
+      let h = 2166136261 >>> 0;
+      const s = String(seed);
+      for (let i = 0; i < s.length; i++) {
+        h ^= s.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+      }
+      return function() {
+        h = Math.imul(h ^ (h >>> 16), 2246822507);
+        h = Math.imul(h ^ (h >>> 13), 3266489909);
+        return ((h ^= h >>> 16) >>> 0) / 4294967296;
+      };
+    }
+
+    const toMin = t => {
+      const [h, m] = t.split(':').map(Number);
+      return h * 60 + m;
+    };
+
+    function statusTimeModeForMinutes(nowMin) {
+      const normalized = ((nowMin % 1440) + 1440) % 1440;
+      const rushAM = (normalized >= toMin('06:00') && normalized < toMin('09:30'));
+      const rushPM = (normalized >= toMin('17:00') && normalized < toMin('19:30'));
+      const overnight = (normalized >= toMin('22:30') || normalized < toMin('03:59'));
+      if (overnight) return 'overnight';
+      if (rushAM) return 'rushAM';
+      if (rushPM) return 'rushPM';
+      return 'local';
+    }
+
+    function statusServiceAllowed(route, mode) {
+      if (route.serviceId === 'S' && route.isExpress) {
+        if (mode === 'rushAM' && route.peak === 'AM') return true;
+        if (mode === 'rushPM' && route.peak === 'PM') return true;
+        return false;
+      }
+
+      const isRush = mode === 'rushAM' || mode === 'rushPM';
+      if (!isRush && route.isExpress) return false;
+
+      if (mode === 'overnight') {
+        if (route.serviceId === 'G' || route.serviceId === 'S' || route.serviceId === 'D') return false;
+        if (route.serviceId === 'F' && route.isExpress) return false;
+      }
+      return true;
+    }
+
+    function statusEffectiveStopCount(route, mode) {
+      const shouldSkipRadcliff = route.hasRadcliff && !(mode === 'rushAM' || mode === 'rushPM');
+      return shouldSkipRadcliff ? route.stopCount - 1 : route.stopCount;
+    }
+
+    function statusExpandDepartures(periods) {
+      const out = [];
+      periods.forEach(period => {
+        let cur = toMin(period.start);
+        const end = toMin(period.end);
+        while (cur <= end) {
+          out.push(cur);
+          cur += period.every;
+        }
+      });
+      return out;
+    }
+
+    function statusRouteDepartureMinutes(route) {
+      const dep = statusExpandDepartures(STATUS_LINE_SERVICE[route.serviceId] || []);
+      const branchSeed = `${route.serviceId}-${route.tag}-${route.origin}-${route.destination}`;
+      const rng = seededRandom(branchSeed);
+      const baseOffset = Math.floor(rng() * 3);
+
+      return dep.map(t0 => {
+        let slotted = t0 + baseOffset;
+        if (route.serviceId === 'F' && !route.isExpress && route.origin === 'Boylston') slotted += 3;
+        else if (route.serviceId === 'C' && (route.destination === 'Oakville City Airport' || route.origin === 'Oakville City Airport')) slotted += 4;
+        else if (route.serviceId === 'A' && route.isExpress) slotted += 3;
+        else if (route.serviceId === 'B' && route.isExpress) slotted += 2;
+        else if (route.serviceId === 'S' && route.isExpress) slotted += 3;
+        return slotted;
+      });
+    }
+
+    function statusTrainDelayInfo(trainSeed, mode) {
+      const rng = seededRandom(trainSeed + '-delay');
+      const roll = rng();
+      const isRushHour = mode === 'rushAM' || mode === 'rushPM';
+      const delayRate = STATUS_BASE_DELAY_RATE * (isRushHour ? STATUS_RUSH_DELAY_MULTIPLIER : 1);
+      const oneMinuteDelayThreshold = 1 - (STATUS_BASE_DELAY_RATE * 0.20);
+
+      if (roll < 1 - delayRate) {
+        return { isDelayed: false, delaySeconds: 0, delayStartStop: -1 };
+      }
+      if (roll < oneMinuteDelayThreshold) {
+        return { isDelayed: true, delaySeconds: 60, delayStartStop: Math.floor(rng() * 2) + 2 };
+      }
+      return {
+        isDelayed: true,
+        delaySeconds: (Math.floor(rng() * 2) + 2) * 60,
+        delayStartStop: Math.floor(rng() * 2) + 2
+      };
+    }
+
+    function computeStatusDelaySignals(now = new Date()) {
+      const nowMin = now.getHours() * 60 + now.getMinutes() + (now.getSeconds() / 60);
+      const mode = statusTimeModeForMinutes(nowMin);
+      const windowStart = nowMin - STATUS_DELAY_LOOKBACK_MIN;
+      const windowEnd = nowMin + STATUS_DELAY_LOOKAHEAD_MIN;
+      const byLetter = {};
+
+      for (const route of STATUS_DELAY_ROUTES) {
+        if (!statusServiceAllowed(route, mode)) continue;
+        const stopCount = statusEffectiveStopCount(route, mode);
+        const routeDurationMin = Math.max(4, (stopCount - 1) * 1.5 + stopCount * 0.35);
+
+        for (const baseDeparture of statusRouteDepartureMinutes(route)) {
+          for (const departureMin of [baseDeparture - 1440, baseDeparture, baseDeparture + 1440]) {
+            if (departureMin > windowEnd) continue;
+            if (departureMin + routeDurationMin < windowStart) continue;
+
+            const trainSeed = `${route.serviceId}-${route.tag}-${baseDeparture}-${route.origin}-${route.destination}`;
+            const delayInfo = statusTrainDelayInfo(trainSeed, mode);
+            const bucket = byLetter[route.serviceId] || { total: 0, delayed: 0, maxDelaySeconds: 0 };
+            bucket.total += 1;
+
+            const delayCanAffectStops = delayInfo.isDelayed && delayInfo.delayStartStop < stopCount;
+            const delayStartsMin = departureMin + Math.max(0, delayInfo.delayStartStop) * 1.5;
+            if (delayCanAffectStops && delayStartsMin <= windowEnd) {
+              bucket.delayed += 1;
+              bucket.maxDelaySeconds = Math.max(bucket.maxDelaySeconds, delayInfo.delaySeconds);
+            }
+            byLetter[route.serviceId] = bucket;
+          }
+        }
+      }
+
+      return Object.fromEntries(Object.entries(byLetter).flatMap(([letter, bucket]) => {
+        const ratio = bucket.total ? bucket.delayed / bucket.total : 0;
+        const significant = bucket.delayed >= STATUS_DELAY_THRESHOLD_MIN_TRAINS ||
+          (bucket.total >= 4 && ratio >= STATUS_DELAY_THRESHOLD_RATIO);
+        if (!significant) return [];
+
+        const type = (ratio >= 0.5 || bucket.delayed >= 5 || bucket.maxDelaySeconds >= 180) ? 'major' : 'minor';
+        const delayedWord = bucket.delayed === 1 ? 'train' : 'trains';
+        return [[letter, {
+          type,
+          delayed: bucket.delayed,
+          total: bucket.total,
+          maxDelaySeconds: bucket.maxDelaySeconds,
+          reason: `Timetable is showing ${bucket.delayed} delayed ${delayedWord} on the ${letter} line within the active service window. Longest delay: ${Math.max(1, Math.round(bucket.maxDelaySeconds / 60))} min.`
+        }]];
+      }));
     }
 
     function scheduledOverride(service){
@@ -132,11 +333,13 @@
       return 'none';
     }
 
-    function renderStatus(state){
+    function renderStatus(state, delaySignals = computeStatusDelaySignals()){
       const host = document.getElementById('statusList');
       host.innerHTML = state.statuses.map((stObj) => {
+        const delaySignal = delaySignals[stObj.letter];
+        const displayObj = delaySignal ? { ...stObj, type: delaySignal.type, delaySignal } : stObj;
         const svcName = stObj.nameHtml;
-        const st = stObj.type; // 'ok' | 'minor' | 'major' | 'none'
+        const st = displayObj.type; // 'ok' | 'minor' | 'major' | 'none'
 
         const icon = `<img class="lnicon" src="${stObj.icon}" alt="${stObj.letter} ${stObj.mode}" loading="lazy" onerror="this.style.display='none'">`;
         const left = `<div class="name">${svcName}</div>`;
@@ -174,7 +377,7 @@
           const pool =
             st==='minor' ? REASONS.minor :
             st==='major' ? REASONS.major : REASONS.none;
-          const reasonText = pool[stObj.reasonIndex] || pool[0];
+          const reasonText = displayObj.delaySignal?.reason || pool[displayObj.reasonIndex] || pool[0];
 
           return `
             <details class="srow" data-service-id="${stObj.id}" data-status-type="${st}">
@@ -294,7 +497,9 @@
     window.BORailStatusDebug = {
       services: SERVICES,
       statusState: STATUS_STATE,
-      normalizeStatusState
+      normalizeStatusState,
+      computeStatusDelaySignals,
+      renderStatus
     };
 
     // Re-render when we cross into a different service window (based on viewer's local time).

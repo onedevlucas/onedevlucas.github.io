@@ -89,7 +89,7 @@
       filter: grayscale(100%);
     }
     .tabbar a.active { color: var(--accent); }
-    .tabbar a.active img { opacity: 1; filter: none; }
+    .tabbar a.active img { opacity: 1; filter: brightness(0) saturate(100%) invert(61%) sepia(39%) saturate(1470%) hue-rotate(203deg) brightness(101%) contrast(101%); }
 
     /* --- Centered map buttons --- */
 .centerwrap {

@@ -54,6 +54,7 @@
   let state = loadState();
   let selectedAmount = null;
   let busy = false;
+  let cardTapEnabled = true;
 
   document.addEventListener('DOMContentLoaded', init);
 
@@ -87,6 +88,7 @@
 
   function bindEvents() {
     els.tapCardButton.addEventListener('click', handleTapToPay);
+    window.addEventListener('resize', updateTapAvailability);
 
     els.amountGrid.addEventListener('click', (event) => {
       const button = event.target.closest('button[data-amount]');
@@ -182,6 +184,7 @@
 
     els.historyCount.textContent = `${state.history.length} ${state.history.length === 1 ? 'tap' : 'taps'}`;
     renderHistory();
+    updateTapAvailability();
   }
 
   function renderHistory() {
@@ -260,7 +263,7 @@
   }
 
   function handleTapToPay() {
-    if (busy) return;
+    if (busy || !cardTapEnabled) return;
 
     busy = true;
     els.walletShell.classList.add('is-tapping');
@@ -317,6 +320,23 @@
     els.tapStatus.classList.toggle('ok', type === 'ok');
     els.tapStatus.classList.toggle('error', type === 'error');
     els.tapStatus.innerHTML = `<span class="tap-icon" aria-hidden="true">${icon}</span><span>${escapeHtml(message)}</span>`;
+  }
+
+  function isTapCapableDevice() {
+    return Boolean(navigator.maxTouchPoints > 0 || window.matchMedia('(pointer: coarse)').matches);
+  }
+
+  function updateTapAvailability() {
+    if (!els.tapCardButton) return;
+    cardTapEnabled = isTapCapableDevice();
+    els.tapCardButton.disabled = !cardTapEnabled;
+    els.tapCardButton.setAttribute('aria-disabled', String(!cardTapEnabled));
+    els.walletShell.classList.toggle('tap-disabled', !cardTapEnabled);
+    if (!busy && !cardTapEnabled) {
+      setTapStatus('Tap-to-pay is available on mobile devices', 'neutral');
+    } else if (!busy && cardTapEnabled && !els.tapStatus.classList.contains('error')) {
+      setTapStatus('Tap card to pay fare', 'neutral');
+    }
   }
 
   function setReloadAlert(message, isError = false) {

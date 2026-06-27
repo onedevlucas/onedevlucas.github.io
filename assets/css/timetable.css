@@ -268,34 +268,52 @@
 
     .stops-list {
       list-style: none;
-      margin: 0;
-      padding-left: 0;
+      margin: 8px 0 0 17px;
+      padding-left: 18px;
+      border-left: 3px solid var(--stop-line-color, var(--accent));
       line-height: 1.4;
     }
     .stop-item {
       position: relative;
+      display: grid;
+      grid-template-columns: 54px minmax(0, 1fr);
+      gap: 8px;
       margin: 0;
-      padding: 8px 0 8px 32px;
-      border-left: 2px solid rgba(255,255,255,0.14);
-      margin-left: 8px;
+      padding: 7px 0;
+      color: var(--muted);
     }
-    .stop-item:last-child {
-      border-left-color: transparent;
+    .stop-item::before {
+      content: '';
+      position: absolute;
+      left: -28px;
+      top: 11px;
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--card);
+      border: 3px solid var(--stop-line-color, var(--accent));
+      z-index: 1;
     }
     .stop-item .stop-icon {
-      position: absolute;
-      left: -9px;
-      top: 8px;
-      width: 18px;
-      height: 18px;
+      display: none;
     }
     .stop-item .stop-icon svg {
       width: 18px;
       height: 18px;
     }
+    .stop-item.current::before {
+      background: var(--success);
+      border-color: var(--success);
+      box-shadow: 0 0 0 4px rgba(52,199,89,.12);
+    }
     .stop-item.current .stop-name {
       color: var(--success);
       font-weight: 600;
+    }
+    .stop-item.current.delayed::before {
+      background: var(--warning);
+      border-color: var(--warning);
+      box-shadow: 0 0 0 4px rgba(255,204,0,.12);
     }
     .stop-item.current.delayed .stop-name {
       color: var(--warning);
@@ -311,7 +329,9 @@
       font-size: 13px;
       color: var(--muted);
       font-variant-numeric: tabular-nums;
-      margin-bottom: 2px;
+      margin-bottom: 0;
+      grid-column: 1;
+      grid-row: 1;
     }
     .stop-time-main.delayed .scheduled {
       text-decoration: line-through;
@@ -327,6 +347,8 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
+      grid-column: 2;
+      grid-row: 1;
     }
     .accessible-icon-tiny {
       width: 15px;
@@ -338,11 +360,13 @@
     .stop-details {
       font-size: 11px;
       color: var(--muted);
-      margin-top: 3px;
+      margin-top: -2px;
       display: flex;
       gap: 12px;
       align-items: center;
       flex-wrap: wrap;
+      grid-column: 2;
+      grid-row: 2;
     }
     .stop-details .clock-icon {
       width: 12px;
@@ -538,7 +562,7 @@
 
     .tabbar a.active img {
       opacity: 1;
-      filter: none;
+      filter: brightness(0) saturate(100%) invert(61%) sepia(39%) saturate(1470%) hue-rotate(203deg) brightness(101%) contrast(101%);
     }
 
     .view-tabs {
@@ -851,9 +875,10 @@
     .trip-leg-time { margin-left: auto; text-align: right; font-variant-numeric: tabular-nums; }
     .trip-stop-timeline { margin: 10px 0 0 17px; padding-left: 18px; border-left: 3px solid var(--leg-color, var(--accent)); }
     .trip-stop { position: relative; display: grid; grid-template-columns: 54px 1fr; gap: 8px; padding: 7px 0; color: var(--muted); font-size: 11px; }
-    .trip-stop::before { content: ''; position: absolute; left: -25px; top: 11px; width: 11px; height: 11px; border-radius: 50%; background: var(--card); border: 3px solid var(--leg-color, var(--accent)); }
+    .trip-stop::before { content: ''; position: absolute; left: -28px; top: 11px; width: 11px; height: 11px; border-radius: 50%; background: var(--card); border: 3px solid var(--leg-color, var(--accent)); }
     .trip-stop.endpoint { color: var(--text); font-weight: 750; }
     .trip-stop-time { font-variant-numeric: tabular-nums; }
+    .trip-stop-name { display: inline-flex; align-items: center; gap: 5px; min-width: 0; }
     .transfer-block {
       display: flex;
       align-items: center;
