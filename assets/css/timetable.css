@@ -276,8 +276,9 @@
     .stop-item {
       position: relative;
       display: grid;
-      grid-template-columns: 68px minmax(0, 1fr);
-      gap: 10px;
+      grid-template-columns: 92px minmax(0, 1fr);
+      column-gap: 16px;
+      row-gap: 2px;
       align-items: start;
       margin: 0;
       padding: 7px 0;
@@ -336,12 +337,16 @@
       min-width: 0;
       line-height: 1.25;
       white-space: nowrap;
+      overflow: hidden;
     }
     .stop-time-main.delayed {
-      display: grid;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
       gap: 1px;
     }
     .stop-time-main.delayed .scheduled {
+      display: block;
       text-decoration: line-through;
       opacity: 0.6;
     }
@@ -361,6 +366,7 @@
       min-width: 0;
       line-height: 1.25;
       overflow-wrap: anywhere;
+      padding-left: 1px;
     }
     .accessible-icon-tiny {
       width: 15px;

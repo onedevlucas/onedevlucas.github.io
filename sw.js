@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v60c-layout-fixes';
+const CACHE_NAME = 'borail-v60d-delayed-stop-layout';
 
 const CORE_ASSETS = [
   './',
