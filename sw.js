@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v59-status-timeline-polish';
+const CACHE_NAME = 'borail-v60-elevator-status';
 
 const CORE_ASSETS = [
   './',

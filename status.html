@@ -10,8 +10,8 @@
 <body>
   <header>
     <div class="wrap">
-      <div class="title">BORail • Status</div>
-      <div class="subtle">Live line conditions • Based on your local time • Tap a disrupted service to see details.</div>
+      <div class="title">BORail - Status</div>
+      <div class="subtle">Live line conditions - Based on your local time - Tap a disrupted service to see details.</div>
     </div>
   </header>
 
@@ -22,45 +22,44 @@
         <div id="statusList" class="status-list"></div>
       </div>
 
-      <!-- Elevator Status (placeholder for later) -->
-      <div class="card">
-        <div class="name" style="margin-bottom:8px;">Elevator Status</div>
-        <div class="subtle">We’ll add elevator outages here next.</div>
+      <div class="card elevator-card">
+        <div class="elevator-card-top">
+          <div>
+            <div class="name">Elevator Status</div>
+            <div class="subtle">Active elevator outages and recently repaired elevators.</div>
+          </div>
+          <div class="elevator-count-pill" id="elevatorOutageSummary" aria-live="polite"></div>
+        </div>
+        <div id="elevatorStatusList" class="elevator-status-list"></div>
       </div>
     </section>
   </main>
 
-  <!-- Bottom tab bar -->
   <nav class="tabbar" role="navigation" aria-label="Primary">
-    <!-- Timetable -->
     <a href="index.html">
       <div class="item">
         <img src="assets/images/navigation/timetable.png" alt="" width="26" height="26" />
         <span>Timetable</span>
       </div>
     </a>
-    <!-- MyBOCard -->
     <a href="mybocard.html">
       <div class="item">
         <img src="assets/images/navigation/mybocard.svg" alt="" width="26" height="26" />
         <span>MyBOCard</span>
       </div>
     </a>
-    <!-- Map -->
     <a href="map.html">
       <div class="item">
         <img src="assets/images/navigation/map.png" alt="" width="26" height="26" />
         <span>Map</span>
       </div>
     </a>
-    <!-- Information (external) -->
     <a href="https://sites.google.com/view/borail-mc/home" target="_blank" rel="noopener">
       <div class="item">
         <img src="assets/images/navigation/information.png" alt="" width="26" height="26" />
         <span>Information</span>
       </div>
     </a>
-    <!-- Status (current) -->
     <a class="active" href="status.html">
       <div class="item">
         <img src="assets/images/navigation/status.png" alt="" width="26" height="26" />

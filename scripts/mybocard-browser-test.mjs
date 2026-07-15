@@ -74,6 +74,7 @@ await evaluate(`(() => {
   return true;
 })()`);
 assert.ok(await evaluate(`document.querySelectorAll('.history-row .line-badges img').length`) >= 4);
+assert.match(await evaluate(`document.querySelector('.history-charge-id').textContent`), /Charge ID: #\d{7}[A-Z0-9]{3}/);
 
 await evaluate(`document.querySelector('[data-amount="10"]').click()`);
 await evaluate(`document.getElementById('confirmPaymentButton').click()`);
@@ -91,6 +92,7 @@ const postTap = await evaluate(`MyBOCardDebug.getState()`);
 assert.equal(postTap.balance, 20);
 assert.equal(postTap.history.length, 2);
 assert.equal(await evaluate(`document.getElementById('cardBalanceText').textContent`), '$20.00');
+assert.match(await evaluate(`document.querySelector('.history-charge-id').textContent`), /Charge ID: #\d{7}[A-Z0-9]{3}/);
 
 await evaluate(`(() => {
   MyBOCardDebug.setState({ balance: 1, history: [] });

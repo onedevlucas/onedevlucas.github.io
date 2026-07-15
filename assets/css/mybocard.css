@@ -456,6 +456,14 @@ header {
   font-size: 12px;
 }
 
+.history-charge-id {
+  margin-top: 3px;
+  color: rgba(160,163,173,.78);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: .2px;
+}
+
 .fare-pill {
   color: var(--accent-2);
   font-weight: 900;

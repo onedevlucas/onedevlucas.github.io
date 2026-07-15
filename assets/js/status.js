@@ -77,9 +77,8 @@
     };
 
     const LATE_NIGHT_OFF = new Set(['S-local','S-express','G-local','D-local']);
-    const STATUS_DELAY_THRESHOLD_MIN_TRAINS = 3;
-    const STATUS_DELAY_THRESHOLD_RATIO = 0.25;
-    const STATUS_DELAY_LOOKBACK_MIN = 45;
+    const STATUS_DELAY_MINOR_MIN_TRAINS = 6;
+    const STATUS_DELAY_MAJOR_MIN_TRAINS = 12;
     const STATUS_DELAY_LOOKAHEAD_MIN = 120;
     const STATUS_BASE_DELAY_RATE = 0.10;
     const STATUS_RUSH_DELAY_MULTIPLIER = 1.09;
@@ -125,6 +124,111 @@
       { serviceId:'B', isExpress:true, tag:'EXP', origin:'Leighton Castle', destination:'Hadleigh', stopCount:9 },
       { serviceId:'B', isExpress:true, tag:'EXP', origin:'Hadleigh', destination:'Leighton Castle', stopCount:9 }
     ];
+
+    const ELEVATOR_STORAGE_KEY = 'borail_elevator_status_v1';
+    const ELEVATOR_RECENT_REPAIRED_MS = 24 * 60 * 60 * 1000;
+    const ELEVATOR_MIN_REPAIR_START_MS = 12 * 60 * 60 * 1000;
+    const ELEVATOR_REPAIR_START_WINDOW_MS = 12 * 60 * 60 * 1000;
+    const ELEVATOR_MIN_REPAIR_DURATION_MS = 2 * 60 * 60 * 1000;
+    const ELEVATOR_REPAIR_DURATION_WINDOW_MS = 6 * 60 * 60 * 1000;
+
+    const ELEVATOR_STATIONS = [
+      { station:'Newkirk', elevators:['Exit','SB','SB','SB'] },
+      { station:'Newkirk - Oak Street', elevators:['NB','SB'] },
+      { station:'Chelsea Bay', elevators:['Exit','NB'] },
+      { station:'Berwick Hall', elevators:['Exit','NB/WB'] },
+      { station:'Cambridge Central', elevators:['NB','SB'] },
+      { station:'Atkinson Junction', elevators:['Exit','NB','SB'] },
+      { station:'Kenilworth', elevators:['Exit'] },
+      { station:'La Vista', elevators:['NB','SB'] },
+      { station:'Burlington - University of NCU', elevators:['Exit','NB','SB'] },
+      { station:'Willow Springs', elevators:['Exit','NB','SB'] },
+      { station:'Cannon View', elevators:['Exit','NB','SB'] },
+      { station:'Ivory Knolls', elevators:['NB','SB'] },
+      { station:'Vanderburg', elevators:['NB','SB'] },
+      { station:'Ralston-Finch East', elevators:['Exit'] },
+      { station:'Atkins Bridge', elevators:['NB','SB'] },
+      { station:'Veridia Nexus', elevators:['Exit'] },
+      { station:'Oakville City Airport', elevators:['Exit','NB','SB','WB'] },
+      { station:'Oakville Exchange', elevators:['NB','SB','EB'] },
+      { station:'Oakville City Center', elevators:['NB','EB'] },
+      { station:'Oakville Plaza', elevators:['NB','SB','EB'] },
+      { station:'Leighton Castle', elevators:['Exit','NB','EB'] },
+      { station:'Yoakum', elevators:['NB','EB'] },
+      { station:'Talmedge Hill', elevators:['Exit','NB'] },
+      { station:'New Salemview', elevators:['NB','EB'] },
+      { station:'Roxbury Landing', elevators:['Exit','SB/NB/WB'] },
+      { station:'Scottsbury', elevators:['NB','SB'] },
+      { station:'Ameryville', elevators:['NB','SB'] },
+      { station:'Scottsdale', elevators:['NB','SB'] },
+      { station:'Brandywine', elevators:['NB','SB','Exit'] },
+      { station:'Santa Mora', elevators:['Exit'] },
+      { station:'Groveton', elevators:['Exit','NB/EB'] },
+      { station:'Madisonboro', elevators:['Exit','NB','EB'] },
+      { station:'South Harrington', elevators:['NB','EB'] },
+      { station:'Harrington City', elevators:['NB','EB'] },
+      { station:'Carrollton', elevators:['Exit'] },
+      { station:'Hadleigh', elevators:['Exit'] }
+    ];
+
+    const STATUS_STATION_SERVICES = {
+      'Newkirk': [{ s:'F', e:true }, { s:'F' }, { s:'A' }, { s:'S', e:true }],
+      'Newkirk - Oak Street': [{ s:'F', e:true }, { s:'F' }, { s:'S', e:true }],
+      'Chelsea Bay': [{ s:'F' }],
+      'Berwick Hall': [{ s:'F', e:true }, { s:'F' }, { s:'G' }],
+      'Cambridge Central': [{ s:'F' }],
+      'Atkinson Junction': [{ s:'F', e:true }, { s:'F' }],
+      'Kenilworth': [{ s:'F' }],
+      'La Vista': [{ s:'F', e:true }, { s:'F' }],
+      'Burlington - University of NCU': [{ s:'A' }, { s:'S', e:true }, { s:'S' }],
+      'Willow Springs': [{ s:'A', e:true }, { s:'S', e:true }, { s:'S' }],
+      'Cannon View': [{ s:'A', e:true }, { s:'A' }, { s:'S', e:true }, { s:'S' }],
+      'Ivory Knolls': [{ s:'S' }],
+      'Vanderburg': [{ s:'S' }],
+      'Ralston-Finch East': [{ s:'S', e:true }, { s:'S' }],
+      'Atkins Bridge': [{ s:'A', e:true }, { s:'A' }],
+      'Veridia Nexus': [{ s:'D' }],
+      'Oakville City Airport': [{ s:'A', e:true }, { s:'A' }, { s:'C' }, { s:'D' }],
+      'Oakville Exchange': [{ s:'A', e:true }, { s:'A' }, { s:'B', e:true }, { s:'B' }, { s:'C' }],
+      'Oakville City Center': [{ s:'B', e:true }, { s:'B' }, { s:'C' }],
+      'Oakville Plaza': [{ s:'A', e:true }, { s:'A' }, { s:'B', e:true }, { s:'B' }, { s:'C' }],
+      'Leighton Castle': [{ s:'B', e:true }, { s:'B' }, { s:'C' }],
+      'Yoakum': [{ s:'C' }],
+      'Talmedge Hill': [{ s:'A', e:true }, { s:'A' }],
+      'New Salemview': [{ s:'C' }],
+      'Roxbury Landing': [{ s:'C' }, { s:'E' }],
+      'Scottsbury': [{ s:'E' }],
+      'Ameryville': [{ s:'E' }],
+      'Scottsdale': [{ s:'E' }],
+      'Brandywine': [{ s:'E' }],
+      'Santa Mora': [{ s:'E' }],
+      'Groveton': [{ s:'B' }],
+      'Madisonboro': [{ s:'B', e:true }, { s:'B' }],
+      'South Harrington': [{ s:'B' }],
+      'Harrington City': [{ s:'B', e:true }, { s:'B' }],
+      'Carrollton': [{ s:'B', e:true }],
+      'Hadleigh': [{ s:'B', e:true }]
+    };
+
+    const LINE_ICON_PATHS = {
+      A: { local:'assets/images/line-icons/a-local.png', express:'assets/images/line-icons/a-express.png' },
+      B: { local:'assets/images/line-icons/b-local.png', express:'assets/images/line-icons/b-express.png' },
+      C: { local:'assets/images/line-icons/c-local.png' },
+      D: { local:'assets/images/line-icons/d-local.png' },
+      E: { local:'assets/images/line-icons/e-local.png' },
+      F: { local:'assets/images/line-icons/f-local.png', express:'assets/images/line-icons/f-express.png' },
+      G: { local:'assets/images/line-icons/g-local.png' },
+      S: { local:'assets/images/line-icons/s-local.png', express:'assets/images/line-icons/s-express.png' }
+    };
+
+    const ELEVATOR_UNITS = ELEVATOR_STATIONS.flatMap(station =>
+      station.elevators.map((direction, index) => ({
+        id: `${station.station}-${direction}-${index}`.replace(/[^a-z0-9]+/gi, '-').toLowerCase(),
+        station: station.station,
+        direction,
+        stationElevatorCount: station.elevators.length
+      }))
+    );
 
     function minutesNowLocal(){
       const d = new Date();
@@ -250,7 +354,7 @@
     function computeStatusDelaySignals(now = new Date()) {
       const nowMin = now.getHours() * 60 + now.getMinutes() + (now.getSeconds() / 60);
       const mode = statusTimeModeForMinutes(nowMin);
-      const windowStart = nowMin - STATUS_DELAY_LOOKBACK_MIN;
+      const windowStart = nowMin;
       const windowEnd = nowMin + STATUS_DELAY_LOOKAHEAD_MIN;
       const byLetter = {};
 
@@ -280,21 +384,19 @@
         }
       }
 
-      return Object.fromEntries(Object.entries(byLetter).flatMap(([letter, bucket]) => {
-        const ratio = bucket.total ? bucket.delayed / bucket.total : 0;
-        const significant = bucket.delayed >= STATUS_DELAY_THRESHOLD_MIN_TRAINS ||
-          (bucket.total >= 4 && ratio >= STATUS_DELAY_THRESHOLD_RATIO);
-        if (!significant) return [];
-
-        const type = (ratio >= 0.5 || bucket.delayed >= 5 || bucket.maxDelaySeconds >= 180) ? 'major' : 'minor';
+      return Object.fromEntries(BASE_LINES.map(({ letter }) => {
+        const bucket = byLetter[letter] || { total: 0, delayed: 0, maxDelaySeconds: 0 };
+        const type = bucket.delayed >= STATUS_DELAY_MAJOR_MIN_TRAINS
+          ? 'major'
+          : (bucket.delayed >= STATUS_DELAY_MINOR_MIN_TRAINS ? 'minor' : 'ok');
         const delayedWord = bucket.delayed === 1 ? 'train' : 'trains';
-        return [[letter, {
+        return [letter, {
           type,
           delayed: bucket.delayed,
           total: bucket.total,
           maxDelaySeconds: bucket.maxDelaySeconds,
-          reason: `Timetable is showing ${bucket.delayed} delayed ${delayedWord} on the ${letter} line within the active service window. Longest delay: ${Math.max(1, Math.round(bucket.maxDelaySeconds / 60))} min.`
-        }]];
+          reason: `Timetable is showing ${bucket.delayed} delayed ${delayedWord} on the ${letter} line in the next 2 hours. Longest delay: ${Math.max(0, Math.round(bucket.maxDelaySeconds / 60))} min.`
+        }];
       }));
     }
 
@@ -491,15 +593,263 @@
       return normalized;
     }
 
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[char]);
+    }
+
+    function elevatorIcon(type) {
+      if (type === 'hazard') {
+        return `<svg class="status-symbol hazard-symbol" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 22 20H2L12 3Z" fill="#ffcc00"/><path d="M12 8v6" stroke="#111" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="17" r="1.4" fill="#111"/></svg>`;
+      }
+      if (type === 'elevator') {
+        return `<svg class="status-symbol elevator-symbol" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v10M9 10l3-3 3 3M9 14l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+      }
+      if (type === 'progress') {
+        return `<svg class="status-symbol repair-symbol progress" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="#ff9500"/><path d="M12 7v6" stroke="#211300" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="16.8" r="1.3" fill="#211300"/></svg>`;
+      }
+      if (type === 'repaired') {
+        return `<svg class="status-symbol repair-symbol repaired" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="#34c759"/><path d="m7.8 12.2 2.7 2.7 5.8-6" fill="none" stroke="#07130b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+      }
+      return `<svg class="status-symbol repair-symbol awaiting" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="#ff3b30"/><path d="m8.5 8.5 7 7m0-7-7 7" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>`;
+    }
+
+    function directionLabel(direction) {
+      const labels = {
+        Exit: 'Exit',
+        NB: 'Northbound',
+        SB: 'Southbound',
+        EB: 'Eastbound',
+        WB: 'Westbound'
+      };
+      const parts = String(direction).split('/').map(part => labels[part] || part);
+      return `${parts.join(' / ')} Elevator`;
+    }
+
+    function lineBadgePath(service, express) {
+      const item = LINE_ICON_PATHS[service];
+      if (!item) return '';
+      return express ? item.express : item.local;
+    }
+
+    function renderStationBadges(station) {
+      const badges = STATUS_STATION_SERVICES[station] || [];
+      if (!badges.length) return '';
+      return `<span class="station-badges">${badges.map(badge => {
+        const src = lineBadgePath(badge.s, Boolean(badge.e));
+        if (!src) return '';
+        const alt = badge.e ? `<${badge.s}>` : `(${badge.s})`;
+        return `<img src="${src}" alt="${escapeHtml(alt)}" loading="lazy">`;
+      }).join('')}</span>`;
+    }
+
+    function formatElevatorTime(timestamp) {
+      return new Intl.DateTimeFormat(undefined, {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+      }).format(new Date(timestamp));
+    }
+
+    function loadElevatorState() {
+      try {
+        const raw = localStorage.getItem(ELEVATOR_STORAGE_KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch { return null; }
+    }
+
+    function saveElevatorState(state) {
+      try { localStorage.setItem(ELEVATOR_STORAGE_KEY, JSON.stringify(state)); }
+      catch { /* ignore */ }
+    }
+
+    function elevatorStatusFor(outage, nowMs = Date.now()) {
+      if (nowMs >= outage.repairedAt) return 'repaired';
+      if (nowMs >= outage.repairStartAt) return 'progress';
+      return 'awaiting';
+    }
+
+    function repairStatusMeta(status) {
+      if (status === 'repaired') {
+        return { label: 'Repaired', cls: 'repaired', icon: elevatorIcon('repaired') };
+      }
+      if (status === 'progress') {
+        return { label: 'Repairs in Progress', cls: 'progress', icon: elevatorIcon('progress') };
+      }
+      return { label: 'Awaiting Repair', cls: 'awaiting', icon: elevatorIcon('awaiting') };
+    }
+
+    function createElevatorOutage(unit, nowMs, rng) {
+      const reportedAt = nowMs - (20 * 60 * 1000) - Math.floor(rng() * 6 * 60 * 60 * 1000);
+      const repairStartAt = reportedAt + ELEVATOR_MIN_REPAIR_START_MS + Math.floor(rng() * ELEVATOR_REPAIR_START_WINDOW_MS);
+      const repairedAt = repairStartAt + ELEVATOR_MIN_REPAIR_DURATION_MS + Math.floor(rng() * ELEVATOR_REPAIR_DURATION_WINDOW_MS);
+      return {
+        id: `outage-${unit.id}-${Math.floor(reportedAt)}`,
+        elevatorId: unit.id,
+        station: unit.station,
+        direction: unit.direction,
+        reportedAt,
+        repairStartAt,
+        repairedAt
+      };
+    }
+
+    function normalizeElevatorState(state, nowMs = Date.now()) {
+      const existing = Array.isArray(state?.outages) ? state.outages : [];
+      const targetActive = Math.min(4, Math.max(2, Number(state?.targetActive) || 0)) ||
+        (2 + Math.floor(seededRandom(`elevator-target-${nowMs}`)() * 3));
+
+      return {
+        createdAt: Number(state?.createdAt) || nowMs,
+        targetActive,
+        outages: existing
+          .filter(outage => outage && outage.elevatorId && outage.station && outage.direction)
+          .map(outage => ({
+            id: String(outage.id || `outage-${outage.elevatorId}-${outage.reportedAt}`),
+            elevatorId: String(outage.elevatorId),
+            station: String(outage.station),
+            direction: String(outage.direction),
+            reportedAt: Number(outage.reportedAt) || nowMs,
+            repairStartAt: Number(outage.repairStartAt) || (nowMs + ELEVATOR_MIN_REPAIR_START_MS),
+            repairedAt: Number(outage.repairedAt) || (nowMs + ELEVATOR_MIN_REPAIR_START_MS + ELEVATOR_MIN_REPAIR_DURATION_MS)
+          }))
+          .filter(outage => {
+            const status = elevatorStatusFor(outage, nowMs);
+            return status !== 'repaired' || nowMs - outage.repairedAt <= ELEVATOR_RECENT_REPAIRED_MS;
+          })
+      };
+    }
+
+    function ensureElevatorOutageCount(state, nowMs = Date.now()) {
+      const active = state.outages.filter(outage => elevatorStatusFor(outage, nowMs) !== 'repaired');
+      const needed = Math.max(0, state.targetActive - active.length);
+      if (!needed) return state;
+
+      const used = new Set(state.outages.map(outage => outage.elevatorId));
+      const candidates = ELEVATOR_UNITS.filter(unit => !used.has(unit.id));
+      const rng = seededRandom(`elevator-outage-${state.createdAt}-${state.outages.length}-${nowMs}`);
+
+      for (let i = candidates.length - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        const temp = candidates[i];
+        candidates[i] = candidates[j];
+        candidates[j] = temp;
+      }
+
+      candidates.slice(0, needed).forEach(unit => {
+        state.outages.push(createElevatorOutage(unit, nowMs, rng));
+      });
+      return state;
+    }
+
+    function getOrCreateElevatorState(nowMs = Date.now()) {
+      const raw = loadElevatorState();
+      const normalized = ensureElevatorOutageCount(
+        normalizeElevatorState(raw || { createdAt: nowMs, targetActive: 2 + Math.floor(seededRandom(`elevator-target-${nowMs}`)() * 3), outages: [] }, nowMs),
+        nowMs
+      );
+      saveElevatorState(normalized);
+      return normalized;
+    }
+
+    function groupElevatorOutages(outages) {
+      const groups = new Map();
+      outages.forEach(outage => {
+        if (!groups.has(outage.station)) groups.set(outage.station, []);
+        groups.get(outage.station).push(outage);
+      });
+      return Array.from(groups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+    }
+
+    function renderElevatorDetail(outage, nowMs) {
+      const status = elevatorStatusFor(outage, nowMs);
+      const meta = repairStatusMeta(status);
+      return `<div class="elevator-detail-row">
+        <div class="elevator-detail-icon">${elevatorIcon('elevator')}</div>
+        <div class="elevator-detail-copy">
+          <strong>${escapeHtml(directionLabel(outage.direction))}</strong>
+          <span class="repair-state ${meta.cls}">${meta.icon}<span>${meta.label}</span></span>
+          <span>Reported at: ${escapeHtml(formatElevatorTime(outage.reportedAt))}</span>
+          ${status === 'repaired' ? `<span>Repaired at: ${escapeHtml(formatElevatorTime(outage.repairedAt))}</span>` : ''}
+        </div>
+      </div>`;
+    }
+
+    function renderElevatorGroup(station, outages, nowMs, repaired = false) {
+      const count = outages.length;
+      const countLabel = count === 1 ? '1' : String(count);
+      return `<details class="elevator-row ${repaired ? 'recently-repaired' : ''}">
+        <summary>
+          <div class="elevator-row-main">
+            <div class="elevator-station-line">
+              <strong>${escapeHtml(station)}</strong>
+              ${renderStationBadges(station)}
+            </div>
+            <span class="elevator-hint">${repaired ? 'Click for repair details...' : 'Click for more info...'}</span>
+          </div>
+          <span class="elevator-row-pill ${repaired ? 'repaired' : 'hazard'}">
+            ${repaired ? elevatorIcon('repaired') : elevatorIcon('hazard')}
+            <span>${countLabel}</span>
+          </span>
+        </summary>
+        <div class="elevator-detail-list">
+          ${outages.map(outage => renderElevatorDetail(outage, nowMs)).join('')}
+        </div>
+      </details>`;
+    }
+
+    function renderElevatorStatus(state = getOrCreateElevatorState(), now = new Date()) {
+      const host = document.getElementById('elevatorStatusList');
+      const summary = document.getElementById('elevatorOutageSummary');
+      if (!host || !summary) return;
+
+      const nowMs = now.getTime();
+      const normalized = ensureElevatorOutageCount(normalizeElevatorState(state, nowMs), nowMs);
+      ELEVATOR_STATE = normalized;
+      saveElevatorState(normalized);
+
+      const active = normalized.outages.filter(outage => elevatorStatusFor(outage, nowMs) !== 'repaired');
+      const repaired = normalized.outages.filter(outage => elevatorStatusFor(outage, nowMs) === 'repaired' && nowMs - outage.repairedAt <= ELEVATOR_RECENT_REPAIRED_MS);
+      const activeCount = active.length;
+
+      summary.innerHTML = `${activeCount ? elevatorIcon('hazard') : elevatorIcon('repaired')}<span>${activeCount}</span>`;
+
+      const activeHtml = active.length
+        ? groupElevatorOutages(active).map(([station, outages]) => renderElevatorGroup(station, outages, nowMs, false)).join('')
+        : '<div class="elevator-empty">No active elevator outages.</div>';
+
+      const repairedHtml = repaired.length
+        ? `<div class="elevator-section-title">Recently Repaired Elevators</div>${groupElevatorOutages(repaired).map(([station, outages]) => renderElevatorGroup(station, outages, nowMs, true)).join('')}`
+        : '';
+
+      host.innerHTML = `<div class="elevator-section-title">Active Elevator Outages</div>${activeHtml}${repairedHtml}`;
+      window.BORailElevatorDebug = {
+        state: normalized,
+        units: ELEVATOR_UNITS,
+        getStatus: outage => elevatorStatusFor(outage, Date.now()),
+        render: renderElevatorStatus
+      };
+      if (window.BORailStatusDebug) {
+        window.BORailStatusDebug.elevatorState = normalized;
+      }
+    }
+
     const STATUS_STATE = getOrCreateStatusState();
+    let ELEVATOR_STATE = getOrCreateElevatorState();
     renderStatus(STATUS_STATE);
+    renderElevatorStatus(ELEVATOR_STATE);
 
     window.BORailStatusDebug = {
       services: SERVICES,
       statusState: STATUS_STATE,
       normalizeStatusState,
       computeStatusDelaySignals,
-      renderStatus
+      renderStatus,
+      elevatorState: ELEVATOR_STATE,
+      renderElevatorStatus
     };
 
     // Re-render when we cross into a different service window (based on viewer's local time).
@@ -510,4 +860,5 @@
         _lastKey = k;
         renderStatus(STATUS_STATE);
       }
+      renderElevatorStatus(ELEVATOR_STATE);
     }, 30 * 1000);

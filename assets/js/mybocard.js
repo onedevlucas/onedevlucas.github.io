@@ -152,7 +152,8 @@
           station: entry.station,
           timestamp: Number(entry.timestamp),
           amount: -FARE,
-          balanceAfter: clampMoney(Number(entry.balanceAfter ?? balance))
+          balanceAfter: clampMoney(Number(entry.balanceAfter ?? balance)),
+          chargeId: normalizeChargeId(entry.chargeId, `${entry.id || ''}|${entry.station}|${entry.timestamp}`)
         }))
       : [];
 
@@ -201,6 +202,7 @@
             ${renderBadges(entry.station)}
           </div>
           <div class="history-time">${formatDateTime(entry.timestamp)}</div>
+          <div class="history-charge-id">Charge ID: #${escapeHtml(entry.chargeId)}</div>
         </div>
         <div class="fare-pill">-${formatMoney(FARE)}</div>
       </div>
@@ -307,7 +309,8 @@
       station,
       timestamp,
       amount: -FARE,
-      balanceAfter: clampMoney(balanceAfter)
+      balanceAfter: clampMoney(balanceAfter),
+      chargeId: normalizeChargeId('', `${timestamp}-${station}-${Math.random()}`)
     };
   }
 
@@ -397,6 +400,30 @@
       hour: 'numeric',
       minute: '2-digit'
     }).format(new Date(timestamp));
+  }
+
+  function normalizeChargeId(existing, seed) {
+    const value = String(existing || '').replace(/^#/, '').trim().toUpperCase();
+    if (/^\d{7}[A-Z0-9]{3}$/.test(value)) return value;
+    return generateChargeId(seed);
+  }
+
+  function generateChargeId(seed) {
+    let hash = 2166136261 >>> 0;
+    const text = String(seed);
+    for (let i = 0; i < text.length; i++) {
+      hash ^= text.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    hash >>>= 0;
+    const numberPart = String(hash % 10000000).padStart(7, '0');
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let suffix = '';
+    for (let i = 0; i < 3; i++) {
+      hash = Math.imul(hash ^ (hash >>> 13), 3266489909) >>> 0;
+      suffix += alphabet[hash % alphabet.length];
+    }
+    return `${numberPart}${suffix}`;
   }
 
   function escapeHtml(value) {

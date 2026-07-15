@@ -59,10 +59,10 @@ const routeExamples = await evaluate(`(() => {
     fallbackDestination: result.destination.fallback
   });
   return {
-    newkirk: summarize(BORailTripDebug.planBORailTrip('Newkirk', 'New Halifax', new Date('2026-07-01T07:00:00'))),
-    harrington: summarize(BORailTripDebug.planBORailTrip('Harrington City', 'Kenilworth', new Date('2026-07-01T17:10:00'))),
-    bradford: summarize(BORailTripDebug.planBORailTrip('Bradford Bay', 'Willow Springs', new Date('2026-07-01T12:00:00'))),
-    hadleigh: summarize(BORailTripDebug.planBORailTrip('Kenilworth', 'Hadleigh', new Date('2026-07-01T12:00:00')))
+    newkirk: summarize(BORailTripDebug.planBORailTrip('Newkirk', 'New Halifax', new Date('2026-08-01T07:00:00'))),
+    harrington: summarize(BORailTripDebug.planBORailTrip('Harrington City', 'Kenilworth', new Date('2026-08-01T17:10:00'))),
+    bradford: summarize(BORailTripDebug.planBORailTrip('Bradford Bay', 'Willow Springs', new Date('2026-08-01T12:00:00'))),
+    hadleigh: summarize(BORailTripDebug.planBORailTrip('Kenilworth', 'Hadleigh', new Date('2026-08-01T12:00:00')))
   };
 })()`);
 
@@ -102,8 +102,8 @@ assert.equal(radcliffRules.atkinsToAirportMinutes, 3);
 assert.equal(radcliffRules.offPeakFallback.effective, 'Oakville City Airport');
 assert.equal(radcliffRules.offPeakFallback.fallback, true);
 assert.equal(radcliffRules.rushFallback.fallback, false);
-assert.equal(await evaluate(`arrivalsForStation('Radcliff Fields', new Date('2026-07-01T12:00:00')).length`), 0);
-assert.ok(await evaluate(`arrivalsForStation('Radcliff Fields', new Date('2026-07-01T07:00:00')).length`) > 0);
+assert.equal(await evaluate(`arrivalsForStation('Radcliff Fields', new Date('2026-08-01T12:00:00')).length`), 0);
+assert.ok(await evaluate(`arrivalsForStation('Radcliff Fields', new Date('2026-08-01T07:00:00')).length`) > 0);
 
 const bExpressRules = await evaluate(`(() => {
   const northbound = ROUTES.find(route => route.serviceId === 'B' && route.isExpress && route.origin === 'Leighton Castle');
@@ -161,7 +161,7 @@ await evaluate(`document.getElementById('swapTripStations').click()`);
 await evaluate(`(() => {
   BORailTripDebug.setTripStations('Newkirk', 'New Halifax');
   document.getElementById('departLaterButton').click();
-  tripDateInput.value = '2026-07-01';
+  tripDateInput.value = '2026-08-01';
   tripTimeInput.value = '07:00';
   document.getElementById('findTripsButton').click();
   return true;
@@ -172,7 +172,7 @@ assert.ok(await evaluate(`document.querySelectorAll('.route-pill').length`) > 0)
 assert.equal(await evaluate(`document.querySelector('.trip-badge.fastest').textContent`), 'Fastest');
 assert.equal(await evaluate(`document.querySelectorAll('.trip-badge.fastest').length`), 1);
 assert.equal(await evaluate(`(() => {
-  const result = BORailTripDebug.planBORailTrip('Newkirk', 'New Halifax', new Date('2026-07-01T07:00:00'));
+  const result = BORailTripDebug.planBORailTrip('Newkirk', 'New Halifax', new Date('2026-08-01T07:00:00'));
   return result.journeys[0].arrivalSec === Math.min(...result.journeys.map(journey => journey.arrivalSec));
 })()`), true);
 assert.ok(await evaluate(`document.querySelectorAll('.trip-stop-name .accessible-icon-tiny').length`) > 0);
@@ -181,7 +181,7 @@ assert.equal(await evaluate(`Math.round(document.querySelector('.transfer-icon')
 
 await evaluate(`(() => {
   BORailTripDebug.setTripStations('Kenilworth', 'Hadleigh');
-  tripDateInput.value = '2026-07-01';
+  tripDateInput.value = '2026-08-01';
   tripTimeInput.value = '12:00';
   document.getElementById('findTripsButton').click();
   return true;
@@ -262,6 +262,22 @@ await evaluate(`(() => {
 })()`);
 await send('Page.navigate', { url: 'http://127.0.0.1:8766/status.html' });
 await wait(700);
+await evaluate(`BORailStatusDebug.renderStatus(BORailStatusDebug.statusState, {
+  A: {
+    type: 'major',
+    delayed: 12,
+    total: 20,
+    maxDelaySeconds: 180,
+    reason: 'Timetable is showing 12 delayed trains on the A line in the next 2 hours. Longest delay: 3 min.'
+  },
+  B: {
+    type: 'minor',
+    delayed: 6,
+    total: 18,
+    maxDelaySeconds: 120,
+    reason: 'Timetable is showing 6 delayed trains on the B line in the next 2 hours. Longest delay: 2 min.'
+  }
+})`);
 const pairedStatuses = await evaluate(`(() => {
   const byId = Object.fromEntries(BORailStatusDebug.statusState.statuses.map(service => [service.id, service]));
   return {
@@ -293,23 +309,115 @@ assert.equal(pairedStatuses.aLocalReason, pairedStatuses.aExpressReason);
 assert.equal(pairedStatuses.bLocalReason, pairedStatuses.bExpressReason);
 await evaluate(`BORailStatusDebug.renderStatus(BORailStatusDebug.statusState, {
   A: {
-    type: 'minor',
-    delayed: 4,
-    total: 8,
+    type: 'major',
+    delayed: 12,
+    total: 18,
     maxDelaySeconds: 180,
-    reason: 'Timetable is showing 4 delayed trains on the A line within the active service window. Longest delay: 3 min.'
+    reason: 'Timetable is showing 12 delayed trains on the A line in the next 2 hours. Longest delay: 3 min.'
+  },
+  F: {
+    type: 'minor',
+    delayed: 6,
+    total: 14,
+    maxDelaySeconds: 120,
+    reason: 'Timetable is showing 6 delayed trains on the F line in the next 2 hours. Longest delay: 2 min.'
+  },
+  B: {
+    type: 'ok',
+    delayed: 5,
+    total: 16,
+    maxDelaySeconds: 60,
+    reason: 'Timetable is showing 5 delayed trains on the B line in the next 2 hours. Longest delay: 1 min.'
   }
 })`);
 const delayOverride = await evaluate(`(() => ({
-  localType: document.querySelector('[data-service-id="A-local"]').dataset.statusType,
-  expressType: document.querySelector('[data-service-id="A-express"]').dataset.statusType,
-  localReason: document.querySelector('[data-service-id="A-local"] .reason')?.textContent.trim(),
-  expressReason: document.querySelector('[data-service-id="A-express"] .reason')?.textContent.trim()
+  aLocalType: document.querySelector('[data-service-id="A-local"]').dataset.statusType,
+  aExpressType: document.querySelector('[data-service-id="A-express"]').dataset.statusType,
+  aLocalReason: document.querySelector('[data-service-id="A-local"] .reason')?.textContent.trim(),
+  aExpressReason: document.querySelector('[data-service-id="A-express"] .reason')?.textContent.trim(),
+  fLocalType: document.querySelector('[data-service-id="F-local"]').dataset.statusType,
+  bLocalType: document.querySelector('[data-service-id="B-local"]').dataset.statusType,
+  bLocalPill: document.querySelector('[data-service-id="B-local"] .pill')?.textContent.trim()
 }))()`);
-assert.equal(delayOverride.localType, 'minor');
-assert.equal(delayOverride.expressType, 'minor');
-assert.match(delayOverride.localReason, /4 delayed trains/);
-assert.equal(delayOverride.localReason, delayOverride.expressReason);
+assert.equal(delayOverride.aLocalType, 'major');
+assert.equal(delayOverride.aExpressType, 'major');
+assert.match(delayOverride.aLocalReason, /12 delayed trains/);
+assert.equal(delayOverride.aLocalReason, delayOverride.aExpressReason);
+assert.equal(delayOverride.fLocalType, 'minor');
+assert.equal(delayOverride.bLocalType, 'ok');
+assert.match(delayOverride.bLocalPill, /No Disruptions/);
+
+const elevatorInitial = await evaluate(`(() => {
+  const active = BORailElevatorDebug.state.outages.filter(outage => BORailElevatorDebug.getStatus(outage) !== 'repaired');
+  return {
+    activeCount: active.length,
+    rowCount: document.querySelectorAll('.elevator-row').length,
+    summary: document.getElementById('elevatorOutageSummary').textContent.trim(),
+    hasHazard: Boolean(document.querySelector('#elevatorOutageSummary .hazard-symbol')),
+    pageText: document.getElementById('elevatorStatusList').textContent
+  };
+})()`);
+assert.ok(elevatorInitial.activeCount >= 2 && elevatorInitial.activeCount <= 4);
+assert.ok(elevatorInitial.rowCount >= 1);
+assert.match(elevatorInitial.summary, /\d/);
+assert.equal(elevatorInitial.hasHazard, true);
+assert.doesNotMatch(elevatorInitial.pageText, /Wychwood/);
+
+const elevatorLifecycle = await evaluate(`(() => {
+  const now = new Date('2026-07-14T14:34:00').getTime();
+  const units = BORailElevatorDebug.units.slice(0, 3);
+  BORailStatusDebug.renderElevatorStatus({
+    createdAt: now,
+    targetActive: 2,
+    outages: [
+      {
+        id: 'test-awaiting',
+        elevatorId: units[0].id,
+        station: 'Cannon View',
+        direction: 'SB',
+        reportedAt: now - 60 * 60 * 1000,
+        repairStartAt: now + 12 * 60 * 60 * 1000,
+        repairedAt: now + 16 * 60 * 60 * 1000
+      },
+      {
+        id: 'test-progress',
+        elevatorId: units[1].id,
+        station: 'Oakville City Airport',
+        direction: 'NB',
+        reportedAt: now - 13 * 60 * 60 * 1000,
+        repairStartAt: now - 30 * 60 * 1000,
+        repairedAt: now + 3 * 60 * 60 * 1000
+      },
+      {
+        id: 'test-repaired',
+        elevatorId: units[2].id,
+        station: 'Newkirk',
+        direction: 'Exit',
+        reportedAt: now - 26 * 60 * 60 * 1000,
+        repairStartAt: now - 14 * 60 * 60 * 1000,
+        repairedAt: now - 60 * 60 * 1000
+      }
+    ]
+  }, new Date(now));
+  return {
+    activeText: document.getElementById('elevatorStatusList').textContent,
+    activeRows: document.querySelectorAll('.elevator-row:not(.recently-repaired)').length,
+    repairedRows: document.querySelectorAll('.elevator-row.recently-repaired').length,
+    cannonBadges: Array.from(document.querySelectorAll('.elevator-row:not(.recently-repaired) .station-badges img')).map(img => img.alt)
+  };
+})()`);
+assert.match(elevatorLifecycle.activeText, /Cannon View/);
+assert.match(elevatorLifecycle.activeText, /Southbound Elevator/);
+assert.match(elevatorLifecycle.activeText, /Awaiting Repair/);
+assert.match(elevatorLifecycle.activeText, /Oakville City Airport/);
+assert.match(elevatorLifecycle.activeText, /Repairs in Progress/);
+assert.match(elevatorLifecycle.activeText, /Recently Repaired Elevators/);
+assert.match(elevatorLifecycle.activeText, /Repaired/);
+assert.match(elevatorLifecycle.activeText, /2026/);
+assert.doesNotMatch(elevatorLifecycle.activeText, /Wychwood/);
+assert.ok(elevatorLifecycle.activeRows >= 2);
+assert.ok(elevatorLifecycle.repairedRows >= 1);
+assert.ok(elevatorLifecycle.cannonBadges.includes('(A)') || elevatorLifecycle.cannonBadges.includes('<A>'));
 
 if (process.env.BORAIL_STATUS_SCREENSHOT) {
   const statusScreenshot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true });
