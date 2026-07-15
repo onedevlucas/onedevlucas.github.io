@@ -228,9 +228,32 @@ const upcomingTimelineStyle = await evaluate(`(() => {
 assert.equal(upcomingTimelineStyle.borderLeftWidth, '3px');
 assert.notEqual(upcomingTimelineStyle.borderLeftColor, 'rgba(0, 0, 0, 0)');
 assert.equal(upcomingTimelineStyle.stopIconDisplay, 'none');
-assert.equal(upcomingTimelineStyle.stopBeforeLeft, '-25px');
+assert.equal(upcomingTimelineStyle.stopBeforeLeft, '-22px');
 assert.notEqual(upcomingTimelineStyle.activeNavFilter, 'none');
 assert.ok(upcomingTimelineStyle.stopCount > 1);
+const delayedStopLayout = await evaluate(`(() => {
+  const host = document.createElement('ul');
+  host.className = 'stops-list';
+  host.style.setProperty('--stop-line-color', '#c28b42');
+  host.innerHTML = '<li class="stop-item"><span class="stop-icon"></span><div class="stop-time-main delayed"><span class="scheduled">20:29:30</span><span class="new-time">20:30:45</span></div><div class="stop-copy"><div class="stop-name">Roxbury Landing <img class="accessible-icon-tiny" src="assets/images/ui/accessibility.png" alt="Accessible station"></div><div class="stop-details"><span class="detail-item">Delayed 1m</span></div></div></li>';
+  document.body.appendChild(host);
+  const scheduled = host.querySelector('.scheduled').getBoundingClientRect();
+  const newTime = host.querySelector('.new-time').getBoundingClientRect();
+  const name = host.querySelector('.stop-name').getBoundingClientRect();
+  const beforeLeft = getComputedStyle(host.querySelector('.stop-item'), '::before').left;
+  const result = {
+    beforeLeft,
+    newTimeBelow: newTime.top > scheduled.bottom - 1,
+    noOverlap: scheduled.right < name.left && newTime.right < name.left,
+    gap: Math.min(name.left - scheduled.right, name.left - newTime.right)
+  };
+  host.remove();
+  return result;
+})()`);
+assert.equal(delayedStopLayout.beforeLeft, '-22px');
+assert.equal(delayedStopLayout.newTimeBelow, true);
+assert.equal(delayedStopLayout.noOverlap, true);
+assert.ok(delayedStopLayout.gap >= 8);
 assert.deepEqual(await evaluate(`(() => {
   const findOption = (panel, stationName) => Array.from(panel.querySelectorAll('.custom-option-item'))
     .find(item => item.querySelector('.station-item-name')?.textContent.trim() === stationName);
@@ -362,6 +385,29 @@ assert.ok(elevatorInitial.rowCount >= 1);
 assert.match(elevatorInitial.summary, /\d/);
 assert.equal(elevatorInitial.hasHazard, true);
 assert.doesNotMatch(elevatorInitial.pageText, /Wychwood/);
+
+const elevatorDailyDeterminism = await evaluate(`(() => {
+  const first = BORailStatusDebug.buildDailyElevatorState(new Date('2026-07-14T08:00:00').getTime());
+  localStorage.setItem('borail_elevator_status_v2_daily', JSON.stringify({
+    createdAt: 1,
+    targetActive: 4,
+    outages: [{ id: 'browser-only-random-state', elevatorId: 'fake', station: 'Wychwood', direction: 'Exit' }]
+  }));
+  const second = BORailStatusDebug.buildDailyElevatorState(new Date('2026-07-14T21:00:00').getTime());
+  const nextDay = BORailStatusDebug.buildDailyElevatorState(new Date('2026-07-15T08:00:00').getTime());
+  return {
+    sameDayKey: first.dayKey === second.dayKey,
+    sameOutages: first.outages.map(outage => outage.id).join('|') === second.outages.map(outage => outage.id).join('|'),
+    nextDayChanges: first.outages.map(outage => outage.id).join('|') !== nextDay.outages.map(outage => outage.id).join('|'),
+    activeCount: first.outages.filter(outage => outage.id.startsWith('daily-' + first.dayKey + '-')).length,
+    hasWychwood: first.outages.some(outage => outage.station === 'Wychwood')
+  };
+})()`);
+assert.equal(elevatorDailyDeterminism.sameDayKey, true);
+assert.equal(elevatorDailyDeterminism.sameOutages, true);
+assert.equal(elevatorDailyDeterminism.nextDayChanges, true);
+assert.ok(elevatorDailyDeterminism.activeCount >= 2 && elevatorDailyDeterminism.activeCount <= 4);
+assert.equal(elevatorDailyDeterminism.hasWychwood, false);
 
 const elevatorLifecycle = await evaluate(`(() => {
   const now = new Date('2026-07-14T14:34:00').getTime();

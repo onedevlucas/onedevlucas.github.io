@@ -276,7 +276,7 @@
     .stop-item {
       position: relative;
       display: grid;
-      grid-template-columns: 92px minmax(0, 1fr);
+      grid-template-columns: 108px minmax(0, 1fr);
       column-gap: 16px;
       row-gap: 2px;
       align-items: start;
@@ -287,7 +287,7 @@
     .stop-item::before {
       content: '';
       position: absolute;
-      left: -25px;
+      left: -22px;
       top: 11px;
       width: 11px;
       height: 11px;
@@ -355,14 +355,19 @@
       display: block;
       margin-left: 0;
     }
+    .stop-copy {
+      grid-column: 2;
+      grid-row: 1;
+      min-width: 0;
+      display: grid;
+      gap: 2px;
+    }
     .stop-name {
       font-size: 14px;
       color: var(--text);
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      grid-column: 2;
-      grid-row: 1;
       min-width: 0;
       line-height: 1.25;
       overflow-wrap: anywhere;
@@ -383,8 +388,6 @@
       gap: 12px;
       align-items: center;
       flex-wrap: wrap;
-      grid-column: 2;
-      grid-row: 2;
     }
     .stop-details .clock-icon {
       width: 12px;

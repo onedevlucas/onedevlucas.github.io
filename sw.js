@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v60d-delayed-stop-layout';
+const CACHE_NAME = 'borail-v61-timetable-elevator-sync';
 
 const CORE_ASSETS = [
   './',

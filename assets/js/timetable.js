@@ -1431,9 +1431,11 @@ function renderArrivals() {
         return `<li class="${cls}">
           <span class="stop-icon">${icon}</span>
           <div class="stop-time-main ${delayed ? 'delayed' : ''}">${timeHtml}</div>
-          <div class="stop-name">${st.name} ${accessIconHtml}</div>
-          <div class="stop-details">
-            <span class="detail-item">${ICONS.clock}<span>${st.isDelayed ? `Delayed ${Math.round(st.delaySeconds/60)}m` : 'On time'}</span></span>
+          <div class="stop-copy">
+            <div class="stop-name">${st.name} ${accessIconHtml}</div>
+            <div class="stop-details">
+              <span class="detail-item">${ICONS.clock}<span>${st.isDelayed ? `Delayed ${Math.round(st.delaySeconds/60)}m` : 'On time'}</span></span>
+            </div>
           </div>
         </li>`;
       }).join('');

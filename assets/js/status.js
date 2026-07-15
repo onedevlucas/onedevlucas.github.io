@@ -125,7 +125,7 @@
       { serviceId:'B', isExpress:true, tag:'EXP', origin:'Hadleigh', destination:'Leighton Castle', stopCount:9 }
     ];
 
-    const ELEVATOR_STORAGE_KEY = 'borail_elevator_status_v1';
+    const ELEVATOR_STORAGE_KEY = 'borail_elevator_status_v2_daily';
     const ELEVATOR_RECENT_REPAIRED_MS = 24 * 60 * 60 * 1000;
     const ELEVATOR_MIN_REPAIR_START_MS = 12 * 60 * 60 * 1000;
     const ELEVATOR_REPAIR_START_WINDOW_MS = 12 * 60 * 60 * 1000;
@@ -666,6 +666,17 @@
       catch { /* ignore */ }
     }
 
+    function elevatorDayParts(nowMs = Date.now()) {
+      const date = new Date(nowMs);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return {
+        dayKey: `${year}-${month}-${day}`,
+        dayStart: new Date(year, date.getMonth(), date.getDate()).getTime()
+      };
+    }
+
     function elevatorStatusFor(outage, nowMs = Date.now()) {
       if (nowMs >= outage.repairedAt) return 'repaired';
       if (nowMs >= outage.repairStartAt) return 'progress';
@@ -697,13 +708,88 @@
       };
     }
 
+    function shuffleElevatorUnits(seed) {
+      const rng = seededRandom(seed);
+      const units = [...ELEVATOR_UNITS];
+      for (let i = units.length - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        const temp = units[i];
+        units[i] = units[j];
+        units[j] = temp;
+      }
+      return units;
+    }
+
+    function createDailyElevatorOutage(unit, dayKey, dayStart, index) {
+      const rng = seededRandom(`elevator-daily-active-${dayKey}-${unit.id}-${index}`);
+      const reportedAt = dayStart - (4 * 60 * 60 * 1000) - Math.floor(rng() * 14 * 60 * 60 * 1000);
+      const repairStartAt = reportedAt + ELEVATOR_MIN_REPAIR_START_MS + Math.floor(rng() * ELEVATOR_REPAIR_START_WINDOW_MS);
+      const repairedAt = dayStart + (26 * 60 * 60 * 1000) + Math.floor(rng() * 8 * 60 * 60 * 1000);
+
+      return {
+        id: `daily-${dayKey}-${unit.id}`,
+        elevatorId: unit.id,
+        station: unit.station,
+        direction: unit.direction,
+        reportedAt,
+        repairStartAt: Math.min(repairStartAt, repairedAt - ELEVATOR_MIN_REPAIR_DURATION_MS),
+        repairedAt
+      };
+    }
+
+    function createDailyRecentlyRepairedOutage(unit, dayKey, dayStart, index) {
+      const rng = seededRandom(`elevator-daily-repaired-${dayKey}-${unit.id}-${index}`);
+      const repairedAt = dayStart - (60 * 60 * 1000) - Math.floor(rng() * 10 * 60 * 60 * 1000);
+      const repairStartAt = repairedAt - ELEVATOR_MIN_REPAIR_DURATION_MS - Math.floor(rng() * ELEVATOR_REPAIR_DURATION_WINDOW_MS);
+      const reportedAt = repairStartAt - ELEVATOR_MIN_REPAIR_START_MS - Math.floor(rng() * ELEVATOR_REPAIR_START_WINDOW_MS);
+
+      return {
+        id: `daily-repaired-${dayKey}-${unit.id}`,
+        elevatorId: unit.id,
+        station: unit.station,
+        direction: unit.direction,
+        reportedAt,
+        repairStartAt,
+        repairedAt
+      };
+    }
+
+    function buildDailyElevatorState(nowMs = Date.now()) {
+      const { dayKey, dayStart } = elevatorDayParts(nowMs);
+      const targetActive = 2 + Math.floor(seededRandom(`elevator-target-${dayKey}`)() * 3);
+      const units = shuffleElevatorUnits(`elevator-units-${dayKey}`);
+      const activeOutages = units
+        .slice(0, targetActive)
+        .map((unit, index) => createDailyElevatorOutage(unit, dayKey, dayStart, index));
+
+      const recentlyRepairedCount = Math.floor(seededRandom(`elevator-repaired-count-${dayKey}`)() * 3);
+      const repairedOutages = units
+        .slice(targetActive, targetActive + recentlyRepairedCount)
+        .map((unit, index) => createDailyRecentlyRepairedOutage(unit, dayKey, dayStart, index));
+
+      return {
+        createdAt: dayStart,
+        dayKey,
+        targetActive,
+        deterministic: true,
+        outages: [...activeOutages, ...repairedOutages]
+      };
+    }
+
+    function isDailyElevatorState(state, nowMs = Date.now()) {
+      return Boolean(state?.deterministic && state.dayKey === elevatorDayParts(nowMs).dayKey);
+    }
+
     function normalizeElevatorState(state, nowMs = Date.now()) {
+      const { dayKey } = elevatorDayParts(nowMs);
       const existing = Array.isArray(state?.outages) ? state.outages : [];
       const targetActive = Math.min(4, Math.max(2, Number(state?.targetActive) || 0)) ||
-        (2 + Math.floor(seededRandom(`elevator-target-${nowMs}`)() * 3));
+        (2 + Math.floor(seededRandom(`elevator-target-${state?.dayKey || dayKey}`)() * 3));
 
       return {
         createdAt: Number(state?.createdAt) || nowMs,
+        dayKey: String(state?.dayKey || dayKey),
+        deterministic: Boolean(state?.deterministic),
         targetActive,
         outages: existing
           .filter(outage => outage && outage.elevatorId && outage.station && outage.direction)
@@ -730,7 +816,7 @@
 
       const used = new Set(state.outages.map(outage => outage.elevatorId));
       const candidates = ELEVATOR_UNITS.filter(unit => !used.has(unit.id));
-      const rng = seededRandom(`elevator-outage-${state.createdAt}-${state.outages.length}-${nowMs}`);
+      const rng = seededRandom(`elevator-outage-${state.dayKey || elevatorDayParts(nowMs).dayKey}-${state.createdAt}-${state.outages.length}`);
 
       for (let i = candidates.length - 1; i > 0; i--) {
         const j = Math.floor(rng() * (i + 1));
@@ -746,11 +832,7 @@
     }
 
     function getOrCreateElevatorState(nowMs = Date.now()) {
-      const raw = loadElevatorState();
-      const normalized = ensureElevatorOutageCount(
-        normalizeElevatorState(raw || { createdAt: nowMs, targetActive: 2 + Math.floor(seededRandom(`elevator-target-${nowMs}`)() * 3), outages: [] }, nowMs),
-        nowMs
-      );
+      const normalized = normalizeElevatorState(buildDailyElevatorState(nowMs), nowMs);
       saveElevatorState(normalized);
       return normalized;
     }
@@ -807,7 +889,10 @@
       if (!host || !summary) return;
 
       const nowMs = now.getTime();
-      const normalized = ensureElevatorOutageCount(normalizeElevatorState(state, nowMs), nowMs);
+      const sourceState = state?.deterministic && !isDailyElevatorState(state, nowMs)
+        ? buildDailyElevatorState(nowMs)
+        : state;
+      const normalized = ensureElevatorOutageCount(normalizeElevatorState(sourceState, nowMs), nowMs);
       ELEVATOR_STATE = normalized;
       saveElevatorState(normalized);
 
@@ -829,6 +914,7 @@
       window.BORailElevatorDebug = {
         state: normalized,
         units: ELEVATOR_UNITS,
+        buildDailyState: buildDailyElevatorState,
         getStatus: outage => elevatorStatusFor(outage, Date.now()),
         render: renderElevatorStatus
       };
@@ -849,6 +935,7 @@
       computeStatusDelaySignals,
       renderStatus,
       elevatorState: ELEVATOR_STATE,
+      buildDailyElevatorState,
       renderElevatorStatus
     };
 
