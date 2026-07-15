@@ -276,8 +276,9 @@
     .stop-item {
       position: relative;
       display: grid;
-      grid-template-columns: 54px minmax(0, 1fr);
-      gap: 8px;
+      grid-template-columns: 68px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
       margin: 0;
       padding: 7px 0;
       color: var(--muted);
@@ -285,7 +286,7 @@
     .stop-item::before {
       content: '';
       position: absolute;
-      left: -28px;
+      left: -25px;
       top: 11px;
       width: 11px;
       height: 11px;
@@ -332,6 +333,13 @@
       margin-bottom: 0;
       grid-column: 1;
       grid-row: 1;
+      min-width: 0;
+      line-height: 1.25;
+      white-space: nowrap;
+    }
+    .stop-time-main.delayed {
+      display: grid;
+      gap: 1px;
     }
     .stop-time-main.delayed .scheduled {
       text-decoration: line-through;
@@ -339,7 +347,8 @@
     }
     .stop-time-main .new-time {
       color: var(--warning);
-      margin-left: 6px;
+      display: block;
+      margin-left: 0;
     }
     .stop-name {
       font-size: 14px;
@@ -349,6 +358,9 @@
       gap: 6px;
       grid-column: 2;
       grid-row: 1;
+      min-width: 0;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
     }
     .accessible-icon-tiny {
       width: 15px;

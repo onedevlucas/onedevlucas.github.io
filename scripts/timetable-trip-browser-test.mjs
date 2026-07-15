@@ -228,7 +228,7 @@ const upcomingTimelineStyle = await evaluate(`(() => {
 assert.equal(upcomingTimelineStyle.borderLeftWidth, '3px');
 assert.notEqual(upcomingTimelineStyle.borderLeftColor, 'rgba(0, 0, 0, 0)');
 assert.equal(upcomingTimelineStyle.stopIconDisplay, 'none');
-assert.equal(upcomingTimelineStyle.stopBeforeLeft, '-28px');
+assert.equal(upcomingTimelineStyle.stopBeforeLeft, '-25px');
 assert.notEqual(upcomingTimelineStyle.activeNavFilter, 'none');
 assert.ok(upcomingTimelineStyle.stopCount > 1);
 assert.deepEqual(await evaluate(`(() => {

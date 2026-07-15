@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v60b-status-scroll';
+const CACHE_NAME = 'borail-v60c-layout-fixes';
 
 const CORE_ASSETS = [
   './',
