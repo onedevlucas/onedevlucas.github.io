@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v64-discord-advertisement';
+const CACHE_NAME = 'borail-v65-mybocard-advertisement';
 
 const CORE_ASSETS = [
   './',
@@ -30,6 +30,7 @@ const CORE_ASSETS = [
   'assets/images/ads/carousel/01-sponsor.png',
   'assets/images/ads/carousel/02-youtube-promo.png',
   'assets/images/ads/carousel/03-discord.png',
+  'assets/images/ads/carousel/04-mybocard.png',
   'assets/images/branding/borail-logo.png',
   'assets/images/branding/favicon.png',
   'assets/images/navigation/information.png',
