@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v62-updated-system-maps';
+const CACHE_NAME = 'borail-v62-new-york-time';
 
 const CORE_ASSETS = [
   './',
@@ -16,6 +16,7 @@ const CORE_ASSETS = [
   'assets/css/workbench.css',
   'assets/js/status.js',
   'assets/js/mybocard.js',
+  'assets/js/time.js',
   'assets/js/trip-planner-core.js',
   'assets/js/timetable.js',
   'assets/js/workbench-core.js',

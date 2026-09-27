@@ -35,27 +35,43 @@
       height: 100vh;
       background-color: var(--bg);
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
+      gap: 14px;
       z-index: 9999;
       opacity: 1;
-      animation: fadeOutSplash 0.5s ease-in-out 3s forwards;
+      animation: fadeOutSplash 0.5s ease-in-out 3.8s forwards;
     }
 
     #splash-logo {
       width: 280px;
       height: auto;
       opacity: 0;
-      animation: dynamicLogoIntro 3s ease-in-out forwards;
+      animation: dynamicLogoIntro 2.8s ease-in-out forwards;
+    }
+
+    #splash-version {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: .6px;
+      opacity: 0;
+      transform: scale(.86) translateY(-3px);
+      animation: popSplashVersion .18s cubic-bezier(.2, 1.65, .45, 1) 2.8s forwards;
     }
 
     @keyframes dynamicLogoIntro {
       0% { opacity: 0; transform: scale(0.95); }
-      20% { opacity: 1; transform: scale(1); }
-      45% { opacity: 0.3; }
-      65% { opacity: 1; }
-      90% { opacity: 1; }
-      100% { opacity: 0; }
+      18% { opacity: 1; transform: scale(1); }
+      38% { opacity: 0.18; }
+      56% { opacity: 1; }
+      74% { opacity: 0.18; }
+      90%, 100% { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes popSplashVersion {
+      to { opacity: 1; transform: scale(1) translateY(0); }
     }
 
     @keyframes fadeOutSplash {

@@ -1,6 +1,7 @@
 (function() {
   'use strict';
 
+  const BORAIL_CLOCK = globalThis.BORailTime;
   const Core = window.BORailWorkbench;
   const STORAGE_KEY = 'borail-architect-workbench-world-v1';
   const MAX_HISTORY = 50;
@@ -514,7 +515,7 @@
           <span class="issue-code">${escapeHtml(issue.code)}</span>
         </button>`).join('')}</div>`;
     } else if (state.bottomTab === 'changes') {
-      els.bottomContent.innerHTML = `<div class="change-list">${(state.world.changeLog || []).slice(0, 20).map(entry => `<div class="change-entry"><span>${escapeHtml(entry.action)}</span><time>${new Date(entry.at).toLocaleString()}</time></div>`).join('')}</div>`;
+      els.bottomContent.innerHTML = `<div class="change-list">${(state.world.changeLog || []).slice(0, 20).map(entry => `<div class="change-entry"><span>${escapeHtml(entry.action)}</span><time>${BORAIL_CLOCK.formatDateTime(entry.at, { dateStyle: 'short', timeStyle: 'short' })}</time></div>`).join('')}</div>`;
     } else {
       const stats = [
         ['Stations', state.world.stations.length], ['Lines', state.world.lines.length], ['Rail segments', state.world.railSegments.length],

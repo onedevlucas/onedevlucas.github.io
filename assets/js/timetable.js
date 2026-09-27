@@ -1,3 +1,5 @@
+const BORAIL_CLOCK = globalThis.BORailTime;
+
 // Replace this placeholder link with your actual GitHub raw repository URL asset link path!
 const ACCESSIBLE_ICON_URL = "assets/images/ui/accessibility.png";
 
@@ -239,8 +241,7 @@ function timeModeForMinutes(nowMin) {
 }
 
 function timeMode(now = new Date()) {
-  const nowMin = now.getHours() * 60 + now.getMinutes();
-  return timeModeForMinutes(nowMin);
+  return timeModeForMinutes(BORAIL_CLOCK.clockMinutes(now));
 }
 
 function isServiceAllowed(route, mode) {
@@ -435,7 +436,7 @@ const FIXED_SHUTTLE_LEAD_CARS = {
 
 const SHUTTLE_EVENTS_CACHE = new Map();
 function localDateKey(date) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  return BORAIL_CLOCK.dateKey(date);
 }
 
 function getShuttleEventsForToday(serviceId, date = new Date()) {
@@ -598,7 +599,7 @@ function getTrainDirection(serviceId, destination) {
 }
 
 function arrivalsForStation(stationId, now = new Date()) {
-  const nowMinRaw = now.getHours() * 60 + now.getMinutes();
+  const nowMinRaw = BORAIL_CLOCK.clockMinutes(now);
   const mode = timeMode(now);
   const horizon = 6 * 60;
   const stationName = stationId;
@@ -740,7 +741,7 @@ function resolvePlanningStation(stationName, mode) {
 }
 
 function planBORailTrip(originName, destinationName, planningDate) {
-  const startTimeSec = planningDate.getHours() * 3600 + planningDate.getMinutes() * 60 + planningDate.getSeconds();
+  const startTimeSec = BORAIL_CLOCK.clockSeconds(planningDate);
   const mode = timeMode(planningDate);
   const origin = resolvePlanningStation(originName, mode);
   const destination = resolvePlanningStation(destinationName, mode);
@@ -1052,7 +1053,8 @@ document.addEventListener('click', (e) => {
 
 function renderClock() {
   const now = new Date();
-  nowText.textContent = `Now: ${formatTime24Full(now.getHours()*3600 + now.getMinutes()*60 + now.getSeconds())}`;
+  const nowParts = BORAIL_CLOCK.parts(now);
+  nowText.textContent = `New York: ${formatTime24Full(BORAIL_CLOCK.clockSeconds(now))} ${nowParts.zoneName}`;
   const mode = timeMode(now);
   serviceState.textContent = (mode === 'rushAM' || mode === 'rushPM') ? 'Service: Rush (LCL+EXP)' :
                              (mode === 'local') ? 'Service: Local only' :
@@ -1095,11 +1097,11 @@ function setTimetableView(view) {
 }
 
 function inputDateValue(date) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  return BORAIL_CLOCK.dateKey(date);
 }
 
 function inputTimeValue(date) {
-  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+  return BORAIL_CLOCK.inputTimeValue(date);
 }
 
 function initializeTripPlanner() {
@@ -1142,9 +1144,9 @@ function getTripPlanningDate(showError = true) {
     if (showError) renderTripPlannerMessage('Choose a departure date and time.', 'The planner needs both fields before it can search.');
     return null;
   }
-  const date = new Date(`${tripDateInput.value}T${tripTimeInput.value}:00`);
-  if (Number.isNaN(date.getTime())) {
-    if (showError) renderTripPlannerMessage('That departure time is invalid.', 'Please choose another date and time.');
+  const date = BORAIL_CLOCK.fromWallTime(tripDateInput.value, tripTimeInput.value);
+  if (!date) {
+    if (showError) renderTripPlannerMessage('That departure time is invalid.', 'Please choose another New York date and time. Daylight-saving clock changes can skip some times.');
     return null;
   }
   if (date.getTime() < Date.now() - 60000) {
@@ -1315,7 +1317,7 @@ function renderArrivals() {
   const limit = Number(limitSelect.value || 8);
 
   const allRawRows = arrivalsForStation(station, now);
-  const nowSeconds = now.getHours()*3600 + now.getMinutes()*60 + now.getSeconds();
+  const nowSeconds = BORAIL_CLOCK.clockSeconds(now);
 
   if (allRawRows.length === 0) {
     dirFilterSelect.innerHTML = '<option value="ALL">All</option>';

@@ -42,10 +42,33 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 await send('Runtime.enable');
 await send('Page.enable');
 await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+await send('Emulation.setTimezoneOverride', { timezoneId: 'Asia/Seoul' });
 await send('Page.navigate', { url: 'http://127.0.0.1:8766/index.html' });
-await wait(3600);
+await wait(250);
+
+assert.equal(await evaluate(`document.getElementById('splash-version').textContent`), 'V62 - 9/27/26');
+assert.equal(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`), 0);
+await wait(2850);
+assert.ok(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`) > 0.9);
+assert.ok(await evaluate(`Number(getComputedStyle(document.getElementById('splash-logo')).opacity)`) > 0.9);
+if (process.env.BORAIL_SPLASH_SCREENSHOT) {
+  const splashScreenshot = await send('Page.captureScreenshot', { format: 'png' });
+  fs.writeFileSync(process.env.BORAIL_SPLASH_SCREENSHOT, Buffer.from(splashScreenshot.data, 'base64'));
+}
+await wait(1400);
+assert.equal(await evaluate(`document.getElementById('splash-screen') === null`), true);
 
 assert.equal(await evaluate('document.title'), 'BORail Live Timetable');
+assert.equal(await evaluate(`document.querySelector('footer').textContent`), '© BORail • Built for iPhone • Works offline after first load');
+assert.equal(await evaluate(`new Date().getHours() === BORailTime.parts().hour`), false);
+assert.match(await evaluate(`nowText.textContent`), /^New York: \d{2}:\d{2}:\d{2} E[DS]T$/);
+assert.ok(await evaluate(`(() => {
+  const match = /New York: (\\d{2}):(\\d{2}):(\\d{2})/.exec(nowText.textContent);
+  const displayed = Number(match[1]) * 3600 + Number(match[2]) * 60 + Number(match[3]);
+  const actual = BORailTime.clockSeconds();
+  const difference = Math.abs(actual - displayed);
+  return Math.min(difference, 86400 - difference);
+})()`) <= 5);
 assert.equal(await evaluate(`document.getElementById('upcomingView').hidden`), false);
 assert.equal(await evaluate(`document.getElementById('tripPlannerView').hidden`), true);
 
@@ -59,10 +82,10 @@ const routeExamples = await evaluate(`(() => {
     fallbackDestination: result.destination.fallback
   });
   return {
-    newkirk: summarize(BORailTripDebug.planBORailTrip('Newkirk', 'New Halifax', new Date('2026-08-01T07:00:00'))),
-    harrington: summarize(BORailTripDebug.planBORailTrip('Harrington City', 'Kenilworth', new Date('2026-08-01T17:10:00'))),
-    bradford: summarize(BORailTripDebug.planBORailTrip('Bradford Bay', 'Willow Springs', new Date('2026-08-01T12:00:00'))),
-    hadleigh: summarize(BORailTripDebug.planBORailTrip('Kenilworth', 'Hadleigh', new Date('2026-08-01T12:00:00')))
+    newkirk: summarize(BORailTripDebug.planBORailTrip('Newkirk', 'New Halifax', BORailTime.fromWallTime('2026-08-01', '07:00'))),
+    harrington: summarize(BORailTripDebug.planBORailTrip('Harrington City', 'Kenilworth', BORailTime.fromWallTime('2026-08-01', '17:10'))),
+    bradford: summarize(BORailTripDebug.planBORailTrip('Bradford Bay', 'Willow Springs', BORailTime.fromWallTime('2026-08-01', '12:00'))),
+    hadleigh: summarize(BORailTripDebug.planBORailTrip('Kenilworth', 'Hadleigh', BORailTime.fromWallTime('2026-08-01', '12:00')))
   };
 })()`);
 
@@ -102,8 +125,8 @@ assert.equal(radcliffRules.atkinsToAirportMinutes, 3);
 assert.equal(radcliffRules.offPeakFallback.effective, 'Oakville City Airport');
 assert.equal(radcliffRules.offPeakFallback.fallback, true);
 assert.equal(radcliffRules.rushFallback.fallback, false);
-assert.equal(await evaluate(`arrivalsForStation('Radcliff Fields', new Date('2026-08-01T12:00:00')).length`), 0);
-assert.ok(await evaluate(`arrivalsForStation('Radcliff Fields', new Date('2026-08-01T07:00:00')).length`) > 0);
+assert.equal(await evaluate(`arrivalsForStation('Radcliff Fields', BORailTime.fromWallTime('2026-08-01', '12:00')).length`), 0);
+assert.ok(await evaluate(`arrivalsForStation('Radcliff Fields', BORailTime.fromWallTime('2026-08-01', '07:00')).length`) > 0);
 
 const bExpressRules = await evaluate(`(() => {
   const northbound = ROUTES.find(route => route.serviceId === 'B' && route.isExpress && route.origin === 'Leighton Castle');
@@ -161,7 +184,7 @@ await evaluate(`document.getElementById('swapTripStations').click()`);
 await evaluate(`(() => {
   BORailTripDebug.setTripStations('Newkirk', 'New Halifax');
   document.getElementById('departLaterButton').click();
-  tripDateInput.value = '2026-08-01';
+  tripDateInput.value = '2099-08-01';
   tripTimeInput.value = '07:00';
   document.getElementById('findTripsButton').click();
   return true;
@@ -172,7 +195,7 @@ assert.ok(await evaluate(`document.querySelectorAll('.route-pill').length`) > 0)
 assert.equal(await evaluate(`document.querySelector('.trip-badge.fastest').textContent`), 'Fastest');
 assert.equal(await evaluate(`document.querySelectorAll('.trip-badge.fastest').length`), 1);
 assert.equal(await evaluate(`(() => {
-  const result = BORailTripDebug.planBORailTrip('Newkirk', 'New Halifax', new Date('2026-08-01T07:00:00'));
+  const result = BORailTripDebug.planBORailTrip('Newkirk', 'New Halifax', BORailTime.fromWallTime('2026-08-01', '07:00'));
   return result.journeys[0].arrivalSec === Math.min(...result.journeys.map(journey => journey.arrivalSec));
 })()`), true);
 assert.ok(await evaluate(`document.querySelectorAll('.trip-stop-name .accessible-icon-tiny').length`) > 0);
@@ -181,7 +204,7 @@ assert.equal(await evaluate(`Math.round(document.querySelector('.transfer-icon')
 
 await evaluate(`(() => {
   BORailTripDebug.setTripStations('Kenilworth', 'Hadleigh');
-  tripDateInput.value = '2026-08-01';
+  tripDateInput.value = '2099-08-01';
   tripTimeInput.value = '12:00';
   document.getElementById('findTripsButton').click();
   return true;
@@ -387,14 +410,14 @@ assert.equal(elevatorInitial.hasHazard, true);
 assert.doesNotMatch(elevatorInitial.pageText, /Wychwood/);
 
 const elevatorDailyDeterminism = await evaluate(`(() => {
-  const first = BORailStatusDebug.buildDailyElevatorState(new Date('2026-07-14T08:00:00').getTime());
+  const first = BORailStatusDebug.buildDailyElevatorState(BORailTime.fromWallTime('2026-07-14', '08:00').getTime());
   localStorage.setItem('borail_elevator_status_v2_daily', JSON.stringify({
     createdAt: 1,
     targetActive: 4,
     outages: [{ id: 'browser-only-random-state', elevatorId: 'fake', station: 'Wychwood', direction: 'Exit' }]
   }));
-  const second = BORailStatusDebug.buildDailyElevatorState(new Date('2026-07-14T21:00:00').getTime());
-  const nextDay = BORailStatusDebug.buildDailyElevatorState(new Date('2026-07-15T08:00:00').getTime());
+  const second = BORailStatusDebug.buildDailyElevatorState(BORailTime.fromWallTime('2026-07-14', '21:00').getTime());
+  const nextDay = BORailStatusDebug.buildDailyElevatorState(BORailTime.fromWallTime('2026-07-15', '08:00').getTime());
   return {
     sameDayKey: first.dayKey === second.dayKey,
     sameOutages: first.outages.map(outage => outage.id).join('|') === second.outages.map(outage => outage.id).join('|'),
@@ -410,7 +433,7 @@ assert.ok(elevatorDailyDeterminism.activeCount >= 2 && elevatorDailyDeterminism.
 assert.equal(elevatorDailyDeterminism.hasWychwood, false);
 
 const elevatorLifecycle = await evaluate(`(() => {
-  const now = new Date('2026-07-14T14:34:00').getTime();
+  const now = BORailTime.fromWallTime('2026-07-14', '14:34').getTime();
   const units = BORailElevatorDebug.units.slice(0, 3);
   BORailStatusDebug.renderElevatorStatus({
     createdAt: now,

@@ -1,3 +1,5 @@
+const BORAIL_CLOCK = globalThis.BORailTime;
+
 // ----- base line probabilities (shared by local/express variants) -----
     const BASE_LINES = [
       { letter:'A', color:'var(--line-Green)',  probs:{ ok:90, minor:3, major:5, none:2 } }, // formerly Green
@@ -66,7 +68,7 @@
       ]
     };
 
-    // ----- time-based service rules (uses the viewer's local time) -----
+    // ----- time-based service rules (uses New York time) -----
     const SCHEDULE = {
       morningRushStart: 6*60 + 30,   // 6:30 AM
       morningRushEnd:   9*60 + 30,   // 9:30 AM
@@ -230,13 +232,12 @@
       }))
     );
 
-    function minutesNowLocal(){
-      const d = new Date();
-      return d.getHours()*60 + d.getMinutes();
+    function minutesNowNewYork(){
+      return BORAIL_CLOCK.clockMinutes();
     }
 
     function getScheduleState(){
-      const m = minutesNowLocal();
+      const m = minutesNowNewYork();
       const late = (m >= SCHEDULE.lateNightStart) || (m < SCHEDULE.lateNightEnd);
       const morningRush = (m >= SCHEDULE.morningRushStart) && (m < SCHEDULE.morningRushEnd);
       const eveningRush = (m >= SCHEDULE.eveningRushStart) && (m < SCHEDULE.eveningRushEnd);
@@ -352,7 +353,8 @@
     }
 
     function computeStatusDelaySignals(now = new Date()) {
-      const nowMin = now.getHours() * 60 + now.getMinutes() + (now.getSeconds() / 60);
+      const nowParts = BORAIL_CLOCK.parts(now);
+      const nowMin = nowParts.hour * 60 + nowParts.minute + (nowParts.second / 60);
       const mode = statusTimeModeForMinutes(nowMin);
       const windowStart = nowMin;
       const windowEnd = nowMin + STATUS_DELAY_LOOKAHEAD_MIN;
@@ -408,7 +410,7 @@
         return {
           cls: 'nosvc',
           label: 'NO SERVICE',
-          reason: 'Service does not operate 10:30 PM–6:30 AM (your local time).',
+          reason: 'Service does not operate 10:30 PM–6:30 AM New York time.',
           always: true
         };
       }
@@ -418,7 +420,7 @@
         return {
           cls: 'nosvc',
           label: 'NO SERVICE',
-          reason: 'Express service operates only 6:30 AM–9:30 AM and 5:00 PM–7:30 PM (your local time).',
+          reason: 'Express service operates only 6:30 AM–9:30 AM and 5:00 PM–7:30 PM New York time.',
           always: false
         };
       }
@@ -645,13 +647,13 @@
     }
 
     function formatElevatorTime(timestamp) {
-      return new Intl.DateTimeFormat(undefined, {
+      return BORAIL_CLOCK.formatDateTime(timestamp, {
         month: 'long',
         day: 'numeric',
         year: 'numeric',
         hour: 'numeric',
         minute: '2-digit'
-      }).format(new Date(timestamp));
+      });
     }
 
     function loadElevatorState() {
@@ -667,13 +669,11 @@
     }
 
     function elevatorDayParts(nowMs = Date.now()) {
-      const date = new Date(nowMs);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
+      const dayKey = BORAIL_CLOCK.dateKey(nowMs);
+      const dayStart = BORAIL_CLOCK.startOfDay(nowMs);
       return {
-        dayKey: `${year}-${month}-${day}`,
-        dayStart: new Date(year, date.getMonth(), date.getDate()).getTime()
+        dayKey,
+        dayStart: dayStart.getTime()
       };
     }
 
@@ -939,7 +939,7 @@
       renderElevatorStatus
     };
 
-    // Re-render when we cross into a different service window (based on viewer's local time).
+    // Re-render when New York crosses into a different service window.
     let _lastKey = scheduleKey();
     setInterval(() => {
       const k = scheduleKey();

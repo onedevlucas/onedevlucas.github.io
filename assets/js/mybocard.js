@@ -1,6 +1,7 @@
 (function () {
   'use strict';
 
+  const BORAIL_CLOCK = globalThis.BORailTime;
   const STORAGE_KEY = 'borail_mybocard_v1';
   const FARE = 2.50;
   const MAX_BALANCE = 500;
@@ -394,12 +395,12 @@
   }
 
   function formatDateTime(timestamp) {
-    return new Intl.DateTimeFormat(undefined, {
+    return BORAIL_CLOCK.formatDateTime(timestamp, {
       month: 'short',
       day: 'numeric',
       hour: 'numeric',
       minute: '2-digit'
-    }).format(new Date(timestamp));
+    });
   }
 
   function normalizeChargeId(existing, seed) {
