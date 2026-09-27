@@ -107,7 +107,7 @@
 }
 
 @media (min-width: 720px) {
-  .map-buttons { grid-template-columns: repeat(3, 1fr); }
+  .map-buttons { grid-template-columns: repeat(2, 1fr); }
 }
 
 .map-card {

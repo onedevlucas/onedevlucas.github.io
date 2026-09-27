@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v61-timetable-elevator-sync';
+const CACHE_NAME = 'borail-v62-updated-system-maps';
 
 const CORE_ASSETS = [
   './',
@@ -23,6 +23,7 @@ const CORE_ASSETS = [
   'assets/maps/borail-flatlands-regular-service-map.pdf',
   'assets/maps/borail-flatlands-route-map.pdf',
   'assets/maps/borail-flatlands-rush-hour-map.pdf',
+  'assets/maps/borail-flatlands-winter-emergency-map.pdf',
   'assets/images/ads/sponsor.png',
   'assets/images/ads/youtube-promo.png',
   'assets/images/branding/borail-logo.png',
