@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v63-advertisement-carousel';
+const CACHE_NAME = 'borail-v64-discord-advertisement';
 
 const CORE_ASSETS = [
   './',
@@ -29,6 +29,7 @@ const CORE_ASSETS = [
   'assets/images/ads/carousel/manifest.json',
   'assets/images/ads/carousel/01-sponsor.png',
   'assets/images/ads/carousel/02-youtube-promo.png',
+  'assets/images/ads/carousel/03-discord.png',
   'assets/images/branding/borail-logo.png',
   'assets/images/branding/favicon.png',
   'assets/images/navigation/information.png',
