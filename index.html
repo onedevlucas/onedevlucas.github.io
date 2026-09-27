@@ -15,7 +15,7 @@
 
   <div id="splash-screen">
     <img id="splash-logo" src="assets/images/branding/borail-logo.png" alt="BORail Logo">
-    <div id="splash-version">V62 - 9/27/26</div>
+    <div id="splash-version">V63 - 9/27/26</div>
   </div>
 
   <header>
@@ -43,6 +43,15 @@
   </header>
 
   <main class="wrap">
+    <section class="ad-carousel" id="adCarousel" aria-label="Advertisements" aria-roledescription="carousel">
+      <button class="ad-carousel-arrow previous" id="adCarouselPrevious" type="button" aria-label="Previous advertisement">‹</button>
+      <div class="ad-carousel-viewport">
+        <div class="ad-carousel-track" id="adCarouselTrack"></div>
+      </div>
+      <button class="ad-carousel-arrow next" id="adCarouselNext" type="button" aria-label="Next advertisement">›</button>
+      <span class="visually-hidden" id="adCarouselStatus" aria-live="off"></span>
+    </section>
+
     <section class="grid">
       <div class="card timetable-main-card">
 <div id="upcomingView">
@@ -140,21 +149,6 @@
 </div>
       </div>
 
-      <aside class="card">
-        <div class="banner" style="margin-bottom:12px;">
-          <div class="subtle">Sponsored</div>
-          <div class="pill">Ad</div>
-        </div>
-        <div class="adbox">
-          <img src="assets/images/ads/sponsor.png" alt="Advertisement" style="max-width:100%; max-height:64px; border-radius:10px;">
-        </div>
-        <div style="height:10px"></div>
-        <div class="adbox">
-          <a href="https://youtube.com/theemfanner" target="_blank" rel="noopener">
-            <img src="assets/images/ads/youtube-promo.png" alt="Promote YouTube Channel" style="max-width:100%; max-height:64px; border-radius:10px;">
-          </a>
-        </div>
-      </aside>
     </section>
 
     <section class="card" style="margin-top:12px;">
@@ -201,6 +195,7 @@
   </nav>
   <script src="assets/js/time.js"></script>
   <script src="assets/js/trip-planner-core.js"></script>
+  <script src="assets/js/ad-carousel.js"></script>
   <script src="assets/js/timetable.js"></script>
 </body>
 </html>

@@ -46,7 +46,7 @@ await send('Emulation.setTimezoneOverride', { timezoneId: 'Asia/Seoul' });
 await send('Page.navigate', { url: 'http://127.0.0.1:8766/index.html' });
 await wait(250);
 
-assert.equal(await evaluate(`document.getElementById('splash-version').textContent`), 'V62 - 9/27/26');
+assert.equal(await evaluate(`document.getElementById('splash-version').textContent`), 'V63 - 9/27/26');
 assert.equal(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`), 0);
 await wait(2850);
 assert.ok(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`) > 0.9);
@@ -71,6 +71,24 @@ assert.ok(await evaluate(`(() => {
 })()`) <= 5);
 assert.equal(await evaluate(`document.getElementById('upcomingView').hidden`), false);
 assert.equal(await evaluate(`document.getElementById('tripPlannerView').hidden`), true);
+assert.equal(await evaluate(`document.querySelector('main > .grid > aside') === null`), true);
+assert.equal(await evaluate(`document.querySelectorAll('#adCarouselTrack .ad-carousel-slide').length`), 2);
+assert.equal(await evaluate(`document.getElementById('adCarousel').nextElementSibling.classList.contains('grid')`), true);
+assert.equal(await evaluate(`Math.round(document.getElementById('adCarousel').getBoundingClientRect().width / document.getElementById('adCarousel').getBoundingClientRect().height)`), 5);
+assert.equal(await evaluate(`BORailAdCarouselDebug.getState().autoIntervalMs`), 5000);
+assert.equal(await evaluate(`BORailAdCarouselDebug.getState().manualPauseMs`), 10000);
+const carouselIndexBeforeAutomaticNavigation = await evaluate(`BORailAdCarouselDebug.getState().activeIndex`);
+await wait(1200);
+assert.notEqual(await evaluate(`BORailAdCarouselDebug.getState().activeIndex`), carouselIndexBeforeAutomaticNavigation);
+await evaluate(`document.getElementById('adCarouselNext').click()`);
+const carouselIndexAfterManualNavigation = await evaluate(`BORailAdCarouselDebug.getState().activeIndex`);
+assert.equal(await evaluate(`BORailAdCarouselDebug.getState().manuallyPaused`), true);
+assert.match(await evaluate(`document.querySelector('#adCarouselTrack .ad-carousel-slide:nth-child(2) a').href`), /youtube\.com\/theemfanner/);
+await wait(5200);
+assert.equal(await evaluate(`BORailAdCarouselDebug.getState().activeIndex`), carouselIndexAfterManualNavigation);
+await wait(5000);
+assert.notEqual(await evaluate(`BORailAdCarouselDebug.getState().activeIndex`), carouselIndexAfterManualNavigation);
+assert.equal(await evaluate(`BORailAdCarouselDebug.getState().manuallyPaused`), false);
 
 const routeExamples = await evaluate(`(() => {
   const summarize = result => ({
@@ -165,6 +183,7 @@ assert.deepEqual(bExpressRules.madisonboroBadges.filter(badge => badge.includes(
 
 await evaluate(`document.getElementById('tripPlannerTab').click()`);
 assert.equal(await evaluate(`document.getElementById('tripPlannerView').hidden`), false);
+assert.equal(await evaluate(`getComputedStyle(document.getElementById('adCarousel')).display`), 'block');
 assert.equal(await evaluate(`tripOriginSelect.type`), 'hidden');
 assert.equal(await evaluate(`document.querySelectorAll('#tripOriginTriggerContent .dropdown-badge-img').length`), 4);
 assert.equal(await evaluate(`document.querySelectorAll('#tripDestinationTriggerContent .dropdown-badge-img').length`), 1);

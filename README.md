@@ -15,8 +15,10 @@ The timetable also includes a schedule-aware trip planner that compares current 
 - `assets/css/` - page styles
 - `assets/js/` - timetable and status behavior
 - `assets/images/` - branding, line, navigation, advertisement, and UI images
+- `assets/images/ads/carousel/` - automatically indexed PNG advertisements and optional link settings
 - `assets/maps/` - downloadable system map PDFs
 - `scripts/verify.mjs` - checks JavaScript syntax, asset links, and repository layout
+- `scripts/generate-ad-manifest.mjs` - alphabetically indexes carousel PNGs for the Timetable page
 - `scripts/workbench-test.mjs` - tests the Workbench seed world, coordinates, validation, and JSON roundtrip
 - `scripts/workbench-browser-test.mjs` - exercises the rendered editor through a local headless Chrome session
 - `scripts/trip-planner-test.mjs` - tests time-dependent routing, transfer windows, delay handling, and express recommendations
@@ -64,3 +66,5 @@ Current limitations: the starter world contains only the Green Line, drafts are 
 ## Editing notes
 
 Keep public HTML entry pages at the repository root so existing links continue to work. Put new static files in the matching `assets/` subfolder and use root-relative page paths such as `assets/images/navigation/map.png`.
+
+For advertisements, add `.png` files to `assets/images/ads/carousel/`; numeric filename prefixes such as `01-` and `02-` control their order. Add an optional `href` and custom `alt` entry to `links.json` when an image should be clickable. GitHub Actions regenerates `manifest.json` after those files change; locally, run `node scripts/generate-ad-manifest.mjs` before previewing.

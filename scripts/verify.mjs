@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const htmlFiles = ['index.html', 'home.html', 'map.html', 'mybocard.html', 'status.html', 'workbench.html'];
-const scriptFiles = ['assets/js/time.js', 'assets/js/trip-planner-core.js', 'assets/js/timetable.js', 'assets/js/mybocard.js', 'assets/js/status.js', 'assets/js/workbench-core.js', 'assets/js/workbench.js', 'sw.js'];
+const scriptFiles = ['assets/js/time.js', 'assets/js/ad-carousel.js', 'assets/js/trip-planner-core.js', 'assets/js/timetable.js', 'assets/js/mybocard.js', 'assets/js/status.js', 'assets/js/workbench-core.js', 'assets/js/workbench.js', 'sw.js'];
 const webFiles = [...htmlFiles, ...scriptFiles];
 
 const references = [];
@@ -25,6 +25,15 @@ const missing = references
   .filter(([, reference]) => !/^(?:data:|https?:)/.test(reference))
   .filter(([, reference]) => !fs.existsSync(path.join(root, reference.split('?')[0])))
   .map(([file, reference]) => `${file} -> ${reference}`);
+
+const adManifestPath = path.join(root, 'assets', 'images', 'ads', 'carousel', 'manifest.json');
+const adManifest = JSON.parse(fs.readFileSync(adManifestPath, 'utf8'));
+for (const advertisement of adManifest) {
+  const imagePath = path.join(root, 'assets', 'images', 'ads', 'carousel', advertisement.file || '');
+  if (!advertisement.file?.toLowerCase().endsWith('.png') || !fs.existsSync(imagePath)) {
+    missing.push(`assets/images/ads/carousel/manifest.json -> ${advertisement.file || '(missing file)'}`);
+  }
+}
 
 const rootAssets = fs.readdirSync(root)
   .filter((file) => /\.(?:png|pdf|css|js)$/i.test(file) && file !== 'sw.js');

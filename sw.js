@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v62-new-york-time';
+const CACHE_NAME = 'borail-v63-advertisement-carousel';
 
 const CORE_ASSETS = [
   './',
@@ -17,6 +17,7 @@ const CORE_ASSETS = [
   'assets/js/status.js',
   'assets/js/mybocard.js',
   'assets/js/time.js',
+  'assets/js/ad-carousel.js',
   'assets/js/trip-planner-core.js',
   'assets/js/timetable.js',
   'assets/js/workbench-core.js',
@@ -25,8 +26,9 @@ const CORE_ASSETS = [
   'assets/maps/borail-flatlands-route-map.pdf',
   'assets/maps/borail-flatlands-rush-hour-map.pdf',
   'assets/maps/borail-flatlands-winter-emergency-map.pdf',
-  'assets/images/ads/sponsor.png',
-  'assets/images/ads/youtube-promo.png',
+  'assets/images/ads/carousel/manifest.json',
+  'assets/images/ads/carousel/01-sponsor.png',
+  'assets/images/ads/carousel/02-youtube-promo.png',
   'assets/images/branding/borail-logo.png',
   'assets/images/branding/favicon.png',
   'assets/images/navigation/information.png',
@@ -66,7 +68,9 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
-  const networkFirst = ['document', 'script', 'style'].includes(event.request.destination);
+  const requestPath = new URL(event.request.url).pathname;
+  const networkFirst = ['document', 'script', 'style'].includes(event.request.destination) ||
+    requestPath.endsWith('/assets/images/ads/carousel/manifest.json');
 
   if (networkFirst) {
     event.respondWith(
