@@ -15,7 +15,7 @@
 
   <div id="splash-screen">
     <img id="splash-logo" src="assets/images/branding/borail-logo.png" alt="BORail Logo">
-    <div id="splash-version">V66 - 10/16/26</div>
+    <div id="splash-version">V67 - 10/16/26</div>
   </div>
 
   <header>
@@ -162,10 +162,6 @@
   </div>
 
   <div class="live-map-toolbar" aria-label="Live map tools">
-    <label class="live-map-station-search">
-      <span>Find a station</span>
-      <select id="liveMapStationSearch" aria-label="Find a station"></select>
-    </label>
     <button type="button" class="live-map-filter-toggle" id="liveMapFilterToggle" aria-expanded="false" aria-controls="liveMapFilters">
       Filters <span id="liveMapFilterCount">All trains</span>
     </button>
@@ -206,6 +202,10 @@
         <button type="button" id="liveMapExpand" aria-label="Expand the live map" title="Expand map">⛶</button>
       </div>
       <div class="live-map-clock" id="liveMapClock">New York —</div>
+      <div class="live-map-follow-status" id="liveMapFollowStatus" hidden>
+        <span id="liveMapFollowStatusContent"></span>
+        <button type="button" id="liveMapStopFollowing" aria-label="Stop following train" title="Stop following train">×</button>
+      </div>
       <div class="live-map-legend" aria-label="Map legend">
         <span><i class="legend-train local"></i>Local</span>
         <span><i class="legend-train express"></i>Express</span>

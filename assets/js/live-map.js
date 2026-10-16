@@ -6,7 +6,20 @@
   const MAP_HEIGHT = 860;
   const MAX_ZOOM = 5;
   const REFRESH_INTERVAL_MS = 1000;
-  const LINE_ORDER = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'S'];
+  const SERVICE_FILTERS = Object.freeze([
+    { serviceId: 'A', isExpress: true },
+    { serviceId: 'A', isExpress: false },
+    { serviceId: 'B', isExpress: false },
+    { serviceId: 'B', isExpress: true },
+    { serviceId: 'C', isExpress: false },
+    { serviceId: 'D', isExpress: false },
+    { serviceId: 'E', isExpress: false },
+    { serviceId: 'F', isExpress: false },
+    { serviceId: 'F', isExpress: true },
+    { serviceId: 'G', isExpress: false },
+    { serviceId: 'S', isExpress: false },
+    { serviceId: 'S', isExpress: true }
+  ]);
 
   const view = document.getElementById('liveMapView');
   if (!view) return;
@@ -16,7 +29,6 @@
   const tracksLayer = document.getElementById('liveMapTracks');
   const stationsLayer = document.getElementById('liveMapStations');
   const trainsLayer = document.getElementById('liveMapTrains');
-  const stationSearch = document.getElementById('liveMapStationSearch');
   const filterToggle = document.getElementById('liveMapFilterToggle');
   const filtersPanel = document.getElementById('liveMapFilters');
   const filterCount = document.getElementById('liveMapFilterCount');
@@ -25,6 +37,9 @@
   const serviceState = document.getElementById('liveMapServiceState');
   const trainCount = document.getElementById('liveMapTrainCount');
   const clock = document.getElementById('liveMapClock');
+  const followStatus = document.getElementById('liveMapFollowStatus');
+  const followStatusContent = document.getElementById('liveMapFollowStatusContent');
+  const stopFollowingButton = document.getElementById('liveMapStopFollowing');
   const emptyState = document.getElementById('liveMapEmpty');
   const details = document.getElementById('liveMapDetails');
   const detailsContent = document.getElementById('liveMapDetailsContent');
@@ -119,8 +134,8 @@
       ['Ralston-Finch East', 'Vanderburg', 'Djimar', 'Ivory Knolls', 'Cannon View', 'Rockcastle', 'Willow Springs', 'Burlington - University of NCU', 'Newkirk - Oak Street', 'Newkirk']
     ],
     A: [
-      ['Newkirk', 'Burlington - University of NCU', 'Cannon View', 'Atkins Bridge', 'Radcliff Fields', 'Oakville City Airport', 'Oakville Exchange', 'Oakville Plaza', 'Talmedge Hill', 'Mount River'],
-      ['Port Williamson', 'Willow Springs', 'Cannon View', 'Atkins Bridge', 'Oakville City Airport']
+      ['Newkirk', 'Newkirk - Oak Street', 'Burlington - University of NCU', 'Willow Springs', 'Rockcastle', 'Cannon View', 'Atkins Bridge', 'Radcliff Fields', 'Oakville City Airport', 'Oakville Exchange', 'Oakville Plaza', 'Talmedge Hill', 'Mount River'],
+      ['Port Williamson', 'Willow Springs', 'Rockcastle', 'Cannon View', 'Atkins Bridge', 'Oakville City Airport']
     ],
     D: [['Veridia Nexus', 'Oakville City Airport']],
     C: [
@@ -159,9 +174,7 @@
   const forceFourTrack = new Set([
     edgeKey('Cannon View', 'Rockcastle'), edgeKey('Rockcastle', 'Willow Springs'),
     edgeKey('Willow Springs', 'Burlington - University of NCU'), edgeKey('Burlington - University of NCU', 'Newkirk - Oak Street'),
-    edgeKey('Newkirk - Oak Street', 'Newkirk'), edgeKey('Newkirk', 'Burlington - University of NCU'),
-    edgeKey('Burlington - University of NCU', 'Cannon View'), edgeKey('Port Williamson', 'Willow Springs'),
-    edgeKey('Willow Springs', 'Cannon View')
+    edgeKey('Newkirk - Oak Street', 'Newkirk')
   ]);
 
   const serviceGraphs = buildServiceGraphs();
@@ -240,11 +253,19 @@
       edges.get(sharedBC).services.add('B');
       edges.get(sharedBC).services.add('C');
     }
-    return [...edges.values()].map(edge => ({
+    const mappedEdges = [...edges.values()].map(edge => ({
       ...edge,
       services: [...edge.services],
       count: trackCountForEdge(edge.key, [...edge.services])
     }));
+    const newkirkOakKey = edgeKey('Newkirk', 'Newkirk - Oak Street');
+    return mappedEdges.flatMap(edge => {
+      if (edge.key !== newkirkOakKey || !edge.services.includes('F')) return edge;
+      return [
+        { ...edge, services: edge.services.filter(serviceId => serviceId !== 'F'), count: 4, centerOffset: 0 },
+        { ...edge, services: ['F'], count: 2, centerOffset: -17 }
+      ];
+    });
   }
 
   function findServicePath(serviceId, fromStation, toStation) {
@@ -299,18 +320,24 @@
   }
 
   function laneOffsetFor(snapshot, edge) {
-    const physical = physicalEdges.find(item => item.key === edge);
+    const physical = physicalEdges.find(item => item.key === edge && item.services.includes(snapshot.serviceId));
     const count = physical?.count || 2;
-    const forward = snapshot.direction === 'Northbound' || snapshot.direction === 'Eastbound';
     if (count === 1) return 0;
-    if (count === 2) return forward ? -3.2 : 3.2;
-    if (count === 3) return snapshot.isExpress ? 0 : (forward ? -5.2 : 5.2);
-    const inner = snapshot.isExpress ? 2.5 : 7.2;
-    return forward ? -inner : inner;
+    if (count === 2) return 3.2;
+    if (count === 3) return snapshot.isExpress ? 0 : 5.2;
+    return snapshot.serviceId === 'S' ? 7.2 : 2.5;
   }
 
   function offsetPosition(position, snapshot) {
-    const amount = laneOffsetFor(snapshot, position.edge);
+    const physical = physicalEdges.find(item => item.key === position.edge && item.services.includes(snapshot.serviceId));
+    let amount = laneOffsetFor(snapshot, position.edge);
+    if (physical?.centerOffset) {
+      const left = STATION_COORDS[physical.left];
+      const right = STATION_COORDS[physical.right];
+      const storedAngle = Math.atan2(right[1] - left[1], right[0] - left[0]) * 180 / Math.PI;
+      const movingWithStoredDirection = Math.cos((position.angle - storedAngle) * Math.PI / 180) >= 0;
+      amount += movingWithStoredDirection ? physical.centerOffset : -physical.centerOffset;
+    }
     const radians = position.angle * Math.PI / 180;
     return {
       ...position,
@@ -351,12 +378,12 @@
       const right = STATION_COORDS[edge.right];
       if (!left || !right) return;
       trackOffsets(edge.count).forEach(offset => {
-        const line = offsetLine(left, right, offset);
+        const line = offsetLine(left, right, offset + (edge.centerOffset || 0));
         tracksLayer.appendChild(createSvgElement('line', { ...line, class: 'live-map-track-bed' }));
         tracksLayer.appendChild(createSvgElement('line', { ...line, class: 'live-map-rail' }));
       });
       edge.services.forEach((serviceId, index) => {
-        const amount = edge.services.length === 1 ? 0 : (index - (edge.services.length - 1) / 2) * 2.2;
+        const amount = (edge.centerOffset || 0) + (edge.services.length === 1 ? 0 : (index - (edge.services.length - 1) / 2) * 2.2);
         const line = offsetLine(left, right, amount);
         const overlay = createSvgElement('line', {
           ...line,
@@ -391,6 +418,16 @@
       });
       group.appendChild(createSvgElement('circle', { class: 'live-map-station-hit', cx: point[0], cy: point[1], r: 15 }));
       group.appendChild(createSvgElement('circle', { class: 'live-map-station-dot', cx: point[0], cy: point[1], r: MAJOR_STATIONS.has(station.id) ? 5.4 : 4.1 }));
+      if (ACCESSIBLE_STATIONS.has(station.id)) {
+        group.appendChild(createSvgElement('image', {
+          class: 'live-map-accessibility-icon',
+          href: ACCESSIBLE_ICON_URL,
+          x: point[0] + 4,
+          y: point[1] + 3,
+          width: 12,
+          height: 12
+        }));
+      }
       const label = createSvgElement('text', {
         class: `live-map-station-label${MAJOR_STATIONS.has(station.id) ? '' : ' secondary'}`,
         x: point[0] > 1010 ? point[0] - 8 : point[0] + 8,
@@ -404,20 +441,17 @@
     });
   }
 
-  function initializeSearch() {
-    stationSearch.innerHTML = '<option value="">Choose a station…</option>' + [...STATIONS]
-      .sort((left, right) => left.name.localeCompare(right.name))
-      .map(station => `<option value="${escapeHtml(station.id)}">${escapeHtml(station.name)}</option>`)
-      .join('');
-  }
-
   function initializeLineFilters() {
-    lineFilters.innerHTML = LINE_ORDER.map(serviceId => `
-      <label class="live-map-line-filter" style="background:${SERVICE_META[serviceId].color}" title="${serviceId} line">
-        <input type="checkbox" name="liveMapLine" value="${serviceId}" checked aria-label="Show ${serviceId} line trains">
-        <span>${serviceId}</span>
+    lineFilters.innerHTML = SERVICE_FILTERS.map(({ serviceId, isExpress }) => {
+      const label = serviceLabel(serviceId, isExpress);
+      const value = `${serviceId}-${isExpress ? 'express' : 'local'}`;
+      return `
+      <label class="live-map-line-filter" title="${escapeHtml(label)}">
+        <input type="checkbox" name="liveMapService" value="${value}" checked aria-label="Show ${escapeHtml(label)} trains">
+        <img src="${iconFor(serviceId, isExpress)}" alt="">
       </label>
-    `).join('');
+    `;
+    }).join('');
   }
 
   function getRunsForDate(date) {
@@ -539,10 +573,10 @@
   function snapshotMatchesFilters(snapshot) {
     const serviceTypes = selectedFilterValues('liveMapServiceType');
     const statuses = selectedFilterValues('liveMapRunningStatus');
-    const lines = selectedFilterValues('liveMapLine');
+    const services = selectedFilterValues('liveMapService');
     const type = snapshot.isExpress ? 'express' : 'local';
     const runningStatus = snapshot.currentDelayed ? 'delayed' : 'on-time';
-    return serviceTypes.has(type) && statuses.has(runningStatus) && lines.has(snapshot.serviceId);
+    return serviceTypes.has(type) && statuses.has(runningStatus) && services.has(`${snapshot.serviceId}-${type}`);
   }
 
   function createTrainElement(snapshot) {
@@ -552,29 +586,40 @@
       tabindex: '0',
       role: 'button'
     });
-    const center = -((snapshot.consist.cars - 1) * 7) / 2;
+    const frontCenter = ((snapshot.consist.cars - 1) * 7) / 2;
+    const consistHalfWidth = frontCenter + 4;
     const consistGroup = createSvgElement('g', { class: 'live-map-train-consist' });
-    consistGroup.appendChild(createSvgElement('circle', { class: 'train-selection-ring', cx: center, cy: 0, r: 15 }));
+    consistGroup.appendChild(createSvgElement('ellipse', {
+      class: 'train-selection-ring', cx: 0, cy: 0, rx: consistHalfWidth + 4.5, ry: 9.5
+    }));
     for (let index = 0; index < snapshot.consist.cars; index += 1) {
+      const carCenter = frontCenter - index * 7;
       consistGroup.appendChild(createSvgElement('rect', {
         class: `live-map-train-car${index === 0 ? ' live-map-train-front' : ''}`,
-        x: -4 - index * 7,
+        x: carCenter - 3,
         y: -3.2,
         width: 6,
         height: 6.4,
         rx: 1.4,
-        fill: SERVICE_META[snapshot.serviceId].color
+        fill: '#ffffff'
       }));
     }
+    consistGroup.appendChild(createSvgElement('polygon', {
+      class: 'live-map-direction-arrow',
+      points: `${frontCenter + 5},-3.4 ${frontCenter + 11},0 ${frontCenter + 5},3.4`
+    }));
     group.appendChild(consistGroup);
-    const badge = createSvgElement(snapshot.isExpress ? 'polygon' : 'circle', snapshot.isExpress
-      ? { class: 'live-map-train-badge', points: '10,-8 18,0 10,8 2,0' }
-      : { class: 'live-map-train-badge', cx: 10, cy: 0, r: 7 });
-    group.appendChild(badge);
-    const badgeText = createSvgElement('text', { class: 'live-map-train-badge-text', x: 10, y: .4 });
-    badgeText.textContent = snapshot.serviceId;
-    group.appendChild(badgeText);
-    group.appendChild(createSvgElement('circle', { class: 'live-map-delay-dot', cx: 18, cy: -7, r: snapshot.currentDelayed ? 3.2 : 0 }));
+    group.appendChild(createSvgElement('image', {
+      class: 'live-map-train-icon',
+      href: iconFor(snapshot.serviceId, snapshot.isExpress),
+      x: -8,
+      y: -23,
+      width: 16,
+      height: 16
+    }));
+    group.appendChild(createSvgElement('circle', {
+      class: 'live-map-delay-dot', cx: consistHalfWidth + 5, cy: -8, r: snapshot.currentDelayed ? 3.2 : 0
+    }));
     group.appendChild(createSvgElement('title'));
     trainsLayer.appendChild(group);
     trainElements.set(snapshot.id, group);
@@ -623,9 +668,11 @@
       const snapshot = activeSnapshots.get(selected.id);
       if (!snapshot || !snapshotMatchesFilters(snapshot)) {
         closeDetails();
+      } else if (followingSelectedTrain) {
+        updateFollowStatus(snapshot);
+        centerOn(snapshot.x, snapshot.y, Math.max(2.2, currentZoom()));
       } else {
         renderTrainDetails(snapshot);
-        if (followingSelectedTrain) centerOn(snapshot.x, snapshot.y, Math.max(2.2, currentZoom()));
       }
     } else if (selected?.type === 'station') {
       renderStationDetails(selected.id, date);
@@ -663,11 +710,14 @@
     const run = snapshot.run;
     const nextScheduled = formatMapTime(snapshot.scheduledNextArrivalSec);
     const nextActual = formatMapTime(snapshot.nextArrivalSec);
+    followStatus.hidden = true;
     detailsContent.innerHTML = `
       <div class="live-map-detail-kicker">Active train</div>
-      <h3>${escapeHtml(serviceLabel(run.serviceId, run.isExpress))} Line to ${escapeHtml(run.destination)}</h3>
+      <h3 class="live-map-train-title">
+        <img src="${iconFor(run.serviceId, run.isExpress)}" alt="${escapeHtml(serviceLabel(run.serviceId, run.isExpress))}">
+        <span>to ${escapeHtml(run.destination)}</span>
+      </h3>
       <div class="live-map-detail-subtitle">${escapeHtml(snapshot.status)}</div>
-      <div class="live-map-detail-badges">${lineBadgeHtml(run.serviceId, run.isExpress)}</div>
       ${trainStatusBanner(snapshot)}
       <div class="live-map-progress"><i style="width:${Math.round(snapshot.routeProgress * 100)}%"></i></div>
       <div class="live-map-detail-grid">
@@ -683,15 +733,31 @@
         <div class="live-map-detail-cell"><span>Service</span><strong>${run.isExpress ? 'Express' : 'Local'}</strong></div>
       </div>
       <button type="button" class="live-map-reset-filters" id="liveMapFollowTrain" style="width:100%;margin-top:11px;">
-        ${followingSelectedTrain ? 'Stop following train' : 'Follow this train'}
+        Follow this train
       </button>
     `;
     details.hidden = false;
     focusSelectionButton.disabled = false;
-    document.getElementById('liveMapFollowTrain')?.addEventListener('click', () => {
-      followingSelectedTrain = !followingSelectedTrain;
-      renderTrainDetails(snapshot);
-    });
+    document.getElementById('liveMapFollowTrain')?.addEventListener('click', () => startFollowing(snapshot));
+  }
+
+  function updateFollowStatus(snapshot) {
+    followStatusContent.innerHTML = `
+      <img src="${iconFor(snapshot.serviceId, snapshot.isExpress)}" alt="">
+      <span>Following train to ${escapeHtml(snapshot.run.destination)}</span>
+    `;
+    followStatus.hidden = false;
+  }
+
+  function startFollowing(snapshot) {
+    followingSelectedTrain = true;
+    details.hidden = true;
+    updateFollowStatus(snapshot);
+    centerOn(snapshot.x, snapshot.y, Math.max(2.2, currentZoom()));
+  }
+
+  function stopFollowing() {
+    closeDetails();
   }
 
   function stationLines(stationId) {
@@ -775,8 +841,8 @@
     clearSelections();
     selected = { type: 'station', id: stationId };
     followingSelectedTrain = false;
+    followStatus.hidden = true;
     stationElements.get(stationId)?.classList.add('selected');
-    stationSearch.value = stationId;
     renderStationDetails(stationId, new Date());
     if (focus) centerOn(STATION_COORDS[stationId][0], STATION_COORDS[stationId][1], Math.max(2.1, currentZoom()));
   }
@@ -787,6 +853,7 @@
     clearSelections();
     selected = { type: 'train', id: trainId };
     followingSelectedTrain = false;
+    followStatus.hidden = true;
     trainElements.get(trainId)?.classList.add('selected');
     renderTrainDetails(snapshot);
     if (focus) centerOn(snapshot.x, snapshot.y, Math.max(2.25, currentZoom()));
@@ -795,11 +862,11 @@
   function closeDetails() {
     selected = null;
     followingSelectedTrain = false;
+    followStatus.hidden = true;
     clearSelections();
     details.hidden = true;
     detailsContent.innerHTML = '';
     focusSelectionButton.disabled = true;
-    stationSearch.value = '';
   }
 
   function currentZoom() {
@@ -872,6 +939,7 @@
   }
 
   function onPointerDown(event) {
+    if (event.target.closest('.live-map-station, .live-map-train')) return;
     pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
     svg.setPointerCapture?.(event.pointerId);
     if (pointers.size === 2) {
@@ -880,7 +948,6 @@
       dragStart = null;
       return;
     }
-    if (event.target.closest('.live-map-station, .live-map-train')) return;
     dragStart = { x: event.clientX, y: event.clientY, viewX: viewBox.x, viewY: viewBox.y };
     svg.classList.add('is-panning');
   }
@@ -946,10 +1013,8 @@
       filtersPanel.querySelectorAll('input[type="checkbox"]').forEach(input => { input.checked = true; });
       refreshTrains(new Date(), true);
     });
-    stationSearch.addEventListener('change', () => {
-      if (stationSearch.value) selectStation(stationSearch.value, true);
-    });
     detailsClose.addEventListener('click', closeDetails);
+    stopFollowingButton.addEventListener('click', stopFollowing);
     zoomInButton.addEventListener('click', () => zoomAt(1.35));
     zoomOutButton.addEventListener('click', () => zoomAt(1 / 1.35));
     fitButton.addEventListener('click', fitMap);
@@ -1003,7 +1068,6 @@
     renderGeography();
     renderTracks();
     renderStations();
-    initializeSearch();
     initializeLineFilters();
     initializeEvents();
     applyViewBox();
@@ -1015,6 +1079,7 @@
     getActiveTrainSnapshots,
     findServicePath,
     getTrackEdges: () => physicalEdges.map(edge => ({ ...edge, services: [...edge.services] })),
+    getLaneOffset: (edge, snapshot) => laneOffsetFor(snapshot, edge),
     getStationCoordinates: () => ({ ...STATION_COORDS }),
     getState: () => ({
       active: mapActive,

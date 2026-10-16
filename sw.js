@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v66-live-map';
+const CACHE_NAME = 'borail-v67-live-map-controls';
 
 const CORE_ASSETS = [
   './',
