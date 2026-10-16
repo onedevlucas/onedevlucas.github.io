@@ -15,7 +15,7 @@
 
   <div id="splash-screen">
     <img id="splash-logo" src="assets/images/branding/borail-logo.png" alt="BORail Logo">
-    <div id="splash-version">V65 - 9/27/26</div>
+    <div id="splash-version">V66 - 10/16/26</div>
   </div>
 
   <header>
@@ -23,8 +23,9 @@
       <div class="title">BORail Live Timetable</div>
       <div class="subtle" id="nowText">—</div>
       <div class="view-tabs" role="tablist" aria-label="Timetable views">
-        <button class="view-tab active" id="upcomingTab" data-view="upcoming" role="tab" aria-selected="true">Upcoming Trains</button>
-        <button class="view-tab" id="tripPlannerTab" data-view="planner" role="tab" aria-selected="false">Plan a Trip</button>
+        <button class="view-tab active" id="upcomingTab" data-view="upcoming" role="tab" aria-selected="true" aria-controls="upcomingView">Upcoming Trains</button>
+        <button class="view-tab" id="tripPlannerTab" data-view="planner" role="tab" aria-selected="false" aria-controls="tripPlannerView">Plan a Trip</button>
+        <button class="view-tab" id="liveMapTab" data-view="map" role="tab" aria-selected="false" aria-controls="liveMapView">Live Map</button>
       </div>
       <div class="controls" id="upcomingHeaderControls">
         <div class="custom-select-container" id="stationDropdownContainer">
@@ -147,6 +148,79 @@
     </div>
   </div>
 </div>
+
+<div id="liveMapView" hidden>
+  <div class="live-map-heading">
+    <div>
+      <span class="trip-planner-kicker">Schedule-based live positions</span>
+      <h2>BORail Live Map</h2>
+    </div>
+    <div class="live-map-heading-status">
+      <span class="pill" id="liveMapServiceState">Current service</span>
+      <span class="pill" id="liveMapTrainCount">0 active trains</span>
+    </div>
+  </div>
+
+  <div class="live-map-toolbar" aria-label="Live map tools">
+    <label class="live-map-station-search">
+      <span>Find a station</span>
+      <select id="liveMapStationSearch" aria-label="Find a station"></select>
+    </label>
+    <button type="button" class="live-map-filter-toggle" id="liveMapFilterToggle" aria-expanded="false" aria-controls="liveMapFilters">
+      Filters <span id="liveMapFilterCount">All trains</span>
+    </button>
+  </div>
+
+  <div class="live-map-filters" id="liveMapFilters" hidden>
+    <fieldset>
+      <legend>Service type</legend>
+      <label><input type="checkbox" name="liveMapServiceType" value="local" checked> Local</label>
+      <label><input type="checkbox" name="liveMapServiceType" value="express" checked> Express</label>
+    </fieldset>
+    <fieldset>
+      <legend>Running status</legend>
+      <label><input type="checkbox" name="liveMapRunningStatus" value="on-time" checked> On time</label>
+      <label><input type="checkbox" name="liveMapRunningStatus" value="delayed" checked> Delayed</label>
+    </fieldset>
+    <fieldset class="live-map-line-filters">
+      <legend>Lines</legend>
+      <div id="liveMapLineFilters"></div>
+    </fieldset>
+    <button type="button" class="live-map-reset-filters" id="liveMapResetFilters">Reset filters</button>
+  </div>
+
+  <div class="live-map-shell" id="liveMapShell">
+    <div class="live-map-canvas" id="liveMapCanvas">
+      <svg id="liveMapSvg" viewBox="0 0 1200 860" role="application" aria-label="Interactive BORail system map. Drag to pan and pinch or use the controls to zoom.">
+        <defs id="liveMapDefs"></defs>
+        <g id="liveMapGeography"></g>
+        <g id="liveMapTracks"></g>
+        <g id="liveMapStations"></g>
+        <g id="liveMapTrains"></g>
+      </svg>
+      <div class="live-map-controls" aria-label="Map controls">
+        <button type="button" id="liveMapZoomIn" aria-label="Zoom in" title="Zoom in">+</button>
+        <button type="button" id="liveMapZoomOut" aria-label="Zoom out" title="Zoom out">−</button>
+        <button type="button" id="liveMapFit" aria-label="Fit the entire system" title="Fit entire system">⌂</button>
+        <button type="button" id="liveMapFocusSelection" aria-label="Return to selected train or station" title="Return to selection" disabled>◎</button>
+        <button type="button" id="liveMapExpand" aria-label="Expand the live map" title="Expand map">⛶</button>
+      </div>
+      <div class="live-map-clock" id="liveMapClock">New York —</div>
+      <div class="live-map-legend" aria-label="Map legend">
+        <span><i class="legend-train local"></i>Local</span>
+        <span><i class="legend-train express"></i>Express</span>
+        <span><i class="legend-delay"></i>Delayed</span>
+      </div>
+      <div class="live-map-empty" id="liveMapEmpty" hidden>No active trains match these filters.</div>
+    </div>
+
+    <aside class="live-map-details" id="liveMapDetails" aria-live="polite" aria-label="Live map details" hidden>
+      <button type="button" class="live-map-details-close" id="liveMapDetailsClose" aria-label="Close details">×</button>
+      <div id="liveMapDetailsContent"></div>
+    </aside>
+  </div>
+  <p class="live-map-disclaimer">Positions are calculated from the official BORail timetable and New York time. This map does not use GPS.</p>
+</div>
       </div>
 
     </section>
@@ -197,5 +271,6 @@
   <script src="assets/js/trip-planner-core.js"></script>
   <script src="assets/js/ad-carousel.js"></script>
   <script src="assets/js/timetable.js"></script>
+  <script src="assets/js/live-map.js"></script>
 </body>
 </html>

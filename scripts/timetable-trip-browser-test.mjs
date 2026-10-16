@@ -41,12 +41,19 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 await send('Runtime.enable');
 await send('Page.enable');
-await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+const viewportWidth = Number(process.env.BORAIL_VIEWPORT_WIDTH || 390);
+const viewportHeight = Number(process.env.BORAIL_VIEWPORT_HEIGHT || 844);
+await send('Emulation.setDeviceMetricsOverride', {
+  width: viewportWidth,
+  height: viewportHeight,
+  deviceScaleFactor: 1,
+  mobile: viewportWidth < 700
+});
 await send('Emulation.setTimezoneOverride', { timezoneId: 'Asia/Seoul' });
 await send('Page.navigate', { url: 'http://127.0.0.1:8766/index.html' });
 await wait(250);
 
-assert.equal(await evaluate(`document.getElementById('splash-version').textContent`), 'V65 - 9/27/26');
+assert.equal(await evaluate(`document.getElementById('splash-version').textContent`), 'V66 - 10/16/26');
 assert.equal(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`), 0);
 await wait(2850);
 assert.ok(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`) > 0.9);
@@ -91,6 +98,121 @@ assert.equal(await evaluate(`BORailAdCarouselDebug.getState().activeIndex`), car
 await wait(5000);
 assert.notEqual(await evaluate(`BORailAdCarouselDebug.getState().activeIndex`), carouselIndexAfterManualNavigation);
 assert.equal(await evaluate(`BORailAdCarouselDebug.getState().manuallyPaused`), false);
+
+await evaluate(`document.getElementById('liveMapTab').click()`);
+await wait(250);
+assert.equal(await evaluate(`document.getElementById('liveMapView').hidden`), false);
+assert.equal(await evaluate(`document.getElementById('upcomingView').hidden`), true);
+assert.equal(await evaluate(`document.getElementById('upcomingHeaderControls').hidden`), true);
+assert.equal(await evaluate(`document.querySelectorAll('#liveMapStations .live-map-station').length`), await evaluate(`STATIONS.length`));
+assert.equal(await evaluate(`Object.keys(BORailLiveMapDebug.getStationCoordinates()).length`), await evaluate(`STATIONS.length`));
+
+const liveMapTrackRules = await evaluate(`(() => {
+  const edges = BORailLiveMapDebug.getTrackEdges();
+  const edge = (left, right) => edges.find(item =>
+    (item.left === left && item.right === right) || (item.left === right && item.right === left)
+  );
+  return {
+    fSingle: edge('Foxston', 'New Cottage')?.count,
+    sThree: edge('Cannon View', 'Ivory Knolls')?.count,
+    sFour: edge('Cannon View', 'Rockcastle')?.count,
+    cAirportSingle: edge('Perry Road', 'Oakville City Airport')?.count,
+    bHadleighSingle: edge('Carrollton', 'Hadleigh')?.count,
+    sharedBC: edge('Mount Hindsboro', 'Perry Road')
+  };
+})()`);
+assert.equal(liveMapTrackRules.fSingle, 1);
+assert.equal(liveMapTrackRules.sThree, 3);
+assert.equal(liveMapTrackRules.sFour, 4);
+assert.equal(liveMapTrackRules.cAirportSingle, 1);
+assert.equal(liveMapTrackRules.bHadleighSingle, 1);
+assert.equal(liveMapTrackRules.sharedBC.count, 2);
+assert.deepEqual([...liveMapTrackRules.sharedBC.services].sort(), ['B', 'C']);
+
+const liveMapSnapshot = await evaluate(`(() => {
+  const testDate = BORailTime.fromWallTime('2026-10-16', '07:08');
+  const trains = BORailLiveMapDebug.getActiveTrainSnapshots(testDate);
+  BORailLiveMapDebug.refresh(testDate);
+  const first = trains[0];
+  BORailLiveMapDebug.selectTrain(first.id);
+  const element = document.querySelector('[data-train-id="' + CSS.escape(first.id) + '"]');
+  return {
+    activeCount: trains.length,
+    delayedCount: trains.filter(train => train.currentDelayed).length,
+    expressCount: trains.filter(train => train.isExpress).length,
+    firstCars: first.consist.cars,
+    renderedCars: element?.querySelectorAll('.live-map-train-car').length,
+    details: document.getElementById('liveMapDetailsContent').textContent,
+    positionFinite: Number.isFinite(first.x) && Number.isFinite(first.y) && Number.isFinite(first.angle)
+  };
+})()`);
+assert.ok(liveMapSnapshot.activeCount > 0);
+assert.ok(liveMapSnapshot.delayedCount > 0);
+assert.ok(liveMapSnapshot.expressCount > 0);
+assert.equal(liveMapSnapshot.firstCars, liveMapSnapshot.renderedCars);
+assert.match(liveMapSnapshot.details, /Lead car/i);
+assert.match(liveMapSnapshot.details, /cars/i);
+assert.equal(liveMapSnapshot.positionFinite, true);
+
+const expressFilterResult = await evaluate(`(() => {
+  const testDate = BORailTime.fromWallTime('2026-10-16', '07:08');
+  document.querySelector('input[name="liveMapServiceType"][value="local"]').checked = false;
+  BORailLiveMapDebug.refresh(testDate);
+  const state = BORailLiveMapDebug.getState();
+  const snapshots = new Map(BORailLiveMapDebug.getActiveTrainSnapshots(testDate).map(train => [train.id, train]));
+  const allExpress = Array.from(document.querySelectorAll('#liveMapTrains .live-map-train'))
+    .every(element => snapshots.get(element.dataset.trainId)?.isExpress);
+  document.querySelector('input[name="liveMapServiceType"][value="local"]').checked = true;
+  BORailLiveMapDebug.refresh(testDate);
+  return { rendered: state.renderedTrainCount, allExpress };
+})()`);
+assert.ok(expressFilterResult.rendered > 0);
+assert.equal(expressFilterResult.allExpress, true);
+
+const delayedFilterResult = await evaluate(`(() => {
+  const testDate = BORailTime.fromWallTime('2026-10-16', '07:08');
+  document.querySelector('input[name="liveMapRunningStatus"][value="on-time"]').checked = false;
+  BORailLiveMapDebug.refresh(testDate);
+  const snapshots = new Map(BORailLiveMapDebug.getActiveTrainSnapshots(testDate).map(train => [train.id, train]));
+  const rendered = Array.from(document.querySelectorAll('#liveMapTrains .live-map-train'));
+  const allDelayed = rendered.every(element => snapshots.get(element.dataset.trainId)?.currentDelayed);
+  document.querySelector('input[name="liveMapRunningStatus"][value="on-time"]').checked = true;
+  BORailLiveMapDebug.refresh(testDate);
+  return { rendered: rendered.length, allDelayed };
+})()`);
+assert.ok(delayedFilterResult.rendered > 0);
+assert.equal(delayedFilterResult.allDelayed, true);
+
+assert.equal(await evaluate(`(() => {
+  const firstDate = BORailTime.fromWallTime('2026-10-16', '07:08:00');
+  const secondDate = BORailTime.fromWallTime('2026-10-16', '07:08:10');
+  const first = BORailLiveMapDebug.getActiveTrainSnapshots(firstDate);
+  const second = new Map(BORailLiveMapDebug.getActiveTrainSnapshots(secondDate).map(train => [train.id, train]));
+  return first.some(train => {
+    const later = second.get(train.id);
+    return later && Math.hypot(later.x - train.x, later.y - train.y) > .1;
+  });
+})()`), true);
+
+assert.equal(await evaluate(`(() => {
+  BORailLiveMapDebug.selectStation('Perry Road');
+  const content = document.getElementById('liveMapDetailsContent');
+  return /Perry Road/.test(content.textContent) && content.querySelectorAll('.live-map-arrival').length <= 5;
+})()`), true);
+const mapWidthBeforeZoom = await evaluate(`BORailLiveMapDebug.getState().viewBox.width`);
+await evaluate(`document.getElementById('liveMapZoomIn').click()`);
+assert.ok(await evaluate(`BORailLiveMapDebug.getState().viewBox.width`) < mapWidthBeforeZoom);
+await evaluate(`document.getElementById('liveMapFit').click()`);
+assert.equal(await evaluate(`BORailLiveMapDebug.getState().viewBox.width`), 1200);
+if (process.env.BORAIL_LIVE_MAP_SCREENSHOT) {
+  await evaluate(`document.getElementById('liveMapDetailsClose').click()`);
+  await evaluate(`document.getElementById('liveMapView').scrollIntoView({ block: 'start' })`);
+  await wait(120);
+  const liveMapScreenshot = await send('Page.captureScreenshot', { format: 'png' });
+  fs.writeFileSync(process.env.BORAIL_LIVE_MAP_SCREENSHOT, Buffer.from(liveMapScreenshot.data, 'base64'));
+}
+await evaluate(`document.getElementById('upcomingTab').click()`);
+assert.equal(await evaluate(`document.getElementById('upcomingView').hidden`), false);
 
 const routeExamples = await evaluate(`(() => {
   const summarize = result => ({

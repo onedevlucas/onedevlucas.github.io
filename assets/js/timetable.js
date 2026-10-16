@@ -835,8 +835,10 @@ const serviceTypeFilterSelect = document.getElementById('serviceTypeFilterSelect
 const refreshBtn = document.getElementById('refreshBtn');
 const upcomingTab = document.getElementById('upcomingTab');
 const tripPlannerTab = document.getElementById('tripPlannerTab');
+const liveMapTab = document.getElementById('liveMapTab');
 const upcomingView = document.getElementById('upcomingView');
 const tripPlannerView = document.getElementById('tripPlannerView');
+const liveMapView = document.getElementById('liveMapView');
 const upcomingHeaderControls = document.getElementById('upcomingHeaderControls');
 const plannerServiceState = document.getElementById('plannerServiceState');
 const tripOriginSelect = document.getElementById('tripOriginSelect');
@@ -1084,16 +1086,24 @@ function slideDown(el) {
 }
 
 function setTimetableView(view) {
+  if (!['upcoming', 'planner', 'map'].includes(view)) view = 'upcoming';
   activeTimetableView = view;
   const plannerActive = view === 'planner';
-  upcomingView.hidden = plannerActive;
+  const mapActive = view === 'map';
+  const upcomingActive = view === 'upcoming';
+  upcomingView.hidden = !upcomingActive;
   tripPlannerView.hidden = !plannerActive;
-  upcomingHeaderControls.hidden = plannerActive;
-  upcomingTab.classList.toggle('active', !plannerActive);
+  liveMapView.hidden = !mapActive;
+  upcomingHeaderControls.hidden = !upcomingActive;
+  upcomingTab.classList.toggle('active', upcomingActive);
   tripPlannerTab.classList.toggle('active', plannerActive);
-  upcomingTab.setAttribute('aria-selected', String(!plannerActive));
+  liveMapTab.classList.toggle('active', mapActive);
+  upcomingTab.setAttribute('aria-selected', String(upcomingActive));
   tripPlannerTab.setAttribute('aria-selected', String(plannerActive));
+  liveMapTab.setAttribute('aria-selected', String(mapActive));
+  sessionStorage.setItem('borailTimetableView', view);
   if (plannerActive) updatePlannerServiceState(getTripPlanningDate(false) || new Date());
+  document.dispatchEvent(new CustomEvent('borail:viewchange', { detail: { view } }));
 }
 
 function inputDateValue(date) {
@@ -1556,6 +1566,7 @@ renderCustomStationsDropdown();
 initializeTripPlanner();
 renderClock();
 renderArrivals();
+setTimetableView(sessionStorage.getItem('borailTimetableView') || 'upcoming');
 
 setInterval(() => {
   renderClock();
@@ -1569,6 +1580,7 @@ serviceTypeFilterSelect.addEventListener('change', renderArrivals);
 refreshBtn.addEventListener('click', () => { renderClock(); renderArrivals(); });
 upcomingTab.addEventListener('click', () => setTimetableView('upcoming'));
 tripPlannerTab.addEventListener('click', () => setTimetableView('planner'));
+liveMapTab.addEventListener('click', () => setTimetableView('map'));
 departNowButton.addEventListener('click', () => setTripDepartureMode('now'));
 departLaterButton.addEventListener('click', () => setTripDepartureMode('later'));
 tripDateInput.addEventListener('change', () => updatePlannerServiceState(getTripPlanningDate(false) || new Date()));

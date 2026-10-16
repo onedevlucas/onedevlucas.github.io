@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v65-mybocard-advertisement';
+const CACHE_NAME = 'borail-v66-live-map';
 
 const CORE_ASSETS = [
   './',
@@ -18,6 +18,7 @@ const CORE_ASSETS = [
   'assets/js/mybocard.js',
   'assets/js/time.js',
   'assets/js/ad-carousel.js',
+  'assets/js/live-map.js',
   'assets/js/trip-planner-core.js',
   'assets/js/timetable.js',
   'assets/js/workbench-core.js',
