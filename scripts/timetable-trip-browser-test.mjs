@@ -70,7 +70,7 @@ await send('Runtime.evaluate', { expression: `try {
 await send('Page.navigate', { url: 'http://127.0.0.1:8766/index.html' });
 await wait(750);
 
-assert.equal(await evaluate(`document.getElementById('splash-version').textContent`), 'V70 - 10/16/26');
+assert.equal(await evaluate(`document.getElementById('splash-version').textContent`), 'V70B - 10/17/26');
 assert.equal(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`), 0);
 await wait(2850);
 assert.ok(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`) > 0.9);
@@ -85,7 +85,9 @@ assert.equal(await evaluate(`document.getElementById('splash-screen') === null`)
 assert.equal(await evaluate('document.title'), 'BORail Live Timetable');
 assert.equal(await evaluate(`document.querySelector('footer').textContent`), '© BORail • Built for iPhone • Works offline after first load');
 assert.equal(await evaluate(`new Date().getHours() === BORailTime.parts().hour`), false);
-assert.match(await evaluate(`nowText.textContent`), /^New York: 07:0\d:\d{2} EDT • AM Rush Preview$/);
+assert.match(await evaluate(`nowText.textContent`), /^New York: \d{2}:\d{2}:\d{2} E(?:S|D)T$/);
+assert.equal(await evaluate(`document.body.textContent.includes('AM Rush Preview')`), false);
+assert.equal(await evaluate(`'isPreview' in BORailTime`), false);
 assert.ok(await evaluate(`(() => {
   const match = /New York: (\\d{2}):(\\d{2}):(\\d{2})/.exec(nowText.textContent);
   const displayed = Number(match[1]) * 3600 + Number(match[2]) * 60 + Number(match[3]);

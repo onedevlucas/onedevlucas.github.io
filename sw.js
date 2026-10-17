@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v70-guided-track-motion';
+const CACHE_NAME = 'borail-v70b-live-new-york-time';
 
 const CORE_ASSETS = [
   './',

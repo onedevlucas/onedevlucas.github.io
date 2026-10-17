@@ -1056,7 +1056,7 @@ document.addEventListener('click', (e) => {
 function renderClock() {
   const now = BORAIL_CLOCK.now();
   const nowParts = BORAIL_CLOCK.parts(now);
-  nowText.textContent = `New York: ${formatTime24Full(BORAIL_CLOCK.clockSeconds(now))} ${nowParts.zoneName}${BORAIL_CLOCK.isPreview ? ` • ${BORAIL_CLOCK.previewLabel}` : ''}`;
+  nowText.textContent = `New York: ${formatTime24Full(BORAIL_CLOCK.clockSeconds(now))} ${nowParts.zoneName}`;
   const mode = timeMode(now);
   serviceState.textContent = (mode === 'rushAM' || mode === 'rushPM') ? 'Service: Rush (LCL+EXP)' :
                              (mode === 'local') ? 'Service: Local only' :

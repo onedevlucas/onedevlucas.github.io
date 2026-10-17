@@ -821,7 +821,7 @@
 
   function updateClockAndService(date) {
     const parts = BORAIL_CLOCK.parts(date);
-    clock.textContent = `New York ${formatTime24Full(BORAIL_CLOCK.clockSeconds(date))} ${parts.zoneName}${BORAIL_CLOCK.isPreview ? ` • ${BORAIL_CLOCK.previewLabel}` : ''}`;
+    clock.textContent = `New York ${formatTime24Full(BORAIL_CLOCK.clockSeconds(date))} ${parts.zoneName}`;
     const mode = timeMode(date);
     serviceState.textContent = mode === 'rushAM' ? 'AM Rush service'
       : mode === 'rushPM' ? 'PM Rush service'
