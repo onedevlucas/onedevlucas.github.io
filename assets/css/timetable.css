@@ -1113,11 +1113,9 @@
 .live-map-canvas { position: relative; min-width: 0; min-height: 0; aspect-ratio: 1; overflow: hidden; touch-action: none; user-select: none; }
 #liveMapSvg { width: 100%; height: 100%; min-height: 0; display: block; background: #000; cursor: grab; }
 #liveMapSvg.is-panning { cursor: grabbing; }
-.live-map-background,
-.live-map-internal-alias-mask { fill: #000; }
-.live-map-track-layout { filter: invert(1) brightness(.96); pointer-events: none; }
-.live-map-internal-alias-mask { pointer-events: none; }
-.live-map-station { cursor: pointer; outline: none; }
+.live-map-background { fill: #000; }
+.live-map-track-layout { pointer-events: none; transition: opacity .2s ease; }
+.live-map-station { cursor: pointer; outline: none; transition: opacity .2s ease; }
 .live-map-station-hit { fill: transparent; }
 .live-map-station-dot { fill: transparent; stroke: transparent; stroke-width: 2; vector-effect: non-scaling-stroke; transition: r .15s ease, fill .15s ease, stroke .15s ease; }
 .live-map-station:hover .live-map-station-dot,
@@ -1127,7 +1125,7 @@
   pointer-events: none;
   filter: drop-shadow(0 1px 2px rgba(0,0,0,.85));
 }
-.live-map-train { cursor: pointer; outline: none; filter: drop-shadow(0 3px 5px rgba(0,0,0,.75)); transition: transform 1s linear; }
+.live-map-train { cursor: pointer; outline: none; filter: drop-shadow(0 3px 5px rgba(0,0,0,.75)); transition: transform 1s linear, opacity .2s ease; }
 .live-map-train .train-selection-ring { fill: none; stroke: #fff; stroke-width: 2; opacity: 0; vector-effect: non-scaling-stroke; }
 .live-map-train:hover .train-selection-ring,
 .live-map-train:focus-visible .train-selection-ring,
@@ -1138,6 +1136,37 @@
 .live-map-direction-arrow { stroke: #05070a; stroke-width: 1.2; stroke-linejoin: round; vector-effect: non-scaling-stroke; pointer-events: none; }
 .live-map-train-icon { pointer-events: none; filter: drop-shadow(0 2px 2px rgba(0,0,0,.9)); }
 .live-map-train.delayed .live-map-delay-dot { fill: var(--warning); stroke: #fff; stroke-width: 1; vector-effect: non-scaling-stroke; }
+#liveMapSvg.route-focus-active .live-map-track-layout { opacity: .2; }
+#liveMapSvg.route-focus-active .live-map-station,
+#liveMapSvg.route-focus-active .live-map-train { opacity: .17; }
+#liveMapSvg.route-focus-active .live-map-station.selected-route-stop,
+#liveMapSvg.route-focus-active .live-map-train.selected { opacity: 1; }
+.live-map-selected-route {
+  fill: none;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+  filter: drop-shadow(0 0 3px rgba(255,255,255,.48));
+}
+.live-map-route-stop { pointer-events: none; }
+.live-map-route-stop circle { fill: #090b10; stroke: #fff; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.live-map-route-stop.origin circle { fill: #28c96f; }
+.live-map-route-stop.destination circle { fill: #ff5f57; }
+.live-map-route-stop-label,
+.live-map-route-endpoint-label {
+  fill: #fff;
+  stroke: #000;
+  stroke-width: 3px;
+  paint-order: stroke fill;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: -.01em;
+}
+.live-map-route-endpoint-label { fill: #d8d9df; font-size: 7px; letter-spacing: .08em; }
+#liveMapSvg[data-zoom-level="wide"] .live-map-route-stop-label { font-size: 8px; }
 .live-map-controls {
   position: absolute;
   top: 12px;

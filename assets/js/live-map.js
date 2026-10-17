@@ -27,6 +27,7 @@
   const svg = document.getElementById('liveMapSvg');
   const geographyLayer = document.getElementById('liveMapGeography');
   const tracksLayer = document.getElementById('liveMapTracks');
+  const selectionLayer = document.getElementById('liveMapSelection');
   const stationsLayer = document.getElementById('liveMapStations');
   const trainsLayer = document.getElementById('liveMapTrains');
   const filterToggle = document.getElementById('liveMapFilterToggle');
@@ -249,6 +250,14 @@
     edgeKey('Newkirk - Oak Street', 'Newkirk')
   ]);
 
+  const SHARED_BC_EDGES = new Set([
+    edgeKey('Mount Hindsboro', 'Perry Road'),
+    edgeKey('Perry Road', 'Oakville Exchange'),
+    edgeKey('Oakville Exchange', 'Oakville City Center'),
+    edgeKey('Oakville City Center', 'Oakville Plaza'),
+    edgeKey('Oakville Plaza', 'Leighton Castle')
+  ]);
+
   const serviceGraphs = buildServiceGraphs();
   const physicalEdges = buildPhysicalEdges();
   const trainElements = new Map();
@@ -364,6 +373,23 @@
     const key = edgeKey(leftStation, rightStation);
     const serviceId = routeContext?.serviceId;
     const direction = routeContext?.direction;
+    const geometryService = serviceId === 'C' && SHARED_BC_EDGES.has(key) ? 'B' : serviceId;
+    const geometryType = geometryService === 'B' && serviceId === 'C'
+      ? 'local'
+      : routeContext?.isExpress ? 'express' : 'local';
+    const engineeringKey = `${geometryService}-${geometryType}|${leftStation}|${rightStation}`;
+    const engineeringPoints = window.BORAIL_ROUTE_GEOMETRY?.[engineeringKey];
+
+    if (engineeringPoints?.length > 1) {
+      return engineeringPoints.map(([x, y], index) => ({
+        station: index === 0 ? leftStation : index === engineeringPoints.length - 1 ? rightStation : null,
+        x,
+        y,
+        edgeToNext: index < engineeringPoints.length - 1 ? key : null,
+        guidedTrack: true
+      }));
+    }
+
     const guidedGeometry = GUIDED_TRACK_GEOMETRY[`${serviceId}|${direction}|${key}`];
     const serviceGeometry = SERVICE_EDGE_GEOMETRY[`${serviceId}|${key}`];
     const geometry = guidedGeometry || serviceGeometry;
@@ -526,7 +552,6 @@
     geographyLayer.innerHTML = `
       <rect class="live-map-background" x="0" y="0" width="${MAP_WIDTH}" height="${MAP_HEIGHT}"></rect>
       <image class="live-map-track-layout" href="assets/maps/borail-live-track-layout.svg" x="0" y="0" width="${MAP_WIDTH}" height="${MAP_HEIGHT}" preserveAspectRatio="xMidYMid meet"></image>
-      <rect class="live-map-internal-alias-mask" x="568" y="887" width="62" height="17" rx="2"></rect>
     `;
   }
 
@@ -809,9 +834,11 @@
       if (!snapshot || !snapshotMatchesFilters(snapshot)) {
         closeDetails();
       } else if (followingSelectedTrain) {
+        renderRouteFocus(snapshot);
         updateFollowStatus(snapshot);
         centerOn(snapshot.x, snapshot.y, Math.max(2.2, currentZoom()));
       } else {
+        renderRouteFocus(snapshot);
         renderTrainDetails(snapshot);
       }
     } else if (selected?.type === 'station') {
@@ -889,10 +916,111 @@
     followStatus.hidden = false;
   }
 
+  function liveMapStationLabel(stationName) {
+    return stationName === 'Oakville City Airport'
+      ? 'Wychwood Oakville City Airport'
+      : stationName;
+  }
+
+  function routePointsForRun(run) {
+    const direction = getTrainDirection(run.serviceId, run.destination);
+    const result = [];
+    for (let index = 0; index < run.stops.length - 1; index += 1) {
+      const left = run.stops[index].name;
+      const right = run.stops[index + 1].name;
+      const stationPath = findServicePath(run.serviceId, left, right);
+      const points = pointsForPath(stationPath, {
+        serviceId: run.serviceId,
+        direction,
+        isExpress: run.isExpress
+      });
+      result.push(...(result.length ? points.slice(1) : points));
+    }
+    return result;
+  }
+
+  function clearRouteFocus() {
+    svg.classList.remove('route-focus-active');
+    selectionLayer.innerHTML = '';
+    delete selectionLayer.dataset.selectedTrainId;
+    stationElements.forEach(element => element.classList.remove('selected-route-stop', 'route-origin', 'route-destination'));
+  }
+
+  function renderRouteFocus(snapshot) {
+    const run = snapshot.run;
+    const points = routePointsForRun(run);
+    if (points.length < 2) {
+      clearRouteFocus();
+      return;
+    }
+
+    svg.classList.add('route-focus-active');
+    stationElements.forEach(element => element.classList.remove('selected-route-stop', 'route-origin', 'route-destination'));
+    selectionLayer.innerHTML = '';
+    selectionLayer.dataset.selectedTrainId = snapshot.id;
+
+    const route = createSvgElement('path', {
+      class: 'live-map-selected-route',
+      d: points.map((point, index) => `${index ? 'L' : 'M'} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(' '),
+      stroke: SERVICE_META[run.serviceId]?.color || '#ffffff'
+    });
+    selectionLayer.appendChild(route);
+
+    run.stops.forEach((stop, index) => {
+      const point = STATION_COORDS[stop.name];
+      if (!point) return;
+      const isOrigin = index === 0;
+      const isDestination = index === run.stops.length - 1;
+      const stationElement = stationElements.get(stop.name);
+      stationElement?.classList.add('selected-route-stop');
+      if (isOrigin) stationElement?.classList.add('route-origin');
+      if (isDestination) stationElement?.classList.add('route-destination');
+
+      const marker = createSvgElement('g', {
+        class: `live-map-route-stop${isOrigin ? ' origin' : ''}${isDestination ? ' destination' : ''}`,
+        'data-route-stop': stop.name
+      });
+      marker.appendChild(createSvgElement('circle', {
+        cx: point[0],
+        cy: point[1],
+        r: isOrigin || isDestination ? 7 : 4.5
+      }));
+      const previousPoint = STATION_COORDS[run.stops[Math.max(0, index - 1)].name] || point;
+      const nextPoint = STATION_COORDS[run.stops[Math.min(run.stops.length - 1, index + 1)].name] || point;
+      const horizontal = Math.abs(nextPoint[0] - previousPoint[0]) >= Math.abs(nextPoint[1] - previousPoint[1]);
+      const side = index % 2 ? 1 : -1;
+      const labelX = horizontal ? point[0] : point[0] + side * 10;
+      const labelY = horizontal ? point[1] + side * 11 : point[1] - 3;
+      const textAnchor = horizontal ? 'middle' : side < 0 ? 'end' : 'start';
+      const label = createSvgElement('text', {
+        x: labelX,
+        y: labelY,
+        'text-anchor': textAnchor,
+        class: 'live-map-route-stop-label'
+      });
+      label.textContent = liveMapStationLabel(stop.name);
+      marker.appendChild(label);
+      if (isOrigin || isDestination) {
+        const endpointLabel = createSvgElement('text', {
+          x: labelX,
+          y: horizontal ? labelY + side * 8 : labelY + 8,
+          'text-anchor': textAnchor,
+          class: 'live-map-route-endpoint-label'
+        });
+        endpointLabel.textContent = isOrigin ? 'ORIGIN' : 'DESTINATION';
+        marker.appendChild(endpointLabel);
+      }
+      selectionLayer.appendChild(marker);
+    });
+  }
+
   function startFollowing(snapshot) {
     followingSelectedTrain = true;
     details.hidden = true;
+    renderRouteFocus(snapshot);
     updateFollowStatus(snapshot);
+    focusSelectionButton.setAttribute('aria-label', 'Return to followed train');
+    focusSelectionButton.title = 'Return to followed train';
     centerOn(snapshot.x, snapshot.y, Math.max(2.2, currentZoom()));
   }
 
@@ -979,10 +1107,13 @@
   function selectStation(stationId, focus = false) {
     if (!STATION_COORDS[stationId]) return;
     clearSelections();
+    clearRouteFocus();
     selected = { type: 'station', id: stationId };
     followingSelectedTrain = false;
     followStatus.hidden = true;
     stationElements.get(stationId)?.classList.add('selected');
+    focusSelectionButton.setAttribute('aria-label', 'Return to selected station');
+    focusSelectionButton.title = 'Return to selected station';
     renderStationDetails(stationId, BORAIL_CLOCK.now());
     if (focus) centerOn(STATION_COORDS[stationId][0], STATION_COORDS[stationId][1], Math.max(2.1, currentZoom()));
   }
@@ -995,6 +1126,9 @@
     followingSelectedTrain = false;
     followStatus.hidden = true;
     trainElements.get(trainId)?.classList.add('selected');
+    renderRouteFocus(snapshot);
+    focusSelectionButton.setAttribute('aria-label', 'Follow selected train');
+    focusSelectionButton.title = 'Follow selected train';
     renderTrainDetails(snapshot);
     if (focus) centerOn(snapshot.x, snapshot.y, Math.max(2.25, currentZoom()));
   }
@@ -1004,9 +1138,12 @@
     followingSelectedTrain = false;
     followStatus.hidden = true;
     clearSelections();
+    clearRouteFocus();
     details.hidden = true;
     detailsContent.innerHTML = '';
     focusSelectionButton.disabled = true;
+    focusSelectionButton.setAttribute('aria-label', 'Return to selected train or station');
+    focusSelectionButton.title = 'Return to selection';
   }
 
   function currentZoom() {
@@ -1064,7 +1201,7 @@
       if (point) centerOn(point[0], point[1], Math.max(2.2, currentZoom()));
     } else if (selected?.type === 'train') {
       const snapshot = activeSnapshots.get(selected.id);
-      if (snapshot) centerOn(snapshot.x, snapshot.y, Math.max(2.25, currentZoom()));
+      if (snapshot) startFollowing(snapshot);
     }
   }
 

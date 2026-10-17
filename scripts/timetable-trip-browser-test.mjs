@@ -70,7 +70,7 @@ await send('Runtime.evaluate', { expression: `try {
 await send('Page.navigate', { url: 'http://127.0.0.1:8766/index.html' });
 await wait(750);
 
-assert.equal(await evaluate(`document.getElementById('splash-version').textContent`), 'V70B - 10/17/26');
+assert.equal(await evaluate(`document.getElementById('splash-version').textContent`), 'V71 - 10/17/26');
 assert.equal(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`), 0);
 await wait(2850);
 assert.ok(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`) > 0.9);
@@ -128,8 +128,9 @@ assert.equal(await evaluate(`Object.keys(BORailLiveMapDebug.getStationCoordinate
 assert.equal(await evaluate(`document.getElementById('liveMapStationSearch')`), null);
 assert.equal(await evaluate(`document.getElementById('liveMapSvg').viewBox.baseVal.height`), 1200);
 assert.equal(await evaluate(`document.querySelector('.live-map-track-layout')?.getAttribute('href')`), 'assets/maps/borail-live-track-layout.svg');
-assert.equal(await evaluate(`Boolean(document.querySelector('.live-map-internal-alias-mask'))`), true);
-assert.equal(await evaluate(`document.body.textContent.includes('Wychwood')`), false);
+assert.equal(await evaluate(`Boolean(document.querySelector('.live-map-internal-alias-mask'))`), false);
+assert.equal(await evaluate(`getComputedStyle(document.querySelector('.live-map-track-layout')).filter`), 'none');
+assert.equal(await evaluate(`fetch('assets/maps/borail-live-track-layout.svg').then(response => response.text()).then(source => source.includes('fill="#000000"') && source.includes('fill="#ffffff"'))`), true);
 assert.deepEqual(await evaluate(`BORailLiveMapDebug.getStationCoordinates()['Oakville City Airport']`), [598, 873]);
 assert.equal(await evaluate(`document.querySelectorAll('#liveMapStations .live-map-accessibility-icon').length`), await evaluate(`Array.from(ACCESSIBLE_STATIONS).filter(station => BORailLiveMapDebug.getStationCoordinates()[station]).length`));
 assert.deepEqual(await evaluate(`Array.from(document.querySelectorAll('input[name="liveMapService"]')).map(input => input.value)`), [
@@ -176,33 +177,38 @@ assert.equal(await evaluate(`BORailLiveMapDebug.getLaneOffset('Rockcastle::Willo
 assert.equal(await evaluate(`BORailLiveMapDebug.getLaneOffset('Rockcastle::Willow Springs', { serviceId: 'A', isExpress: false })`), 2.4);
 
 const guidedTrackGeometry = await evaluate(`(() => {
-  const path = (serviceId, direction, stations) => BORailLiveMapDebug.getPathPoints(serviceId, direction, stations);
+  const path = (serviceId, direction, stations, isExpress = false) => BORailLiveMapDebug.getPathPoints(serviceId, direction, stations, isExpress);
   const fSouth = path('F', 'Southbound', ['Newkirk', 'Newkirk - Oak Street']);
   const fNorth = path('F', 'Northbound', ['Newkirk - Oak Street', 'Newkirk']);
   const fTransition = path('F', 'Southbound', ['Newkirk - Oak Street', 'Hoganville', 'Bayview Park']);
   const bShared = path('B', 'Southbound', ['Mount Hindsboro', 'Perry Road', 'Oakville Exchange']);
   const cShared = path('C', 'Southbound', ['Mount Hindsboro', 'Perry Road', 'Oakville Exchange']);
   const aAirport = path('A', 'Southbound', ['Radcliff Fields', 'Oakville City Airport', 'Oakville Exchange']);
-  return { fSouth, fNorth, fTransition, bShared, cShared, aAirport };
+  const sExpress = path('S', 'Southbound', ['Newkirk', 'Newkirk - Oak Street', 'Burlington - University of NCU'], true);
+  const eRoxbury = path('E', 'Southbound', ['Alpherst', 'Roxbury Landing', 'East Heights']);
+  return { count: Object.keys(BORAIL_ROUTE_GEOMETRY).length, fSouth, fNorth, fTransition, bShared, cShared, aAirport, sExpress, eRoxbury };
 })()`);
-assert.deepEqual([guidedTrackGeometry.fSouth[0].x, guidedTrackGeometry.fSouth[0].y], [214, 471]);
+assert.ok(guidedTrackGeometry.count >= 250);
+assert.deepEqual([guidedTrackGeometry.fSouth[0].x, guidedTrackGeometry.fSouth[0].y], [234, 471]);
 assert.deepEqual([
   guidedTrackGeometry.fSouth.at(-1).x,
   guidedTrackGeometry.fSouth.at(-1).y
-], [208, 544]);
+], [226, 544]);
 assert.equal(guidedTrackGeometry.fSouth.every(point => point.guidedTrack), true);
-assert.deepEqual([guidedTrackGeometry.fNorth[0].x, guidedTrackGeometry.fNorth[0].y], [246, 544]);
+assert.deepEqual([guidedTrackGeometry.fNorth[0].x, guidedTrackGeometry.fNorth[0].y], [226, 544]);
 assert.deepEqual([
   guidedTrackGeometry.fNorth.at(-1).x,
   guidedTrackGeometry.fNorth.at(-1).y
-], [254, 471]);
-assert.equal(guidedTrackGeometry.fTransition.find(point => point.station === 'Hoganville').guidedTrack, false);
+], [234, 471]);
+assert.equal(guidedTrackGeometry.fTransition.find(point => point.station === 'Hoganville').guidedTrack, true);
 assert.deepEqual(
   guidedTrackGeometry.bShared.map(point => [point.x, point.y]),
   guidedTrackGeometry.cShared.map(point => [point.x, point.y])
 );
-assert.equal(guidedTrackGeometry.bShared.some(point => point.y === 864 && point.x > 631), true);
-assert.equal(guidedTrackGeometry.aAirport.every(point => Math.abs(point.y - 881) < 0.01), true);
+assert.equal(guidedTrackGeometry.bShared.every(point => point.guidedTrack), true);
+assert.equal(guidedTrackGeometry.aAirport.every(point => point.guidedTrack), true);
+assert.equal(guidedTrackGeometry.sExpress.every(point => point.guidedTrack), true);
+assert.equal(guidedTrackGeometry.eRoxbury.every(point => point.guidedTrack), true);
 
 const liveMapSnapshot = await evaluate(`(() => {
   const testDate = BORailTime.fromWallTime('2026-10-16', '07:08');
@@ -222,6 +228,12 @@ const liveMapSnapshot = await evaluate(`(() => {
     hasArrow: Boolean(element?.querySelector('.live-map-direction-arrow')),
     titleUsesIcon: Boolean(document.querySelector('#liveMapDetailsContent .live-map-train-title img')),
     duplicateBadge: Boolean(document.querySelector('#liveMapDetailsContent .live-map-detail-badges')),
+    routeFocus: document.getElementById('liveMapSvg').classList.contains('route-focus-active'),
+    routePath: Boolean(document.querySelector('#liveMapSelection .live-map-selected-route')),
+    routeStops: document.querySelectorAll('#liveMapSelection .live-map-route-stop').length,
+    runStops: first.run.stops.length,
+    origin: document.querySelectorAll('#liveMapSelection .live-map-route-stop.origin').length,
+    destination: document.querySelectorAll('#liveMapSelection .live-map-route-stop.destination').length,
     details: document.getElementById('liveMapDetailsContent').textContent,
     positionFinite: Number.isFinite(first.x) && Number.isFinite(first.y) && Number.isFinite(first.angle)
   };
@@ -235,11 +247,26 @@ assert.equal(liveMapSnapshot.hasIcon, true);
 assert.equal(liveMapSnapshot.hasArrow, true);
 assert.equal(liveMapSnapshot.titleUsesIcon, true);
 assert.equal(liveMapSnapshot.duplicateBadge, false);
+assert.equal(liveMapSnapshot.routeFocus, true);
+assert.equal(liveMapSnapshot.routePath, true);
+assert.equal(liveMapSnapshot.routeStops, liveMapSnapshot.runStops);
+assert.equal(liveMapSnapshot.origin, 1);
+assert.equal(liveMapSnapshot.destination, 1);
 assert.match(liveMapSnapshot.details, /Lead car/i);
 assert.match(liveMapSnapshot.details, /cars/i);
 assert.equal(liveMapSnapshot.positionFinite, true);
 
 assert.equal(await evaluate(`(() => {
+  document.getElementById('liveMapFocusSelection').click();
+  return document.getElementById('liveMapDetails').hidden && !document.getElementById('liveMapFollowStatus').hidden;
+})()`), true);
+await evaluate(`document.getElementById('liveMapStopFollowing').click()`);
+assert.equal(await evaluate(`!document.getElementById('liveMapSvg').classList.contains('route-focus-active') && document.getElementById('liveMapSelection').childElementCount === 0`), true);
+
+assert.equal(await evaluate(`(() => {
+  const testDate = BORailTime.fromWallTime('2026-10-16', '07:08');
+  const first = BORailLiveMapDebug.getActiveTrainSnapshots(testDate)[0];
+  BORailLiveMapDebug.selectTrain(first.id);
   document.getElementById('liveMapFollowTrain').click();
   return document.getElementById('liveMapDetails').hidden && !document.getElementById('liveMapFollowStatus').hidden;
 })()`), true);
@@ -329,6 +356,20 @@ if (process.env.BORAIL_LIVE_MAP_SCREENSHOT) {
   await wait(120);
   const liveMapScreenshot = await send('Page.captureScreenshot', { format: 'png' });
   fs.writeFileSync(process.env.BORAIL_LIVE_MAP_SCREENSHOT, Buffer.from(liveMapScreenshot.data, 'base64'));
+}
+if (process.env.BORAIL_ROUTE_FOCUS_SCREENSHOT) {
+  await evaluate(`(() => {
+    const testDate = BORailTime.fromWallTime('2026-10-16', '07:08');
+    BORailLiveMapDebug.refresh(testDate);
+    const train = BORailLiveMapDebug.getActiveTrainSnapshots(testDate)
+      .find(snapshot => snapshot.run.stops.some(stop => stop.name === 'Oakville City Airport'));
+    if (train) BORailLiveMapDebug.selectTrain(train.id);
+    document.getElementById('liveMapDetails').hidden = true;
+    document.getElementById('liveMapView').scrollIntoView({ block: 'start' });
+  })()`);
+  await wait(120);
+  const routeFocusScreenshot = await send('Page.captureScreenshot', { format: 'png' });
+  fs.writeFileSync(process.env.BORAIL_ROUTE_FOCUS_SCREENSHOT, Buffer.from(routeFocusScreenshot.data, 'base64'));
 }
 await evaluate(`document.getElementById('upcomingTab').click()`);
 assert.equal(await evaluate(`document.getElementById('upcomingView').hidden`), false);

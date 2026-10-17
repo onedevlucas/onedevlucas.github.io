@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v70b-live-new-york-time';
+const CACHE_NAME = 'borail-v71-engineering-routes';
 
 const CORE_ASSETS = [
   './',
@@ -18,6 +18,7 @@ const CORE_ASSETS = [
   'assets/js/mybocard.js',
   'assets/js/time.js',
   'assets/js/ad-carousel.js',
+  'assets/js/live-map-route-geometry.js',
   'assets/js/live-map.js',
   'assets/js/trip-planner-core.js',
   'assets/js/timetable.js',
