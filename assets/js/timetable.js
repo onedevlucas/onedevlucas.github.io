@@ -240,7 +240,7 @@ function timeModeForMinutes(nowMin) {
   return 'local';
 }
 
-function timeMode(now = new Date()) {
+function timeMode(now = BORAIL_CLOCK.now()) {
   return timeModeForMinutes(BORAIL_CLOCK.clockMinutes(now));
 }
 
@@ -439,7 +439,7 @@ function localDateKey(date) {
   return BORAIL_CLOCK.dateKey(date);
 }
 
-function getShuttleEventsForToday(serviceId, date = new Date()) {
+function getShuttleEventsForToday(serviceId, date = BORAIL_CLOCK.now()) {
   const dayKey = localDateKey(date);
   const key = `${serviceId}-${dayKey}`;
   if (SHUTTLE_EVENTS_CACHE.has(key)) return SHUTTLE_EVENTS_CACHE.get(key);
@@ -598,7 +598,7 @@ function getTrainDirection(serviceId, destination) {
   }
 }
 
-function arrivalsForStation(stationId, now = new Date()) {
+function arrivalsForStation(stationId, now = BORAIL_CLOCK.now()) {
   const nowMinRaw = BORAIL_CLOCK.clockMinutes(now);
   const mode = timeMode(now);
   const horizon = 6 * 60;
@@ -1054,9 +1054,9 @@ document.addEventListener('click', (e) => {
 });
 
 function renderClock() {
-  const now = new Date();
+  const now = BORAIL_CLOCK.now();
   const nowParts = BORAIL_CLOCK.parts(now);
-  nowText.textContent = `New York: ${formatTime24Full(BORAIL_CLOCK.clockSeconds(now))} ${nowParts.zoneName}`;
+  nowText.textContent = `New York: ${formatTime24Full(BORAIL_CLOCK.clockSeconds(now))} ${nowParts.zoneName}${BORAIL_CLOCK.isPreview ? ` • ${BORAIL_CLOCK.previewLabel}` : ''}`;
   const mode = timeMode(now);
   serviceState.textContent = (mode === 'rushAM' || mode === 'rushPM') ? 'Service: Rush (LCL+EXP)' :
                              (mode === 'local') ? 'Service: Local only' :
@@ -1102,7 +1102,7 @@ function setTimetableView(view) {
   tripPlannerTab.setAttribute('aria-selected', String(plannerActive));
   liveMapTab.setAttribute('aria-selected', String(mapActive));
   sessionStorage.setItem('borailTimetableView', view);
-  if (plannerActive) updatePlannerServiceState(getTripPlanningDate(false) || new Date());
+  if (plannerActive) updatePlannerServiceState(getTripPlanningDate(false) || BORAIL_CLOCK.now());
   document.dispatchEvent(new CustomEvent('borail:viewchange', { detail: { view } }));
 }
 
@@ -1132,7 +1132,7 @@ function initializeTripPlanner() {
     initialValue: 'New Halifax'
   });
 
-  const now = new Date();
+  const now = BORAIL_CLOCK.now();
   tripDateInput.value = inputDateValue(now);
   tripDateInput.min = inputDateValue(now);
   tripTimeInput.value = inputTimeValue(new Date(now.getTime() + 15 * 60000));
@@ -1145,11 +1145,11 @@ function setTripDepartureMode(mode) {
   departNowButton.classList.toggle('active', !leaveLater);
   departLaterButton.classList.toggle('active', leaveLater);
   futureDepartureFields.hidden = !leaveLater;
-  updatePlannerServiceState(getTripPlanningDate(false) || new Date());
+  updatePlannerServiceState(getTripPlanningDate(false) || BORAIL_CLOCK.now());
 }
 
 function getTripPlanningDate(showError = true) {
-  if (tripDepartureMode === 'now') return new Date();
+  if (tripDepartureMode === 'now') return BORAIL_CLOCK.now();
   if (!tripDateInput.value || !tripTimeInput.value) {
     if (showError) renderTripPlannerMessage('Choose a departure date and time.', 'The planner needs both fields before it can search.');
     return null;
@@ -1159,7 +1159,7 @@ function getTripPlanningDate(showError = true) {
     if (showError) renderTripPlannerMessage('That departure time is invalid.', 'Please choose another New York date and time. Daylight-saving clock changes can skip some times.');
     return null;
   }
-  if (date.getTime() < Date.now() - 60000) {
+  if (date.getTime() < BORAIL_CLOCK.now().getTime() - 60000) {
     if (showError) renderTripPlannerMessage('That departure time has already passed.', 'Choose Depart Now or a future time.');
     return null;
   }
@@ -1322,7 +1322,7 @@ function findAndRenderTrips() {
 }
 
 function renderArrivals() {
-  const now = new Date();
+  const now = BORAIL_CLOCK.now();
   const station = activeStationId;
   const limit = Number(limitSelect.value || 8);
 
@@ -1571,7 +1571,7 @@ setTimetableView(sessionStorage.getItem('borailTimetableView') || 'upcoming');
 setInterval(() => {
   renderClock();
   renderArrivals();
-  if (activeTimetableView === 'planner' && tripDepartureMode === 'now') updatePlannerServiceState(new Date());
+  if (activeTimetableView === 'planner' && tripDepartureMode === 'now') updatePlannerServiceState(BORAIL_CLOCK.now());
 }, 5000);
 
 limitSelect.addEventListener('change', renderArrivals);
@@ -1583,8 +1583,8 @@ tripPlannerTab.addEventListener('click', () => setTimetableView('planner'));
 liveMapTab.addEventListener('click', () => setTimetableView('map'));
 departNowButton.addEventListener('click', () => setTripDepartureMode('now'));
 departLaterButton.addEventListener('click', () => setTripDepartureMode('later'));
-tripDateInput.addEventListener('change', () => updatePlannerServiceState(getTripPlanningDate(false) || new Date()));
-tripTimeInput.addEventListener('change', () => updatePlannerServiceState(getTripPlanningDate(false) || new Date()));
+tripDateInput.addEventListener('change', () => updatePlannerServiceState(getTripPlanningDate(false) || BORAIL_CLOCK.now()));
+tripTimeInput.addEventListener('change', () => updatePlannerServiceState(getTripPlanningDate(false) || BORAIL_CLOCK.now()));
 swapTripStations.addEventListener('click', () => {
   const origin = tripOriginSelect.value;
   tripOriginDropdown.setValue(tripDestinationSelect.value);

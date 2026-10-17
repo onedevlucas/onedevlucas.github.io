@@ -2,6 +2,15 @@
   'use strict';
 
   const TIME_ZONE = 'America/New_York';
+  // Temporary V69 preview. Set enabled to false to restore the real New York clock.
+  const AM_RUSH_PREVIEW = Object.freeze({
+    enabled: true,
+    date: '2026-10-16',
+    time: '07:08:00',
+    label: 'AM Rush Preview'
+  });
+  const PREVIEW_STARTED_AT = Date.now();
+  let previewBaseTimestamp = null;
   const PARTS_FORMATTER = new Intl.DateTimeFormat('en-US', {
     timeZone: TIME_ZONE,
     year: 'numeric',
@@ -101,6 +110,14 @@
     return matches ? result : null;
   }
 
+  function now() {
+    if (!AM_RUSH_PREVIEW.enabled) return new Date();
+    if (previewBaseTimestamp === null) {
+      previewBaseTimestamp = fromWallTime(AM_RUSH_PREVIEW.date, AM_RUSH_PREVIEW.time)?.getTime() ?? Date.now();
+    }
+    return new Date(previewBaseTimestamp + (Date.now() - PREVIEW_STARTED_AT));
+  }
+
   function startOfDay(value = Date.now()) {
     return fromWallTime(dateKey(value), '00:00');
   }
@@ -114,6 +131,9 @@
 
   root.BORailTime = Object.freeze({
     TIME_ZONE,
+    isPreview: AM_RUSH_PREVIEW.enabled,
+    previewLabel: AM_RUSH_PREVIEW.label,
+    now,
     parts,
     dateKey,
     inputTimeValue,

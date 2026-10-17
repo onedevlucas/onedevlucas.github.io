@@ -3,6 +3,11 @@ import assert from 'node:assert/strict';
 await import('../assets/js/time.js');
 
 const clock = globalThis.BORailTime;
+
+assert.equal(clock.isPreview, true);
+assert.equal(clock.dateKey(clock.now()), '2026-10-16');
+assert.ok(clock.clockSeconds(clock.now()) >= 7 * 3600 + 8 * 60);
+assert.ok(clock.clockSeconds(clock.now()) < 7 * 3600 + 10 * 60);
 assert.equal(clock.TIME_ZONE, 'America/New_York');
 
 const winter = clock.parts(new Date('2026-01-15T13:00:00Z'));

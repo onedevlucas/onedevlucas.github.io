@@ -566,7 +566,7 @@
     };
   }
 
-  function getActiveTrainSnapshots(date = new Date()) {
+  function getActiveTrainSnapshots(date = BORAIL_CLOCK.now()) {
     const nowSeconds = BORAIL_CLOCK.clockSeconds(date);
     return getRunsForDate(date).map(run => snapshotForRun(run, nowSeconds)).filter(Boolean);
   }
@@ -645,7 +645,7 @@
     if (title) title.textContent = label;
   }
 
-  function refreshTrains(date = new Date(), force = false) {
+  function refreshTrains(date = BORAIL_CLOCK.now(), force = false) {
     if (!mapActive && !force) return;
     const snapshots = getActiveTrainSnapshots(date);
     activeSnapshots.clear();
@@ -688,7 +688,7 @@
 
   function updateClockAndService(date) {
     const parts = BORAIL_CLOCK.parts(date);
-    clock.textContent = `New York ${formatTime24Full(BORAIL_CLOCK.clockSeconds(date))} ${parts.zoneName}`;
+    clock.textContent = `New York ${formatTime24Full(BORAIL_CLOCK.clockSeconds(date))} ${parts.zoneName}${BORAIL_CLOCK.isPreview ? ` • ${BORAIL_CLOCK.previewLabel}` : ''}`;
     const mode = timeMode(date);
     serviceState.textContent = mode === 'rushAM' ? 'AM Rush service'
       : mode === 'rushPM' ? 'PM Rush service'
@@ -777,7 +777,7 @@
     return lines;
   }
 
-  function arrivalRowsForStation(stationId, date = new Date()) {
+  function arrivalRowsForStation(stationId, date = BORAIL_CLOCK.now()) {
     const nowSeconds = BORAIL_CLOCK.clockSeconds(date);
     const horizonSeconds = 6 * 60 * 60;
     return getRunsForDate(date).map(run => {
@@ -800,7 +800,7 @@
     }).filter(row => row && row.actualMinsAway >= -1).sort((left, right) => left.actualArrivalSec - right.actualArrivalSec).slice(0, 5);
   }
 
-  function renderStationDetails(stationId, date = new Date()) {
+  function renderStationDetails(stationId, date = BORAIL_CLOCK.now()) {
     const rows = arrivalRowsForStation(stationId, date);
     const accessible = ACCESSIBLE_STATIONS.has(stationId);
     const lines = stationLines(stationId);
@@ -850,7 +850,7 @@
     followingSelectedTrain = false;
     followStatus.hidden = true;
     stationElements.get(stationId)?.classList.add('selected');
-    renderStationDetails(stationId, new Date());
+    renderStationDetails(stationId, BORAIL_CLOCK.now());
     if (focus) centerOn(STATION_COORDS[stationId][0], STATION_COORDS[stationId][1], Math.max(2.1, currentZoom()));
   }
 
@@ -997,7 +997,7 @@
 
   function animationLoop(timestamp) {
     if (mapActive && document.visibilityState !== 'hidden' && timestamp - lastRefresh >= REFRESH_INTERVAL_MS) {
-      refreshTrains(new Date());
+      refreshTrains(BORAIL_CLOCK.now());
       lastRefresh = timestamp;
     }
     frameId = requestAnimationFrame(animationLoop);
@@ -1006,19 +1006,19 @@
   function initializeEvents() {
     document.addEventListener('borail:viewchange', event => {
       mapActive = event.detail?.view === 'map';
-      if (mapActive) requestAnimationFrame(() => refreshTrains(new Date(), true));
+      if (mapActive) requestAnimationFrame(() => refreshTrains(BORAIL_CLOCK.now(), true));
     });
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible' && mapActive) refreshTrains(new Date(), true);
+      if (document.visibilityState === 'visible' && mapActive) refreshTrains(BORAIL_CLOCK.now(), true);
     });
-    filtersPanel.addEventListener('change', () => refreshTrains(new Date(), true));
+    filtersPanel.addEventListener('change', () => refreshTrains(BORAIL_CLOCK.now(), true));
     filterToggle.addEventListener('click', () => {
       filtersPanel.hidden = !filtersPanel.hidden;
       filterToggle.setAttribute('aria-expanded', String(!filtersPanel.hidden));
     });
     resetFilters.addEventListener('click', () => {
       filtersPanel.querySelectorAll('input[type="checkbox"]').forEach(input => { input.checked = true; });
-      refreshTrains(new Date(), true);
+      refreshTrains(BORAIL_CLOCK.now(), true);
     });
     detailsClose.addEventListener('click', closeDetails);
     stopFollowingButton.addEventListener('click', stopFollowing);
@@ -1078,7 +1078,7 @@
     initializeLineFilters();
     initializeEvents();
     applyViewBox();
-    refreshTrains(new Date(), true);
+    refreshTrains(BORAIL_CLOCK.now(), true);
     frameId = requestAnimationFrame(animationLoop);
   }
 
@@ -1098,7 +1098,7 @@
     }),
     selectStation,
     selectTrain,
-    refresh: date => refreshTrains(date || new Date(), true),
+    refresh: date => refreshTrains(date || BORAIL_CLOCK.now(), true),
     destroy() {
       if (frameId) cancelAnimationFrame(frameId);
     }
