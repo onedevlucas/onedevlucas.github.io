@@ -63,10 +63,14 @@ await send('Emulation.setDeviceMetricsOverride', {
   mobile: viewportWidth < 700
 });
 await send('Emulation.setTimezoneOverride', { timezoneId: 'Asia/Seoul' });
+await send('Runtime.evaluate', { expression: `try {
+  sessionStorage.removeItem('borailTimetableSplashSeen');
+  sessionStorage.removeItem('borailTimetableView');
+} catch {}` });
 await send('Page.navigate', { url: 'http://127.0.0.1:8766/index.html' });
-await wait(250);
+await wait(750);
 
-assert.equal(await evaluate(`document.getElementById('splash-version').textContent`), 'V67 - 10/16/26');
+assert.equal(await evaluate(`document.getElementById('splash-version').textContent`), 'V68 - 10/16/26');
 assert.equal(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`), 0);
 await wait(2850);
 assert.ok(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`) > 0.9);
@@ -120,6 +124,11 @@ assert.equal(await evaluate(`document.getElementById('upcomingHeaderControls').h
 assert.equal(await evaluate(`document.querySelectorAll('#liveMapStations .live-map-station').length`), await evaluate(`STATIONS.length`));
 assert.equal(await evaluate(`Object.keys(BORailLiveMapDebug.getStationCoordinates()).length`), await evaluate(`STATIONS.length`));
 assert.equal(await evaluate(`document.getElementById('liveMapStationSearch')`), null);
+assert.equal(await evaluate(`document.getElementById('liveMapSvg').viewBox.baseVal.height`), 1200);
+assert.equal(await evaluate(`document.querySelector('.live-map-track-layout')?.getAttribute('href')`), 'assets/maps/borail-live-track-layout.svg');
+assert.equal(await evaluate(`Boolean(document.querySelector('.live-map-internal-alias-mask'))`), true);
+assert.equal(await evaluate(`document.body.textContent.includes('Wychwood')`), false);
+assert.deepEqual(await evaluate(`BORailLiveMapDebug.getStationCoordinates()['Oakville City Airport']`), [598, 873]);
 assert.equal(await evaluate(`document.querySelectorAll('#liveMapStations .live-map-accessibility-icon').length`), await evaluate(`Array.from(ACCESSIBLE_STATIONS).filter(station => BORailLiveMapDebug.getStationCoordinates()[station]).length`));
 assert.deepEqual(await evaluate(`Array.from(document.querySelectorAll('input[name="liveMapService"]')).map(input => input.value)`), [
   'A-express', 'A-local', 'B-local', 'B-express', 'C-local', 'D-local',
@@ -177,7 +186,7 @@ const liveMapSnapshot = await evaluate(`(() => {
     expressCount: trains.filter(train => train.isExpress).length,
     firstCars: first.consist.cars,
     renderedCars: element?.querySelectorAll('.live-map-train-car').length,
-    whiteCars: Array.from(element?.querySelectorAll('.live-map-train-car') || []).every(car => car.getAttribute('fill') === '#ffffff'),
+    lineColoredCars: Array.from(element?.querySelectorAll('.live-map-train-car') || []).every(car => car.getAttribute('fill') === SERVICE_META[first.serviceId].color),
     hasIcon: Boolean(element?.querySelector('.live-map-train-icon[href*="assets/images/line-icons/"]')),
     hasArrow: Boolean(element?.querySelector('.live-map-direction-arrow')),
     titleUsesIcon: Boolean(document.querySelector('#liveMapDetailsContent .live-map-train-title img')),
@@ -190,7 +199,7 @@ assert.ok(liveMapSnapshot.activeCount > 0);
 assert.ok(liveMapSnapshot.delayedCount > 0);
 assert.ok(liveMapSnapshot.expressCount > 0);
 assert.equal(liveMapSnapshot.firstCars, liveMapSnapshot.renderedCars);
-assert.equal(liveMapSnapshot.whiteCars, true);
+assert.equal(liveMapSnapshot.lineColoredCars, true);
 assert.equal(liveMapSnapshot.hasIcon, true);
 assert.equal(liveMapSnapshot.hasArrow, true);
 assert.equal(liveMapSnapshot.titleUsesIcon, true);

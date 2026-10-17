@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v67-live-map-controls';
+const CACHE_NAME = 'borail-v68-decked-track-map';
 
 const CORE_ASSETS = [
   './',
@@ -27,6 +27,7 @@ const CORE_ASSETS = [
   'assets/maps/borail-flatlands-route-map.pdf',
   'assets/maps/borail-flatlands-rush-hour-map.pdf',
   'assets/maps/borail-flatlands-winter-emergency-map.pdf',
+  'assets/maps/borail-live-track-layout.svg',
   'assets/images/ads/carousel/manifest.json',
   'assets/images/ads/carousel/01-sponsor.png',
   'assets/images/ads/carousel/02-youtube-promo.png',

@@ -3,7 +3,7 @@
 
   const SVG_NS = 'http://www.w3.org/2000/svg';
   const MAP_WIDTH = 1200;
-  const MAP_HEIGHT = 860;
+  const MAP_HEIGHT = 1200;
   const MAX_ZOOM = 5;
   const REFRESH_INTERVAL_MS = 1000;
   const SERVICE_FILTERS = Object.freeze([
@@ -51,76 +51,107 @@
   const expandButton = document.getElementById('liveMapExpand');
 
   const STATION_COORDS = Object.freeze({
-    'Newkirk': [210, 90],
-    'Newkirk - Oak Street': [160, 135],
-    'Hoganville': [160, 230],
-    'Bayview Park': [160, 310],
-    'Chelsea Bay': [160, 365],
-    'Berwick Hall': [160, 430],
-    'Westpoint': [205, 480],
-    'Bradford Square': [105, 480],
-    'Bradford Bay': [55, 480],
-    'Cambridge Central': [145, 535],
-    'Atkinson Junction': [170, 610],
-    'Garner': [155, 690],
-    'Kenilworth': [65, 730],
-    'La Vista': [285, 650],
-    'Brookfield Lawn': [375, 650],
-    'Boylston': [420, 610],
-    'Foxston': [475, 680],
-    'New Cottage': [565, 720],
-    'Whitebranch': [680, 760],
-    'Burlington - University of NCU': [300, 225],
-    'Port Williamson': [405, 235],
-    'Willow Springs': [370, 350],
-    'Rockcastle': [380, 430],
-    'Cannon View': [395, 520],
-    'Ivory Knolls': [350, 580],
-    'Djimar': [440, 600],
-    'Vanderburg': [520, 610],
-    'Ralston-Finch East': [610, 660],
-    'Atkins Bridge': [450, 550],
-    'Radcliff Fields': [520, 550],
-    'Oakville City Airport': [610, 550],
-    'Veridia Nexus': [530, 495],
-    'Oakville Exchange': [750, 545],
-    'Oakville City Center': [805, 590],
-    'Oakville Plaza': [865, 545],
-    'Talmedge Hill': [925, 610],
-    'Mount River': [940, 700],
-    'Perry Road': [700, 510],
-    'Mount Hindsboro': [700, 455],
-    'Wood-by-Hike': [770, 455],
-    'New Salemview': [830, 430],
-    'Millford Heights': [875, 390],
-    'Roxbury Landing': [875, 340],
-    'East Heights': [995, 320],
-    'Leighton Castle': [940, 510],
-    'Fort Meadow': [1060, 530],
-    'Yoakum': [1115, 580],
-    'Joplin': [1115, 645],
-    'Fernwood': [1115, 710],
-    'Greens Corner': [690, 400],
-    'Doverville': [700, 350],
-    'Orchard Ridge': [760, 325],
-    'Groveton': [790, 285],
-    'Madisonboro': [690, 285],
-    'Hutchinson Point': [610, 285],
-    'Vanwood': [520, 285],
-    'South Harrington': [510, 225],
-    'Harrington City': [510, 180],
-    'Carrollton': [510, 135],
-    'Hadleigh': [555, 90],
-    'Alpherst': [865, 300],
-    'New Halifax': [865, 255],
-    'Tyford Farms': [865, 210],
-    'Scottsbury': [865, 165],
-    'Ameryville': [925, 130],
-    'Scottsdale': [990, 130],
-    'Grant Park': [1040, 130],
-    'Cherrywood': [1090, 115],
-    'Brandywine': [1090, 75],
-    'Santa Mora': [1090, 35]
+    'Newkirk': [234, 471],
+    'Newkirk - Oak Street': [226, 544],
+    'Hoganville': [209, 663],
+    'Bayview Park': [209, 729],
+    'Chelsea Bay': [209, 795],
+    'Berwick Hall': [209, 861],
+    'Westpoint': [208, 927],
+    'Bradford Square': [161, 954],
+    'Bradford Bay': [95, 954],
+    'Cambridge Central': [209, 993],
+    'Atkinson Junction': [209, 1059],
+    'Garner': [209, 1125],
+    'Kenilworth': [148, 1165],
+    'La Vista': [287, 1092],
+    'Brookfield Lawn': [353, 1092],
+    'Boylston': [397, 1029],
+    'Foxston': [439, 1101],
+    'New Cottage': [465, 1155],
+    'Whitebranch': [542, 1174],
+    'Burlington - University of NCU': [307, 610],
+    'Port Williamson': [497, 545],
+    'Willow Springs': [394, 659],
+    'Rockcastle': [394, 756],
+    'Cannon View': [395, 858],
+    'Ivory Knolls': [385, 939],
+    'Djimar': [447, 962],
+    'Vanderburg': [513, 962],
+    'Ralston-Finch East': [548, 1032],
+    'Atkins Bridge': [466, 880],
+    'Radcliff Fields': [532, 880],
+    'Oakville City Airport': [598, 873],
+    'Veridia Nexus': [532, 819],
+    'Oakville Exchange': [664, 872],
+    'Oakville City Center': [730, 872],
+    'Oakville Plaza': [796, 872],
+    'Talmedge Hill': [835, 953],
+    'Mount River': [835, 1019],
+    'Perry Road': [630, 796],
+    'Mount Hindsboro': [630, 730],
+    'Wood-by-Hike': [699, 710],
+    'New Salemview': [765, 710],
+    'Millford Heights': [784, 643],
+    'Roxbury Landing': [784, 577],
+    'East Heights': [852, 543],
+    'Leighton Castle': [862, 872],
+    'Fort Meadow': [928, 872],
+    'Yoakum': [958, 931],
+    'Joplin': [958, 998],
+    'Fernwood': [958, 1064],
+    'Greens Corner': [630, 665],
+    'Doverville': [630, 599],
+    'Orchard Ridge': [630, 533],
+    'Groveton': [561, 475],
+    'Madisonboro': [429, 475],
+    'Hutchinson Point': [495, 475],
+    'Vanwood': [361, 415],
+    'South Harrington': [361, 349],
+    'Harrington City': [361, 283],
+    'Carrollton': [369, 216],
+    'Hadleigh': [428, 178],
+    'Alpherst': [784, 462],
+    'New Halifax': [784, 396],
+    'Tyford Farms': [784, 330],
+    'Scottsbury': [784, 264],
+    'Ameryville': [852, 232],
+    'Scottsdale': [918, 232],
+    'Grant Park': [984, 232],
+    'Cherrywood': [1009, 160],
+    'Brandywine': [1009, 94],
+    'Santa Mora': [1009, 28]
+  });
+
+  const EDGE_GEOMETRY = Object.freeze({
+    [edgeKey('Hadleigh', 'Carrollton')]: { from: 'Hadleigh', via: [[363, 178], [363, 216]] },
+    [edgeKey('Vanwood', 'Hutchinson Point')]: { from: 'Vanwood', via: [[361, 475]] },
+    [edgeKey('Groveton', 'Orchard Ridge')]: { from: 'Groveton', via: [[630, 475]] },
+    [edgeKey('Newkirk - Oak Street', 'Burlington - University of NCU')]: { from: 'Newkirk - Oak Street', via: [[226, 610]] },
+    [edgeKey('Burlington - University of NCU', 'Willow Springs')]: { from: 'Burlington - University of NCU', via: [[394, 610]] },
+    [edgeKey('Port Williamson', 'Willow Springs')]: { from: 'Port Williamson', via: [[394, 545]] },
+    [edgeKey('Cannon View', 'Atkins Bridge')]: { from: 'Cannon View', via: [[395, 880]] },
+    [edgeKey('Ivory Knolls', 'Djimar')]: { from: 'Ivory Knolls', via: [[385, 962]] },
+    [edgeKey('Vanderburg', 'Ralston-Finch East')]: { from: 'Vanderburg', via: [[548, 962]] },
+    [edgeKey('Newkirk - Oak Street', 'Hoganville')]: { from: 'Newkirk - Oak Street', via: [[209, 544]] },
+    [edgeKey('Westpoint', 'Bradford Square')]: { from: 'Westpoint', via: [[208, 954]] },
+    [edgeKey('Atkinson Junction', 'La Vista')]: { from: 'Atkinson Junction', via: [[209, 1092]] },
+    [edgeKey('Brookfield Lawn', 'Boylston')]: { from: 'Brookfield Lawn', via: [[397, 1092]] },
+    [edgeKey('Brookfield Lawn', 'Foxston')]: { from: 'Brookfield Lawn', via: [[420, 1092]] },
+    [edgeKey('Foxston', 'New Cottage')]: { from: 'Foxston', via: [[465, 1101]] },
+    [edgeKey('New Cottage', 'Whitebranch')]: { from: 'New Cottage', via: [[465, 1174]] },
+    [edgeKey('Garner', 'Kenilworth')]: { from: 'Garner', via: [[209, 1165]] },
+    [edgeKey('Scottsbury', 'Ameryville')]: { from: 'Scottsbury', via: [[784, 232]] },
+    [edgeKey('Grant Park', 'Cherrywood')]: { from: 'Grant Park', via: [[1009, 232]] },
+    [edgeKey('Alpherst', 'East Heights')]: { from: 'Alpherst', via: [[784, 543]] },
+    [edgeKey('East Heights', 'Roxbury Landing')]: { from: 'East Heights', via: [[784, 543]] },
+    [edgeKey('Millford Heights', 'New Salemview')]: { from: 'Millford Heights', via: [[784, 710]] },
+    [edgeKey('Wood-by-Hike', 'Mount Hindsboro')]: { from: 'Wood-by-Hike', via: [[630, 710]] },
+    [edgeKey('Perry Road', 'Oakville City Airport')]: { from: 'Perry Road', via: [[630, 872]] },
+    [edgeKey('Perry Road', 'Oakville Exchange')]: { from: 'Perry Road', via: [[630, 872]] },
+    [edgeKey('Veridia Nexus', 'Oakville City Airport')]: { from: 'Veridia Nexus', via: [[566, 819], [566, 857], [598, 857]] },
+    [edgeKey('Oakville Plaza', 'Talmedge Hill')]: { from: 'Oakville Plaza', via: [[835, 872]] },
+    [edgeKey('Fort Meadow', 'Yoakum')]: { from: 'Fort Meadow', via: [[958, 872]] }
   });
 
   const PHYSICAL_PATTERNS = Object.freeze({
@@ -151,12 +182,6 @@
       ['Harrington City', 'Carrollton', 'Hadleigh']
     ]
   });
-
-  const MAJOR_STATIONS = new Set([
-    'Newkirk', 'Berwick Hall', 'Atkinson Junction', 'Burlington - University of NCU', 'Cannon View',
-    'Oakville City Airport', 'Oakville Exchange', 'Leighton Castle', 'Perry Road', 'East Heights',
-    'Harrington City', 'Santa Mora', 'Mount River', 'Kenilworth', 'Whitebranch', 'Hadleigh'
-  ]);
 
   const forceSingleTrack = new Set([
     edgeKey('Brookfield Lawn', 'Foxston'), edgeKey('Foxston', 'New Cottage'), edgeKey('New Cottage', 'Whitebranch'),
@@ -289,7 +314,33 @@
   }
 
   function pointsForPath(path) {
-    return path.map(station => ({ station, x: STATION_COORDS[station]?.[0] ?? MAP_WIDTH / 2, y: STATION_COORDS[station]?.[1] ?? MAP_HEIGHT / 2 }));
+    if (!path.length) return [];
+    if (path.length === 1) {
+      const point = STATION_COORDS[path[0]] || [MAP_WIDTH / 2, MAP_HEIGHT / 2];
+      return [{ station: path[0], x: point[0], y: point[1], edgeToNext: null }];
+    }
+
+    const points = [];
+    for (let index = 0; index < path.length - 1; index += 1) {
+      const leftStation = path[index];
+      const rightStation = path[index + 1];
+      const left = STATION_COORDS[leftStation] || [MAP_WIDTH / 2, MAP_HEIGHT / 2];
+      const right = STATION_COORDS[rightStation] || [MAP_WIDTH / 2, MAP_HEIGHT / 2];
+      const key = edgeKey(leftStation, rightStation);
+      const geometry = EDGE_GEOMETRY[key];
+      const via = geometry
+        ? (geometry.from === leftStation ? geometry.via : [...geometry.via].reverse())
+        : [];
+      const segment = [
+        { station: leftStation, x: left[0], y: left[1], edgeToNext: key },
+        ...via.map(([x, y]) => ({ station: null, x, y, edgeToNext: key })),
+        { station: rightStation, x: right[0], y: right[1], edgeToNext: null }
+      ];
+
+      if (points.length) points[points.length - 1].edgeToNext = key;
+      points.push(...(points.length ? segment.slice(1) : segment));
+    }
+    return points;
   }
 
   function pointAlongPolyline(points, progress) {
@@ -300,7 +351,7 @@
       const left = points[index];
       const right = points[index + 1];
       const length = Math.hypot(right.x - left.x, right.y - left.y);
-      segments.push({ left, right, length });
+      segments.push({ left, right, length, edge: left.edgeToNext || edgeKey(left.station, right.station) });
       total += length;
     }
     let distance = Math.max(0, Math.min(1, progress)) * total;
@@ -311,7 +362,7 @@
           x: segment.left.x + (segment.right.x - segment.left.x) * ratio,
           y: segment.left.y + (segment.right.y - segment.left.y) * ratio,
           angle: Math.atan2(segment.right.y - segment.left.y, segment.right.x - segment.left.x) * 180 / Math.PI,
-          edge: edgeKey(segment.left.station, segment.right.station)
+          edge: segment.edge
         };
       }
       distance -= segment.length;
@@ -348,52 +399,14 @@
 
   function renderGeography() {
     geographyLayer.innerHTML = `
-      <rect class="live-map-land" x="14" y="14" width="1172" height="832" rx="30"></rect>
-      <path class="live-map-water" d="M0 0H150L105 95 92 206 38 304 0 320Z"></path>
-      <path class="live-map-water" d="M405 0H585L568 84 604 156 566 245 587 340 548 438 573 532 536 620 611 720 720 860H505L438 768 412 665 447 563 420 460 454 365 426 259 458 165 420 82Z"></path>
-      <path class="live-map-water" d="M760 0H1200V185L1125 176 1070 205 1013 184 949 218 890 192 827 229 783 180 810 115Z"></path>
+      <rect class="live-map-background" x="0" y="0" width="${MAP_WIDTH}" height="${MAP_HEIGHT}"></rect>
+      <image class="live-map-track-layout" href="assets/maps/borail-live-track-layout.svg" x="0" y="0" width="${MAP_WIDTH}" height="${MAP_HEIGHT}" preserveAspectRatio="xMidYMid meet"></image>
+      <rect class="live-map-internal-alias-mask" x="568" y="887" width="62" height="17" rx="2"></rect>
     `;
-  }
-
-  function trackOffsets(count) {
-    if (count === 1) return [0];
-    if (count === 2) return [-3.2, 3.2];
-    if (count === 3) return [-5.2, 0, 5.2];
-    return [-7.2, -2.5, 2.5, 7.2];
-  }
-
-  function offsetLine(left, right, amount) {
-    const dx = right[0] - left[0];
-    const dy = right[1] - left[1];
-    const length = Math.hypot(dx, dy) || 1;
-    const nx = -dy / length * amount;
-    const ny = dx / length * amount;
-    return { x1: left[0] + nx, y1: left[1] + ny, x2: right[0] + nx, y2: right[1] + ny };
   }
 
   function renderTracks() {
     tracksLayer.innerHTML = '';
-    physicalEdges.forEach(edge => {
-      const left = STATION_COORDS[edge.left];
-      const right = STATION_COORDS[edge.right];
-      if (!left || !right) return;
-      trackOffsets(edge.count).forEach(offset => {
-        const line = offsetLine(left, right, offset + (edge.centerOffset || 0));
-        tracksLayer.appendChild(createSvgElement('line', { ...line, class: 'live-map-track-bed' }));
-        tracksLayer.appendChild(createSvgElement('line', { ...line, class: 'live-map-rail' }));
-      });
-      edge.services.forEach((serviceId, index) => {
-        const amount = (edge.centerOffset || 0) + (edge.services.length === 1 ? 0 : (index - (edge.services.length - 1) / 2) * 2.2);
-        const line = offsetLine(left, right, amount);
-        const overlay = createSvgElement('line', {
-          ...line,
-          class: 'live-map-route-overlay',
-          stroke: SERVICE_META[serviceId]?.color || '#9aa0aa'
-        });
-        if (edge.services.length > 1) overlay.setAttribute('stroke-dasharray', '8 5');
-        tracksLayer.appendChild(overlay);
-      });
-    });
   }
 
   function stationAriaLabel(stationName) {
@@ -416,8 +429,8 @@
         role: 'button',
         'aria-label': stationAriaLabel(station.id)
       });
-      group.appendChild(createSvgElement('circle', { class: 'live-map-station-hit', cx: point[0], cy: point[1], r: 15 }));
-      group.appendChild(createSvgElement('circle', { class: 'live-map-station-dot', cx: point[0], cy: point[1], r: MAJOR_STATIONS.has(station.id) ? 5.4 : 4.1 }));
+      group.appendChild(createSvgElement('circle', { class: 'live-map-station-hit', cx: point[0], cy: point[1], r: 18 }));
+      group.appendChild(createSvgElement('circle', { class: 'live-map-station-dot', cx: point[0], cy: point[1], r: 6 }));
       if (ACCESSIBLE_STATIONS.has(station.id)) {
         group.appendChild(createSvgElement('image', {
           class: 'live-map-accessibility-icon',
@@ -428,14 +441,6 @@
           height: 12
         }));
       }
-      const label = createSvgElement('text', {
-        class: `live-map-station-label${MAJOR_STATIONS.has(station.id) ? '' : ' secondary'}`,
-        x: point[0] > 1010 ? point[0] - 8 : point[0] + 8,
-        y: point[1] - 8,
-        'text-anchor': point[0] > 1010 ? 'end' : 'start'
-      });
-      label.textContent = station.name;
-      group.appendChild(label);
       stationsLayer.appendChild(group);
       stationElements.set(station.id, group);
     });
@@ -580,6 +585,7 @@
   }
 
   function createTrainElement(snapshot) {
+    const serviceColor = SERVICE_META[snapshot.serviceId]?.color || '#ffffff';
     const group = createSvgElement('g', {
       class: `live-map-train ${snapshot.isExpress ? 'express' : 'local'}${snapshot.currentDelayed ? ' delayed' : ''}`,
       'data-train-id': snapshot.id,
@@ -601,12 +607,13 @@
         width: 6,
         height: 6.4,
         rx: 1.4,
-        fill: '#ffffff'
+        fill: serviceColor
       }));
     }
     consistGroup.appendChild(createSvgElement('polygon', {
       class: 'live-map-direction-arrow',
-      points: `${frontCenter + 5},-3.4 ${frontCenter + 11},0 ${frontCenter + 5},3.4`
+      points: `${frontCenter + 5},-3.4 ${frontCenter + 11},0 ${frontCenter + 5},3.4`,
+      fill: serviceColor
     }));
     group.appendChild(consistGroup);
     group.appendChild(createSvgElement('image', {
