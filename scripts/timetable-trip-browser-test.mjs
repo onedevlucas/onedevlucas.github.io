@@ -70,7 +70,7 @@ await send('Runtime.evaluate', { expression: `try {
 await send('Page.navigate', { url: 'http://127.0.0.1:8766/index.html' });
 await wait(750);
 
-assert.equal(await evaluate(`document.getElementById('splash-version').textContent`), 'V69 - 10/16/26');
+assert.equal(await evaluate(`document.getElementById('splash-version').textContent`), 'V70 - 10/16/26');
 assert.equal(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`), 0);
 await wait(2850);
 assert.ok(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`) > 0.9);
@@ -168,10 +168,39 @@ assert.equal(liveMapTrackRules.cAirportSingle, 1);
 assert.equal(liveMapTrackRules.bHadleighSingle, 1);
 assert.equal(liveMapTrackRules.sharedBC.count, 2);
 assert.deepEqual([...liveMapTrackRules.sharedBC.services].sort(), ['B', 'C']);
-assert.equal(await evaluate(`BORailLiveMapDebug.getLaneOffset('Port Williamson::Willow Springs', { serviceId: 'A', isExpress: false, direction: 'Northbound' })`), 3.2);
-assert.equal(await evaluate(`BORailLiveMapDebug.getLaneOffset('Port Williamson::Willow Springs', { serviceId: 'A', isExpress: false, direction: 'Southbound' })`), 3.2);
+assert.equal(await evaluate(`BORailLiveMapDebug.getLaneOffset('Port Williamson::Willow Springs', { serviceId: 'A', isExpress: false, direction: 'Northbound' })`), 2.4);
+assert.equal(await evaluate(`BORailLiveMapDebug.getLaneOffset('Port Williamson::Willow Springs', { serviceId: 'A', isExpress: false, direction: 'Southbound' })`), 2.4);
 assert.equal(await evaluate(`BORailLiveMapDebug.getLaneOffset('Rockcastle::Willow Springs', { serviceId: 'S', isExpress: false })`), 7.2);
-assert.equal(await evaluate(`BORailLiveMapDebug.getLaneOffset('Rockcastle::Willow Springs', { serviceId: 'A', isExpress: false })`), 2.5);
+assert.equal(await evaluate(`BORailLiveMapDebug.getLaneOffset('Rockcastle::Willow Springs', { serviceId: 'A', isExpress: false })`), 2.4);
+
+const guidedTrackGeometry = await evaluate(`(() => {
+  const path = (serviceId, direction, stations) => BORailLiveMapDebug.getPathPoints(serviceId, direction, stations);
+  const fSouth = path('F', 'Southbound', ['Newkirk', 'Newkirk - Oak Street']);
+  const fNorth = path('F', 'Northbound', ['Newkirk - Oak Street', 'Newkirk']);
+  const fTransition = path('F', 'Southbound', ['Newkirk - Oak Street', 'Hoganville', 'Bayview Park']);
+  const bShared = path('B', 'Southbound', ['Mount Hindsboro', 'Perry Road', 'Oakville Exchange']);
+  const cShared = path('C', 'Southbound', ['Mount Hindsboro', 'Perry Road', 'Oakville Exchange']);
+  const aAirport = path('A', 'Southbound', ['Radcliff Fields', 'Oakville City Airport', 'Oakville Exchange']);
+  return { fSouth, fNorth, fTransition, bShared, cShared, aAirport };
+})()`);
+assert.deepEqual([guidedTrackGeometry.fSouth[0].x, guidedTrackGeometry.fSouth[0].y], [214, 471]);
+assert.deepEqual([
+  guidedTrackGeometry.fSouth.at(-1).x,
+  guidedTrackGeometry.fSouth.at(-1).y
+], [208, 544]);
+assert.equal(guidedTrackGeometry.fSouth.every(point => point.guidedTrack), true);
+assert.deepEqual([guidedTrackGeometry.fNorth[0].x, guidedTrackGeometry.fNorth[0].y], [246, 544]);
+assert.deepEqual([
+  guidedTrackGeometry.fNorth.at(-1).x,
+  guidedTrackGeometry.fNorth.at(-1).y
+], [254, 471]);
+assert.equal(guidedTrackGeometry.fTransition.find(point => point.station === 'Hoganville').guidedTrack, false);
+assert.deepEqual(
+  guidedTrackGeometry.bShared.map(point => [point.x, point.y]),
+  guidedTrackGeometry.cShared.map(point => [point.x, point.y])
+);
+assert.equal(guidedTrackGeometry.bShared.some(point => point.y === 864 && point.x > 631), true);
+assert.equal(guidedTrackGeometry.aAirport.every(point => Math.abs(point.y - 881) < 0.01), true);
 
 const liveMapSnapshot = await evaluate(`(() => {
   const testDate = BORailTime.fromWallTime('2026-10-16', '07:08');

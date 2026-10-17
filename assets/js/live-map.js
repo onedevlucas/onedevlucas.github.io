@@ -57,19 +57,19 @@
     'Bayview Park': [209, 729],
     'Chelsea Bay': [209, 795],
     'Berwick Hall': [209, 861],
-    'Westpoint': [208, 927],
-    'Bradford Square': [161, 954],
-    'Bradford Bay': [95, 954],
+    'Westpoint': [203, 927],
+    'Bradford Square': [161, 948],
+    'Bradford Bay': [95, 948],
     'Cambridge Central': [209, 993],
     'Atkinson Junction': [209, 1059],
     'Garner': [209, 1125],
-    'Kenilworth': [148, 1165],
+    'Kenilworth': [146, 1165],
     'La Vista': [287, 1092],
     'Brookfield Lawn': [353, 1092],
     'Boylston': [397, 1029],
-    'Foxston': [439, 1101],
-    'New Cottage': [465, 1155],
-    'Whitebranch': [542, 1174],
+    'Foxston': [439, 1095],
+    'New Cottage': [471, 1155],
+    'Whitebranch': [542, 1179],
     'Burlington - University of NCU': [307, 610],
     'Port Williamson': [497, 545],
     'Willow Springs': [394, 659],
@@ -109,8 +109,8 @@
     'Vanwood': [361, 415],
     'South Harrington': [361, 349],
     'Harrington City': [361, 283],
-    'Carrollton': [369, 216],
-    'Hadleigh': [428, 178],
+    'Carrollton': [363, 216],
+    'Hadleigh': [428, 172],
     'Alpherst': [784, 462],
     'New Halifax': [784, 396],
     'Tyford Farms': [784, 330],
@@ -124,7 +124,7 @@
   });
 
   const EDGE_GEOMETRY = Object.freeze({
-    [edgeKey('Hadleigh', 'Carrollton')]: { from: 'Hadleigh', via: [[363, 178], [363, 216]] },
+    [edgeKey('Hadleigh', 'Carrollton')]: { from: 'Hadleigh', via: [[363, 172]] },
     [edgeKey('Vanwood', 'Hutchinson Point')]: { from: 'Vanwood', via: [[361, 475]] },
     [edgeKey('Groveton', 'Orchard Ridge')]: { from: 'Groveton', via: [[630, 475]] },
     [edgeKey('Newkirk - Oak Street', 'Burlington - University of NCU')]: { from: 'Newkirk - Oak Street', via: [[226, 610]] },
@@ -134,12 +134,12 @@
     [edgeKey('Ivory Knolls', 'Djimar')]: { from: 'Ivory Knolls', via: [[385, 962]] },
     [edgeKey('Vanderburg', 'Ralston-Finch East')]: { from: 'Vanderburg', via: [[548, 962]] },
     [edgeKey('Newkirk - Oak Street', 'Hoganville')]: { from: 'Newkirk - Oak Street', via: [[209, 544]] },
-    [edgeKey('Westpoint', 'Bradford Square')]: { from: 'Westpoint', via: [[208, 954]] },
+    [edgeKey('Westpoint', 'Bradford Square')]: { from: 'Westpoint', via: [[203, 948]] },
     [edgeKey('Atkinson Junction', 'La Vista')]: { from: 'Atkinson Junction', via: [[209, 1092]] },
     [edgeKey('Brookfield Lawn', 'Boylston')]: { from: 'Brookfield Lawn', via: [[397, 1092]] },
     [edgeKey('Brookfield Lawn', 'Foxston')]: { from: 'Brookfield Lawn', via: [[420, 1092]] },
-    [edgeKey('Foxston', 'New Cottage')]: { from: 'Foxston', via: [[465, 1101]] },
-    [edgeKey('New Cottage', 'Whitebranch')]: { from: 'New Cottage', via: [[465, 1174]] },
+    [edgeKey('Foxston', 'New Cottage')]: { from: 'Foxston', via: [[471, 1095]] },
+    [edgeKey('New Cottage', 'Whitebranch')]: { from: 'New Cottage', via: [[471, 1179]] },
     [edgeKey('Garner', 'Kenilworth')]: { from: 'Garner', via: [[209, 1165]] },
     [edgeKey('Scottsbury', 'Ameryville')]: { from: 'Scottsbury', via: [[784, 232]] },
     [edgeKey('Grant Park', 'Cherrywood')]: { from: 'Grant Park', via: [[1009, 232]] },
@@ -152,6 +152,53 @@
     [edgeKey('Veridia Nexus', 'Oakville City Airport')]: { from: 'Veridia Nexus', via: [[566, 819], [566, 857], [598, 857]] },
     [edgeKey('Oakville Plaza', 'Talmedge Hill')]: { from: 'Oakville Plaza', via: [[835, 872]] },
     [edgeKey('Fort Meadow', 'Yoakum')]: { from: 'Fort Meadow', via: [[958, 872]] }
+  });
+
+  // Centerlines extracted from the colored engineering guide. These remain data only;
+  // the passenger-facing map continues to use the black-and-white track artwork.
+  const SERVICE_EDGE_GEOMETRY = Object.freeze({
+    [`A|${edgeKey('Cannon View', 'Atkins Bridge')}`]: { from: 'Cannon View', points: [[395, 858], [395, 881], [466, 881]] },
+    [`A|${edgeKey('Atkins Bridge', 'Radcliff Fields')}`]: { from: 'Atkins Bridge', points: [[466, 881], [532, 881]] },
+    [`A|${edgeKey('Radcliff Fields', 'Oakville City Airport')}`]: { from: 'Radcliff Fields', points: [[532, 881], [598, 881]] },
+    [`A|${edgeKey('Oakville City Airport', 'Oakville Exchange')}`]: { from: 'Oakville City Airport', points: [[598, 881], [664, 881]] },
+    [`A|${edgeKey('Oakville Exchange', 'Oakville Plaza')}`]: { from: 'Oakville Exchange', points: [[664, 881], [796, 881]] },
+    [`A|${edgeKey('Oakville Plaza', 'Talmedge Hill')}`]: { from: 'Oakville Plaza', points: [[796, 881], [835, 881], [835, 953]] },
+    [`A|${edgeKey('Talmedge Hill', 'Mount River')}`]: { from: 'Talmedge Hill', points: [[835, 953], [835, 1019]] },
+
+    [`B|${edgeKey('Mount Hindsboro', 'Perry Road')}`]: { from: 'Mount Hindsboro', points: [[631, 730], [631, 796]] },
+    [`C|${edgeKey('Mount Hindsboro', 'Perry Road')}`]: { from: 'Mount Hindsboro', points: [[631, 730], [631, 796]] },
+    [`B|${edgeKey('Perry Road', 'Oakville Exchange')}`]: { from: 'Perry Road', points: [[631, 796], [631, 864], [664, 864]] },
+    [`C|${edgeKey('Perry Road', 'Oakville Exchange')}`]: { from: 'Perry Road', points: [[631, 796], [631, 864], [664, 864]] },
+    [`B|${edgeKey('Oakville Exchange', 'Oakville City Center')}`]: { from: 'Oakville Exchange', points: [[664, 864], [730, 864]] },
+    [`C|${edgeKey('Oakville Exchange', 'Oakville City Center')}`]: { from: 'Oakville Exchange', points: [[664, 864], [730, 864]] },
+    [`B|${edgeKey('Oakville City Center', 'Oakville Plaza')}`]: { from: 'Oakville City Center', points: [[730, 864], [796, 864]] },
+    [`C|${edgeKey('Oakville City Center', 'Oakville Plaza')}`]: { from: 'Oakville City Center', points: [[730, 864], [796, 864]] },
+    [`B|${edgeKey('Oakville Plaza', 'Leighton Castle')}`]: { from: 'Oakville Plaza', points: [[796, 864], [862, 864]] },
+    [`C|${edgeKey('Oakville Plaza', 'Leighton Castle')}`]: { from: 'Oakville Plaza', points: [[796, 864], [862, 864]] },
+    [`C|${edgeKey('Leighton Castle', 'Fort Meadow')}`]: { from: 'Leighton Castle', points: [[862, 864], [928, 864]] },
+    [`C|${edgeKey('Fort Meadow', 'Yoakum')}`]: { from: 'Fort Meadow', points: [[928, 864], [958, 864], [958, 931]] },
+
+    [`C|${edgeKey('Perry Road', 'Oakville City Airport')}`]: { from: 'Perry Road', points: [[631, 796], [631, 864], [598, 864]], guidedTrack: true },
+    [`D|${edgeKey('Veridia Nexus', 'Oakville City Airport')}`]: { from: 'Veridia Nexus', points: [[532, 813], [558, 813], [566, 821], [566, 854], [575, 864], [598, 864]], guidedTrack: true }
+  });
+
+  const GUIDED_TRACK_GEOMETRY = Object.freeze({
+    [`F|Southbound|${edgeKey('Newkirk', 'Newkirk - Oak Street')}`]: {
+      from: 'Newkirk',
+      points: [[214, 471], [215, 504], [211, 520], [208, 526], [208, 544]]
+    },
+    [`F|Northbound|${edgeKey('Newkirk', 'Newkirk - Oak Street')}`]: {
+      from: 'Newkirk - Oak Street',
+      points: [[246, 544], [246, 514], [251, 505], [253, 498], [254, 471]]
+    },
+    [`F|Southbound|${edgeKey('Newkirk - Oak Street', 'Hoganville')}`]: {
+      from: 'Newkirk - Oak Street',
+      points: [[208, 544], [208, 607], [210, 613], [210, 663]]
+    },
+    [`F|Northbound|${edgeKey('Newkirk - Oak Street', 'Hoganville')}`]: {
+      from: 'Hoganville',
+      points: [[213, 663], [213, 643], [215, 636], [232, 629], [243, 620], [246, 611], [246, 544]]
+    }
   });
 
   const PHYSICAL_PATTERNS = Object.freeze({
@@ -288,7 +335,7 @@
       if (edge.key !== newkirkOakKey || !edge.services.includes('F')) return edge;
       return [
         { ...edge, services: edge.services.filter(serviceId => serviceId !== 'F'), count: 4, centerOffset: 0 },
-        { ...edge, services: ['F'], count: 2, centerOffset: -17 }
+        { ...edge, services: ['F'], count: 2, centerOffset: 0 }
       ];
     });
   }
@@ -313,34 +360,104 @@
     return [fromStation, toStation];
   }
 
-  function pointsForPath(path) {
+  function edgePoints(leftStation, rightStation, routeContext) {
+    const key = edgeKey(leftStation, rightStation);
+    const serviceId = routeContext?.serviceId;
+    const direction = routeContext?.direction;
+    const guidedGeometry = GUIDED_TRACK_GEOMETRY[`${serviceId}|${direction}|${key}`];
+    const serviceGeometry = SERVICE_EDGE_GEOMETRY[`${serviceId}|${key}`];
+    const geometry = guidedGeometry || serviceGeometry;
+
+    if (geometry) {
+      const forward = geometry.from === leftStation;
+      const rawPoints = forward ? geometry.points : [...geometry.points].reverse();
+      const guidedTrack = Boolean(guidedGeometry || geometry.guidedTrack);
+      return rawPoints.map(([x, y], index) => ({
+        station: index === 0 ? leftStation : index === rawPoints.length - 1 ? rightStation : null,
+        x,
+        y,
+        edgeToNext: index < rawPoints.length - 1 ? key : null,
+        guidedTrack
+      }));
+    }
+
+    const left = STATION_COORDS[leftStation] || [MAP_WIDTH / 2, MAP_HEIGHT / 2];
+    const right = STATION_COORDS[rightStation] || [MAP_WIDTH / 2, MAP_HEIGHT / 2];
+    const defaultGeometry = EDGE_GEOMETRY[key];
+    const via = defaultGeometry
+      ? (defaultGeometry.from === leftStation ? defaultGeometry.via : [...defaultGeometry.via].reverse())
+      : [];
+    return [
+      { station: leftStation, x: left[0], y: left[1], edgeToNext: key, guidedTrack: false },
+      ...via.map(([x, y]) => ({ station: null, x, y, edgeToNext: key, guidedTrack: false })),
+      { station: rightStation, x: right[0], y: right[1], edgeToNext: null, guidedTrack: false }
+    ];
+  }
+
+  function roundedPathCorners(points, radius = 10) {
+    if (points.length < 3) return points;
+    const rounded = [points[0]];
+    for (let index = 1; index < points.length - 1; index += 1) {
+      const previous = points[index - 1];
+      const current = points[index];
+      const next = points[index + 1];
+      if (current.station) {
+        rounded.push(current);
+        continue;
+      }
+      const incomingLength = Math.hypot(current.x - previous.x, current.y - previous.y);
+      const outgoingLength = Math.hypot(next.x - current.x, next.y - current.y);
+      if (incomingLength < 1 || outgoingLength < 1) {
+        rounded.push(current);
+        continue;
+      }
+      const trim = Math.min(radius, incomingLength * 0.42, outgoingLength * 0.42);
+      const before = {
+        ...current,
+        x: current.x + (previous.x - current.x) * trim / incomingLength,
+        y: current.y + (previous.y - current.y) * trim / incomingLength
+      };
+      const after = {
+        ...current,
+        x: current.x + (next.x - current.x) * trim / outgoingLength,
+        y: current.y + (next.y - current.y) * trim / outgoingLength
+      };
+      rounded.push(before);
+      for (let step = 1; step <= 4; step += 1) {
+        const t = step / 4;
+        const inverse = 1 - t;
+        rounded.push({
+          ...current,
+          x: inverse * inverse * before.x + 2 * inverse * t * current.x + t * t * after.x,
+          y: inverse * inverse * before.y + 2 * inverse * t * current.y + t * t * after.y
+        });
+      }
+    }
+    rounded.push(points[points.length - 1]);
+    return rounded;
+  }
+
+  function pointsForPath(path, routeContext = {}) {
     if (!path.length) return [];
     if (path.length === 1) {
       const point = STATION_COORDS[path[0]] || [MAP_WIDTH / 2, MAP_HEIGHT / 2];
-      return [{ station: path[0], x: point[0], y: point[1], edgeToNext: null }];
+      return [{ station: path[0], x: point[0], y: point[1], edgeToNext: null, guidedTrack: false }];
     }
 
     const points = [];
     for (let index = 0; index < path.length - 1; index += 1) {
       const leftStation = path[index];
       const rightStation = path[index + 1];
-      const left = STATION_COORDS[leftStation] || [MAP_WIDTH / 2, MAP_HEIGHT / 2];
-      const right = STATION_COORDS[rightStation] || [MAP_WIDTH / 2, MAP_HEIGHT / 2];
       const key = edgeKey(leftStation, rightStation);
-      const geometry = EDGE_GEOMETRY[key];
-      const via = geometry
-        ? (geometry.from === leftStation ? geometry.via : [...geometry.via].reverse())
-        : [];
-      const segment = [
-        { station: leftStation, x: left[0], y: left[1], edgeToNext: key },
-        ...via.map(([x, y]) => ({ station: null, x, y, edgeToNext: key })),
-        { station: rightStation, x: right[0], y: right[1], edgeToNext: null }
-      ];
+      const segment = edgePoints(leftStation, rightStation, routeContext);
 
-      if (points.length) points[points.length - 1].edgeToNext = key;
+      if (points.length) {
+        points[points.length - 1].edgeToNext = key;
+        points[points.length - 1].guidedTrack = segment[0].guidedTrack;
+      }
       points.push(...(points.length ? segment.slice(1) : segment));
     }
-    return points;
+    return roundedPathCorners(points);
   }
 
   function pointAlongPolyline(points, progress) {
@@ -351,7 +468,13 @@
       const left = points[index];
       const right = points[index + 1];
       const length = Math.hypot(right.x - left.x, right.y - left.y);
-      segments.push({ left, right, length, edge: left.edgeToNext || edgeKey(left.station, right.station) });
+      segments.push({
+        left,
+        right,
+        length,
+        edge: left.edgeToNext || edgeKey(left.station, right.station),
+        guidedTrack: Boolean(left.guidedTrack)
+      });
       total += length;
     }
     let distance = Math.max(0, Math.min(1, progress)) * total;
@@ -362,7 +485,8 @@
           x: segment.left.x + (segment.right.x - segment.left.x) * ratio,
           y: segment.left.y + (segment.right.y - segment.left.y) * ratio,
           angle: Math.atan2(segment.right.y - segment.left.y, segment.right.x - segment.left.x) * 180 / Math.PI,
-          edge: segment.edge
+          edge: segment.edge,
+          guidedTrack: segment.guidedTrack
         };
       }
       distance -= segment.length;
@@ -374,12 +498,13 @@
     const physical = physicalEdges.find(item => item.key === edge && item.services.includes(snapshot.serviceId));
     const count = physical?.count || 2;
     if (count === 1) return 0;
-    if (count === 2) return 3.2;
-    if (count === 3) return snapshot.isExpress ? 0 : 5.2;
-    return snapshot.serviceId === 'S' ? 7.2 : 2.5;
+    if (count === 2) return 2.4;
+    if (count === 3) return snapshot.isExpress ? 0 : 4.8;
+    return snapshot.serviceId === 'S' ? 7.2 : 2.4;
   }
 
   function offsetPosition(position, snapshot) {
+    if (position.guidedTrack) return position;
     const physical = physicalEdges.find(item => item.key === position.edge && item.services.includes(snapshot.serviceId));
     let amount = laneOffsetFor(snapshot, position.edge);
     if (physical?.centerOffset) {
@@ -502,8 +627,12 @@
       const stop = stops[index];
       if (nowSeconds >= stop.actualArrivalSec && nowSeconds < stop.actualDepartureSec) {
         const adjacent = stops[index + 1] || stops[index - 1] || stop;
-        const path = pointsForPath(findServicePath(run.serviceId, stop.name, adjacent.name));
-        const endpoint = index < stops.length - 1 ? pointAlongPolyline(path, 0) : pointAlongPolyline(path, 1);
+        const path = pointsForPath(findServicePath(run.serviceId, stop.name, adjacent.name), {
+          serviceId: run.serviceId,
+          direction,
+          isExpress: run.isExpress
+        });
+        const endpoint = pointAlongPolyline(path, 0);
         position = offsetPosition(endpoint, { direction, isExpress: run.isExpress, serviceId: run.serviceId });
         status = `At ${stop.name}`;
         currentStation = stop.name;
@@ -522,7 +651,11 @@
         if (nowSeconds >= stop.actualDepartureSec && nowSeconds < next.actualArrivalSec) {
           const segmentDuration = Math.max(1, next.actualArrivalSec - stop.actualDepartureSec);
           const segmentProgress = (nowSeconds - stop.actualDepartureSec) / segmentDuration;
-          const path = pointsForPath(findServicePath(run.serviceId, stop.name, next.name));
+          const path = pointsForPath(findServicePath(run.serviceId, stop.name, next.name), {
+            serviceId: run.serviceId,
+            direction,
+            isExpress: run.isExpress
+          });
           position = offsetPosition(pointAlongPolyline(path, segmentProgress), {
             direction,
             isExpress: run.isExpress,
@@ -1087,6 +1220,11 @@
     findServicePath,
     getTrackEdges: () => physicalEdges.map(edge => ({ ...edge, services: [...edge.services] })),
     getLaneOffset: (edge, snapshot) => laneOffsetFor(snapshot, edge),
+    getPathPoints: (serviceId, direction, path, isExpress = false) => pointsForPath(path, {
+      serviceId,
+      direction,
+      isExpress
+    }).map(point => ({ ...point })),
     getStationCoordinates: () => ({ ...STATION_COORDS }),
     getState: () => ({
       active: mapActive,

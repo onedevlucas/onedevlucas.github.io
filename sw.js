@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v69-am-rush-preview';
+const CACHE_NAME = 'borail-v70-guided-track-motion';
 
 const CORE_ASSETS = [
   './',
