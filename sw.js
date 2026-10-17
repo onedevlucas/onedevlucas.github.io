@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v71-engineering-routes';
+const CACHE_NAME = 'borail-v72-exact-engineering-rails';
 
 const CORE_ASSETS = [
   './',

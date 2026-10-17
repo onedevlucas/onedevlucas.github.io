@@ -226,7 +226,7 @@
       ['East Heights', 'Alpherst']
     ],
     B: [
-      ['Leighton Castle', 'Oakville Plaza', 'Oakville City Center', 'Oakville Exchange', 'Perry Road', 'Mount Hindsboro', 'Greens Corner', 'Doverville', 'Orchard Ridge', 'Groveton', 'Madisonboro', 'Hutchinson Point', 'Vanwood', 'South Harrington', 'Harrington City'],
+      ['Leighton Castle', 'Oakville Plaza', 'Oakville City Center', 'Oakville Exchange', 'Perry Road', 'Mount Hindsboro', 'Greens Corner', 'Doverville', 'Orchard Ridge', 'Groveton', 'Hutchinson Point', 'Madisonboro', 'Vanwood', 'South Harrington', 'Harrington City'],
       ['Harrington City', 'Carrollton', 'Hadleigh']
     ]
   });
@@ -257,6 +257,18 @@
     edgeKey('Oakville City Center', 'Oakville Plaza'),
     edgeKey('Oakville Plaza', 'Leighton Castle')
   ]);
+
+  // These aliases correct the B route's physical station order without
+  // inventing any geometry. Each replacement is sliced directly from the
+  // corresponding BLocal/BExpress engineering guide polyline.
+  const ENGINEERING_EDGE_ALIASES = Object.freeze({
+    'Groveton|Hutchinson Point': ['Groveton', 'Madisonboro'],
+    'Hutchinson Point|Madisonboro': ['Groveton', 'Madisonboro'],
+    'Madisonboro|Vanwood': ['Hutchinson Point', 'Vanwood'],
+    'Vanwood|Madisonboro': ['Vanwood', 'Hutchinson Point'],
+    'Madisonboro|Hutchinson Point': ['Madisonboro', 'Groveton'],
+    'Hutchinson Point|Groveton': ['Madisonboro', 'Groveton']
+  });
 
   const serviceGraphs = buildServiceGraphs();
   const physicalEdges = buildPhysicalEdges();
@@ -369,16 +381,84 @@
     return [fromStation, toStation];
   }
 
-  function edgePoints(leftStation, rightStation, routeContext) {
+  function pointDistance(left, right) {
+    return Math.hypot(right[0] - left[0], right[1] - left[1]);
+  }
+
+  function engineeringRailPoints(rawPoints, leftStation, rightStation) {
+    const points = rawPoints.map(point => [Number(point[0]), Number(point[1])]);
+    const leftCenter = STATION_COORDS[leftStation];
+    const rightCenter = STATION_COORDS[rightStation];
+
+    // The first conversion inserted station-center waypoints solely to divide
+    // the SVG into timetable edges. They are not part of the supplied rails.
+    if (points.length > 2 && leftCenter && pointDistance(points[0], leftCenter) < .75) points.shift();
+    if (points.length > 2 && rightCenter && pointDistance(points.at(-1), rightCenter) < .75) points.pop();
+
+    return points.filter((point, index) => !index || pointDistance(point, points[index - 1]) > .01);
+  }
+
+  function projectPointOntoPolyline(points, target) {
+    let best = null;
+    let distanceAlong = 0;
+    for (let index = 0; index < points.length - 1; index += 1) {
+      const left = points[index];
+      const right = points[index + 1];
+      const dx = right[0] - left[0];
+      const dy = right[1] - left[1];
+      const lengthSquared = dx * dx + dy * dy;
+      const length = Math.sqrt(lengthSquared);
+      const ratio = lengthSquared
+        ? Math.max(0, Math.min(1, ((target[0] - left[0]) * dx + (target[1] - left[1]) * dy) / lengthSquared))
+        : 0;
+      const point = [left[0] + dx * ratio, left[1] + dy * ratio];
+      const distance = pointDistance(point, target);
+      const candidate = { point, distance, distanceAlong: distanceAlong + length * ratio, segmentIndex: index };
+      if (!best || candidate.distance < best.distance) best = candidate;
+      distanceAlong += length;
+    }
+    return best;
+  }
+
+  function sliceEngineeringRail(points, leftStation, rightStation) {
+    const leftProjection = projectPointOntoPolyline(points, STATION_COORDS[leftStation]);
+    const rightProjection = projectPointOntoPolyline(points, STATION_COORDS[rightStation]);
+    if (!leftProjection || !rightProjection) return points;
+    if (leftProjection.distanceAlong > rightProjection.distanceAlong) {
+      return sliceEngineeringRail([...points].reverse(), leftStation, rightStation);
+    }
+
+    const sliced = [leftProjection.point];
+    for (let index = leftProjection.segmentIndex + 1; index <= rightProjection.segmentIndex; index += 1) {
+      const point = points[index];
+      if (point && pointDistance(sliced.at(-1), point) > .01) sliced.push(point);
+    }
+    if (pointDistance(sliced.at(-1), rightProjection.point) > .01) sliced.push(rightProjection.point);
+    return sliced;
+  }
+
+  function engineeringPointsFor(serviceId, isExpress, leftStation, rightStation) {
     const key = edgeKey(leftStation, rightStation);
-    const serviceId = routeContext?.serviceId;
-    const direction = routeContext?.direction;
     const geometryService = serviceId === 'C' && SHARED_BC_EDGES.has(key) ? 'B' : serviceId;
     const geometryType = geometryService === 'B' && serviceId === 'C'
       ? 'local'
-      : routeContext?.isExpress ? 'express' : 'local';
-    const engineeringKey = `${geometryService}-${geometryType}|${leftStation}|${rightStation}`;
-    const engineeringPoints = window.BORAIL_ROUTE_GEOMETRY?.[engineeringKey];
+      : isExpress ? 'express' : 'local';
+    const prefix = `${geometryService}-${geometryType}|`;
+    let sourceLeft = leftStation;
+    let sourceRight = rightStation;
+    const alias = geometryService === 'B' ? ENGINEERING_EDGE_ALIASES[`${leftStation}|${rightStation}`] : null;
+    if (alias) [sourceLeft, sourceRight] = alias;
+
+    const rawPoints = window.BORAIL_ROUTE_GEOMETRY?.[`${prefix}${sourceLeft}|${sourceRight}`];
+    if (!rawPoints?.length) return null;
+    const railPoints = engineeringRailPoints(rawPoints, sourceLeft, sourceRight);
+    return alias ? sliceEngineeringRail(railPoints, leftStation, rightStation) : railPoints;
+  }
+
+  function edgePoints(leftStation, rightStation, routeContext) {
+    const key = edgeKey(leftStation, rightStation);
+    const serviceId = routeContext?.serviceId;
+    const engineeringPoints = engineeringPointsFor(serviceId, routeContext?.isExpress, leftStation, rightStation);
 
     if (engineeringPoints?.length > 1) {
       return engineeringPoints.map(([x, y], index) => ({
@@ -390,34 +470,10 @@
       }));
     }
 
-    const guidedGeometry = GUIDED_TRACK_GEOMETRY[`${serviceId}|${direction}|${key}`];
-    const serviceGeometry = SERVICE_EDGE_GEOMETRY[`${serviceId}|${key}`];
-    const geometry = guidedGeometry || serviceGeometry;
-
-    if (geometry) {
-      const forward = geometry.from === leftStation;
-      const rawPoints = forward ? geometry.points : [...geometry.points].reverse();
-      const guidedTrack = Boolean(guidedGeometry || geometry.guidedTrack);
-      return rawPoints.map(([x, y], index) => ({
-        station: index === 0 ? leftStation : index === rawPoints.length - 1 ? rightStation : null,
-        x,
-        y,
-        edgeToNext: index < rawPoints.length - 1 ? key : null,
-        guidedTrack
-      }));
-    }
-
-    const left = STATION_COORDS[leftStation] || [MAP_WIDTH / 2, MAP_HEIGHT / 2];
-    const right = STATION_COORDS[rightStation] || [MAP_WIDTH / 2, MAP_HEIGHT / 2];
-    const defaultGeometry = EDGE_GEOMETRY[key];
-    const via = defaultGeometry
-      ? (defaultGeometry.from === leftStation ? defaultGeometry.via : [...defaultGeometry.via].reverse())
-      : [];
-    return [
-      { station: leftStation, x: left[0], y: left[1], edgeToNext: key, guidedTrack: false },
-      ...via.map(([x, y]) => ({ station: null, x, y, edgeToNext: key, guidedTrack: false })),
-      { station: rightStation, x: right[0], y: right[1], edgeToNext: null, guidedTrack: false }
-    ];
+    // A train is omitted instead of being placed on invented or legacy map
+    // geometry. The twelve engineering SVG guides are the sole movement source.
+    console.warn(`Missing engineering route geometry for ${serviceId}: ${leftStation} → ${rightStation}`);
+    return [];
   }
 
   function roundedPathCorners(points, radius = 10) {
@@ -477,13 +533,18 @@
       const key = edgeKey(leftStation, rightStation);
       const segment = edgePoints(leftStation, rightStation, routeContext);
 
+      if (!segment.length) return [];
       if (points.length) {
         points[points.length - 1].edgeToNext = key;
         points[points.length - 1].guidedTrack = segment[0].guidedTrack;
       }
-      points.push(...(points.length ? segment.slice(1) : segment));
+      const duplicateJoin = points.length && Math.hypot(
+        points.at(-1).x - segment[0].x,
+        points.at(-1).y - segment[0].y
+      ) < .01;
+      points.push(...(duplicateJoin ? segment.slice(1) : segment));
     }
-    return roundedPathCorners(points);
+    return points;
   }
 
   function pointAlongPolyline(points, progress) {
@@ -651,13 +712,20 @@
     for (let index = 0; index < stops.length; index += 1) {
       const stop = stops[index];
       if (nowSeconds >= stop.actualArrivalSec && nowSeconds < stop.actualDepartureSec) {
-        const adjacent = stops[index + 1] || stops[index - 1] || stop;
-        const path = pointsForPath(findServicePath(run.serviceId, stop.name, adjacent.name), {
+        const nextStop = stops[index + 1];
+        const previousStop = stops[index - 1];
+        const adjacent = nextStop || previousStop || stop;
+        const path = pointsForPath(findServicePath(
+          run.serviceId,
+          nextStop ? stop.name : adjacent.name,
+          nextStop ? adjacent.name : stop.name
+        ), {
           serviceId: run.serviceId,
           direction,
           isExpress: run.isExpress
         });
-        const endpoint = pointAlongPolyline(path, 0);
+        if (!path.length) return null;
+        const endpoint = pointAlongPolyline(path, nextStop ? 0 : 1);
         position = offsetPosition(endpoint, { direction, isExpress: run.isExpress, serviceId: run.serviceId });
         status = `At ${stop.name}`;
         currentStation = stop.name;
@@ -681,6 +749,7 @@
             direction,
             isExpress: run.isExpress
           });
+          if (!path.length) return null;
           position = offsetPosition(pointAlongPolyline(path, segmentProgress), {
             direction,
             isExpress: run.isExpress,
@@ -925,6 +994,7 @@
   function routePointsForRun(run) {
     const direction = getTrainDirection(run.serviceId, run.destination);
     const result = [];
+    const stopPoints = new Map();
     for (let index = 0; index < run.stops.length - 1; index += 1) {
       const left = run.stops[index].name;
       const right = run.stops[index + 1].name;
@@ -934,9 +1004,16 @@
         direction,
         isExpress: run.isExpress
       });
-      result.push(...(result.length ? points.slice(1) : points));
+      if (points.length < 2) continue;
+      if (!index) stopPoints.set(left, points[0]);
+      stopPoints.set(right, points.at(-1));
+      const duplicateJoin = result.length && Math.hypot(
+        result.at(-1).x - points[0].x,
+        result.at(-1).y - points[0].y
+      ) < .01;
+      result.push(...(duplicateJoin ? points.slice(1) : points));
     }
-    return result;
+    return { points: result, stopPoints };
   }
 
   function clearRouteFocus() {
@@ -948,7 +1025,7 @@
 
   function renderRouteFocus(snapshot) {
     const run = snapshot.run;
-    const points = routePointsForRun(run);
+    const { points, stopPoints } = routePointsForRun(run);
     if (points.length < 2) {
       clearRouteFocus();
       return;
@@ -967,7 +1044,8 @@
     selectionLayer.appendChild(route);
 
     run.stops.forEach((stop, index) => {
-      const point = STATION_COORDS[stop.name];
+      const railPoint = stopPoints.get(stop.name);
+      const point = railPoint ? [railPoint.x, railPoint.y] : STATION_COORDS[stop.name];
       if (!point) return;
       const isOrigin = index === 0;
       const isDestination = index === run.stops.length - 1;

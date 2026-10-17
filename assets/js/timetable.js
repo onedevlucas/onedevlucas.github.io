@@ -218,9 +218,9 @@ const ROUTES = [
     stops:['East Heights','Alpherst','New Halifax','Scottsbury','Ameryville','Scottsdale','Grant Park','Cherrywood','Brandywine','Santa Mora'] },
 
   { serviceId:'B', isExpress:false, tag:'LCL', dir:'NB', origin:'Leighton Castle', destination:'Harrington City',
-    stops:['Leighton Castle','Oakville Plaza','Oakville City Center','Oakville Exchange','Perry Road','Mount Hindsboro','Greens Corner','Doverville','Orchard Ridge','Groveton','Madisonboro','Hutchinson Point','Vanwood','South Harrington','Harrington City'] },
+    stops:['Leighton Castle','Oakville Plaza','Oakville City Center','Oakville Exchange','Perry Road','Mount Hindsboro','Greens Corner','Doverville','Orchard Ridge','Groveton','Hutchinson Point','Madisonboro','Vanwood','South Harrington','Harrington City'] },
   { serviceId:'B', isExpress:false, tag:'LCL', dir:'SB', origin:'Harrington City', destination:'Leighton Castle',
-    stops:['Harrington City','South Harrington','Vanwood','Hutchinson Point','Madisonboro','Groveton','Orchard Ridge','Doverville','Greens Corner','Mount Hindsboro','Perry Road','Oakville Exchange','Oakville City Center','Oakville Plaza', 'Leighton Castle'] },
+    stops:['Harrington City','South Harrington','Vanwood','Madisonboro','Hutchinson Point','Groveton','Orchard Ridge','Doverville','Greens Corner','Mount Hindsboro','Perry Road','Oakville Exchange','Oakville City Center','Oakville Plaza', 'Leighton Castle'] },
   { serviceId:'B', isExpress:true, tag:'EXP', dir:'NB', origin:'Leighton Castle', destination:'Hadleigh',
     stops:['Leighton Castle','Oakville Plaza','Oakville City Center','Oakville Exchange','Greens Corner','Madisonboro','Harrington City','Carrollton','Hadleigh'] },
   { serviceId:'B', isExpress:true, tag:'EXP', dir:'SB', origin:'Hadleigh', destination:'Leighton Castle',
