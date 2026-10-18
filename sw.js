@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v73-complete-id-engineering-rails';
+const CACHE_NAME = 'borail-v74-live-map-train-timeline';
 
 const CORE_ASSETS = [
   './',

@@ -961,33 +961,69 @@
     const run = snapshot.run;
     const nextScheduled = formatMapTime(snapshot.scheduledNextArrivalSec);
     const nextActual = formatMapTime(snapshot.nextArrivalSec);
+    const serviceColor = SERVICE_META[run.serviceId]?.color || '#ffffff';
+    const previousScrollTop = details.scrollTop;
+    const stopsHtml = run.stops.map((stop, index) => {
+      const isCurrent = snapshot.currentStation === stop.name;
+      const isNext = !snapshot.currentStation && index === snapshot.currentStopIndex + 1;
+      const isPast = snapshot.currentStation
+        ? index < snapshot.currentStopIndex
+        : index <= snapshot.currentStopIndex;
+      const scheduled = formatTime24Full(stop.scheduledArrivalSec);
+      const actual = formatTime24Full(stop.actualArrivalSec);
+      const delayed = stop.isDelayed && scheduled !== actual;
+      const classes = [
+        'live-map-stop-item',
+        isCurrent ? 'current' : '',
+        isNext ? 'en-route' : '',
+        isPast ? 'past' : '',
+        delayed ? 'delayed' : ''
+      ].filter(Boolean).join(' ');
+      const timeHtml = delayed
+        ? `<span class="scheduled">${scheduled}</span><span class="actual">${actual}</span>`
+        : `<span>${actual}</span>`;
+      const accessible = ACCESSIBLE_STATIONS.has(stop.name)
+        ? `<img class="accessible-icon-tiny" src="${ACCESSIBLE_ICON_URL}" alt="Accessible station">`
+        : '';
+      const statusText = stop.isDelayed
+        ? `Delayed ${Math.round(stop.delaySeconds / 60)}m`
+        : 'On time';
+      return `<li class="${classes}"${isCurrent || isNext ? ' aria-current="location"' : ''}>
+        <div class="live-map-stop-time${delayed ? ' delayed' : ''}">${timeHtml}</div>
+        <div class="live-map-stop-copy">
+          <div class="live-map-stop-name">${escapeHtml(stop.name)} ${accessible}</div>
+          <div class="live-map-stop-status">${ICONS.clock}<span>${statusText}</span></div>
+        </div>
+      </li>`;
+    }).join('');
     followStatus.hidden = true;
     detailsContent.innerHTML = `
       <div class="live-map-detail-kicker">Active train</div>
-      <h3 class="live-map-train-title">
+      <h3 class="live-map-train-title" style="--live-map-service-color:${serviceColor}">
         <img src="${iconFor(run.serviceId, run.isExpress)}" alt="${escapeHtml(serviceLabel(run.serviceId, run.isExpress))}">
-        <span>to ${escapeHtml(run.destination)}</span>
+        <span><strong>${escapeHtml(run.serviceId)} Line</strong><small>to ${escapeHtml(run.destination)}</small></span>
       </h3>
-      <div class="live-map-detail-subtitle">${escapeHtml(snapshot.status)}</div>
+      <div class="live-map-train-card" style="--live-map-service-color:${serviceColor}">
+        <div class="live-map-train-card-route"><span>${run.isExpress ? 'EXP' : 'LCL'}</span>${escapeHtml(run.origin)} to ${escapeHtml(run.destination)}</div>
+        <div class="live-map-train-card-consist"><strong>${escapeHtml(snapshot.consist.model)}</strong><span>with ${snapshot.consist.cars} cars</span><span>Lead car: ${snapshot.consist.leadCar}</span></div>
+      </div>
+      <div class="en-route-banner live-map-en-route">${ICONS.clock}<span>${escapeHtml(snapshot.status)}</span></div>
       ${trainStatusBanner(snapshot)}
       <div class="live-map-progress"><i style="width:${Math.round(snapshot.routeProgress * 100)}%"></i></div>
       <div class="live-map-detail-grid">
-        <div class="live-map-detail-cell"><span>Origin</span><strong>${escapeHtml(run.origin)}</strong></div>
-        <div class="live-map-detail-cell"><span>Destination</span><strong>${escapeHtml(run.destination)}</strong></div>
         <div class="live-map-detail-cell"><span>Next station</span><strong>${escapeHtml(snapshot.nextStation)}</strong></div>
         <div class="live-map-detail-cell"><span>Next arrival</span><strong>${snapshot.currentDelayed && nextActual !== nextScheduled ? `<s>${nextScheduled}</s> ${nextActual}` : nextActual}</strong></div>
         <div class="live-map-detail-cell"><span>Direction</span><strong>${escapeHtml(snapshot.direction)}</strong></div>
         <div class="live-map-detail-cell"><span>Stops remaining</span><strong>${snapshot.stopsRemaining}</strong></div>
-        <div class="live-map-detail-cell"><span>Train model</span><strong>${escapeHtml(snapshot.consist.model)}</strong></div>
-        <div class="live-map-detail-cell"><span>Consist</span><strong>${snapshot.consist.cars} cars</strong></div>
-        <div class="live-map-detail-cell"><span>Lead car</span><strong>${snapshot.consist.leadCar}</strong></div>
-        <div class="live-map-detail-cell"><span>Service</span><strong>${run.isExpress ? 'Express' : 'Local'}</strong></div>
       </div>
       <button type="button" class="live-map-reset-filters" id="liveMapFollowTrain" style="width:100%;margin-top:11px;">
         Follow this train
       </button>
+      <h4 class="live-map-stops-title">Making stops at…</h4>
+      <ol class="live-map-stop-timeline" style="--stop-line-color:${serviceColor}">${stopsHtml}</ol>
     `;
     details.hidden = false;
+    details.scrollTop = previousScrollTop;
     focusSelectionButton.disabled = false;
     document.getElementById('liveMapFollowTrain')?.addEventListener('click', () => startFollowing(snapshot));
   }

@@ -70,7 +70,7 @@ await send('Runtime.evaluate', { expression: `try {
 await send('Page.navigate', { url: 'http://127.0.0.1:8766/index.html' });
 await wait(750);
 
-assert.equal(await evaluate(`document.getElementById('splash-version').textContent`), 'V73 - 10/17/26');
+assert.equal(await evaluate(`document.getElementById('splash-version').textContent`), 'V74 - 10/18/26');
 assert.equal(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`), 0);
 await wait(2850);
 assert.ok(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`) > 0.9);
@@ -290,6 +290,15 @@ const liveMapSnapshot = await evaluate(`(() => {
     routePath: Boolean(document.querySelector('#liveMapSelection .live-map-selected-route')),
     routeStops: document.querySelectorAll('#liveMapSelection .live-map-route-stop').length,
     runStops: first.run.stops.length,
+    timelineStops: document.querySelectorAll('#liveMapDetailsContent .live-map-stop-item').length,
+    timelineClocks: document.querySelectorAll('#liveMapDetailsContent .live-map-stop-status .clock-icon').length,
+    timelineAccessibilityIcons: document.querySelectorAll('#liveMapDetailsContent .live-map-stop-name .accessible-icon-tiny').length,
+    timelineStateMarkers: document.querySelectorAll('#liveMapDetailsContent .live-map-stop-item.current, #liveMapDetailsContent .live-map-stop-item.en-route').length,
+    timelineColor: document.querySelector('#liveMapDetailsContent .live-map-stop-timeline')?.style.getPropertyValue('--stop-line-color').trim(),
+    expectedTimelineColor: SERVICE_META[first.serviceId].color,
+    lineTitle: document.querySelector('#liveMapDetailsContent .live-map-train-title strong')?.textContent.trim(),
+    expectedLineTitle: first.serviceId + ' Line',
+    stopTimesHaveSeconds: Array.from(document.querySelectorAll('#liveMapDetailsContent .live-map-stop-time')).every(element => /\\d{2}:\\d{2}:\\d{2}/.test(element.textContent)),
     origin: document.querySelectorAll('#liveMapSelection .live-map-route-stop.origin').length,
     destination: document.querySelectorAll('#liveMapSelection .live-map-route-stop.destination').length,
     details: document.getElementById('liveMapDetailsContent').textContent,
@@ -308,6 +317,13 @@ assert.equal(liveMapSnapshot.duplicateBadge, false);
 assert.equal(liveMapSnapshot.routeFocus, true);
 assert.equal(liveMapSnapshot.routePath, true);
 assert.equal(liveMapSnapshot.routeStops, liveMapSnapshot.runStops);
+assert.equal(liveMapSnapshot.timelineStops, liveMapSnapshot.runStops);
+assert.equal(liveMapSnapshot.timelineClocks, liveMapSnapshot.runStops);
+assert.ok(liveMapSnapshot.timelineAccessibilityIcons > 0);
+assert.equal(liveMapSnapshot.timelineStateMarkers, 1);
+assert.equal(liveMapSnapshot.timelineColor, liveMapSnapshot.expectedTimelineColor);
+assert.equal(liveMapSnapshot.lineTitle, liveMapSnapshot.expectedLineTitle);
+assert.equal(liveMapSnapshot.stopTimesHaveSeconds, true);
 assert.equal(liveMapSnapshot.origin, 1);
 assert.equal(liveMapSnapshot.destination, 1);
 assert.match(liveMapSnapshot.details, /Lead car/i);
@@ -403,6 +419,10 @@ await realClickElement(`Array.from(document.querySelectorAll('#liveMapTrains .li
 }) || document.querySelector('#liveMapTrains .live-map-train-car')`);
 assert.equal(await evaluate(`BORailLiveMapDebug.getState().selected?.type`), 'train');
 assert.equal(await evaluate(`document.getElementById('liveMapDetails').hidden`), false);
+if (process.env.BORAIL_TRAIN_DETAILS_SCREENSHOT) {
+  const trainDetailsScreenshot = await send('Page.captureScreenshot', { format: 'png' });
+  fs.writeFileSync(process.env.BORAIL_TRAIN_DETAILS_SCREENSHOT, Buffer.from(trainDetailsScreenshot.data, 'base64'));
+}
 const mapWidthBeforeZoom = await evaluate(`BORailLiveMapDebug.getState().viewBox.width`);
 await evaluate(`document.getElementById('liveMapZoomIn').click()`);
 assert.ok(await evaluate(`BORailLiveMapDebug.getState().viewBox.width`) < mapWidthBeforeZoom);
