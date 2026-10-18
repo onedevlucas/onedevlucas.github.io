@@ -62,6 +62,10 @@ await send('Emulation.setDeviceMetricsOverride', {
   deviceScaleFactor: 1,
   mobile: viewportWidth < 700
 });
+await send('Emulation.setTouchEmulationEnabled', {
+  enabled: viewportWidth < 700,
+  maxTouchPoints: viewportWidth < 700 ? 5 : 1
+});
 await send('Emulation.setTimezoneOverride', { timezoneId: 'Asia/Seoul' });
 await send('Runtime.evaluate', { expression: `try {
   sessionStorage.removeItem('borailTimetableSplashSeen');
@@ -70,7 +74,7 @@ await send('Runtime.evaluate', { expression: `try {
 await send('Page.navigate', { url: 'http://127.0.0.1:8766/index.html' });
 await wait(750);
 
-assert.equal(await evaluate(`document.getElementById('splash-version').textContent`), 'V74 - 10/18/26');
+assert.equal(await evaluate(`document.getElementById('splash-version').textContent`), 'V75 - 10/18/26');
 assert.equal(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`), 0);
 await wait(2850);
 assert.ok(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`) > 0.9);
@@ -422,6 +426,68 @@ assert.equal(await evaluate(`document.getElementById('liveMapDetails').hidden`),
 if (process.env.BORAIL_TRAIN_DETAILS_SCREENSHOT) {
   const trainDetailsScreenshot = await send('Page.captureScreenshot', { format: 'png' });
   fs.writeFileSync(process.env.BORAIL_TRAIN_DETAILS_SCREENSHOT, Buffer.from(trainDetailsScreenshot.data, 'base64'));
+}
+if (viewportWidth < 700) {
+  const fullscreenDetailsSetup = await evaluate(`(() => {
+    BORailLiveMapDebug.destroy();
+    document.getElementById('liveMapExpand').click();
+    const content = document.getElementById('liveMapDetailsContent');
+    const view = document.getElementById('liveMapView');
+    content.scrollTop = 0;
+    view.scrollTop = 0;
+    const rect = content.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height * .72;
+    const hit = document.elementFromPoint(x, y);
+    return {
+      x,
+      y,
+      rect: { top: rect.top, bottom: rect.bottom, height: rect.height },
+      hit: hit ? hit.tagName + '.' + hit.className : null,
+      scrollable: content.scrollHeight > content.clientHeight,
+      touchAction: getComputedStyle(content).touchAction,
+      overscrollBehavior: getComputedStyle(content).overscrollBehavior,
+      backgroundOverflow: getComputedStyle(view).overflow,
+      focusMode: document.body.classList.contains('live-map-focus-mode'),
+      detailsOpenClass: document.body.classList.contains('live-map-details-open')
+    };
+  })()`);
+  assert.equal(fullscreenDetailsSetup.scrollable, true);
+  assert.equal(fullscreenDetailsSetup.touchAction, 'pan-y');
+  assert.match(fullscreenDetailsSetup.overscrollBehavior, /contain/);
+  assert.equal(fullscreenDetailsSetup.backgroundOverflow, 'hidden');
+  assert.equal(fullscreenDetailsSetup.focusMode, true);
+  assert.equal(fullscreenDetailsSetup.detailsOpenClass, true);
+  await send('Input.dispatchMouseEvent', {
+    type: 'mouseWheel',
+    x: fullscreenDetailsSetup.x,
+    y: fullscreenDetailsSetup.y,
+    deltaX: 0,
+    deltaY: 320
+  });
+  await wait(100);
+  const fullscreenDetailsScrollTopAfterGesture = await evaluate(`document.getElementById('liveMapDetailsContent').scrollTop`);
+  assert.ok(fullscreenDetailsScrollTopAfterGesture > 40, JSON.stringify(fullscreenDetailsSetup));
+  await evaluate(`BORailLiveMapDebug.refresh(BORailTime.fromWallTime('2026-10-16', '07:08'))`);
+  await wait(100);
+  const fullscreenDetailsResult = await evaluate(`(() => {
+    const content = document.getElementById('liveMapDetailsContent');
+    const close = document.getElementById('liveMapDetailsClose').getBoundingClientRect();
+    return {
+      detailsScrollTop: content.scrollTop,
+      backgroundScrollTop: document.getElementById('liveMapView').scrollTop,
+      closeVisible: close.top >= 0 && close.bottom <= innerHeight,
+      detailsHidden: document.getElementById('liveMapDetails').hidden
+    };
+  })()`);
+  assert.ok(fullscreenDetailsResult.detailsScrollTop > 40);
+  assert.equal(fullscreenDetailsResult.backgroundScrollTop, 0);
+  assert.equal(fullscreenDetailsResult.closeVisible, true);
+  assert.equal(fullscreenDetailsResult.detailsHidden, false);
+  await realClickElement(`document.getElementById('liveMapDetailsClose')`);
+  assert.equal(await evaluate(`document.getElementById('liveMapDetails').hidden && !document.body.classList.contains('live-map-details-open')`), true);
+  await evaluate(`document.getElementById('liveMapExpand').click()`);
+  assert.equal(await evaluate(`document.body.classList.contains('live-map-focus-mode')`), false);
 }
 const mapWidthBeforeZoom = await evaluate(`BORailLiveMapDebug.getState().viewBox.width`);
 await evaluate(`document.getElementById('liveMapZoomIn').click()`);

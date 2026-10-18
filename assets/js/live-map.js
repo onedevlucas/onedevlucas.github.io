@@ -962,7 +962,10 @@
     const nextScheduled = formatMapTime(snapshot.scheduledNextArrivalSec);
     const nextActual = formatMapTime(snapshot.nextArrivalSec);
     const serviceColor = SERVICE_META[run.serviceId]?.color || '#ffffff';
-    const previousScrollTop = details.scrollTop;
+    const detailsKey = `train:${snapshot.id}`;
+    const previousScrollTop = detailsContent.dataset.detailsKey === detailsKey
+      ? detailsContent.scrollTop
+      : 0;
     const stopsHtml = run.stops.map((stop, index) => {
       const isCurrent = snapshot.currentStation === stop.name;
       const isNext = !snapshot.currentStation && index === snapshot.currentStopIndex + 1;
@@ -1022,8 +1025,15 @@
       <h4 class="live-map-stops-title">Making stops at…</h4>
       <ol class="live-map-stop-timeline" style="--stop-line-color:${serviceColor}">${stopsHtml}</ol>
     `;
+    detailsContent.dataset.detailsKey = detailsKey;
     details.hidden = false;
-    details.scrollTop = previousScrollTop;
+    detailsContent.scrollTop = previousScrollTop;
+    requestAnimationFrame(() => {
+      if (detailsContent.dataset.detailsKey === detailsKey) {
+        detailsContent.scrollTop = previousScrollTop;
+      }
+    });
+    document.body.classList.add('live-map-details-open');
     focusSelectionButton.disabled = false;
     document.getElementById('liveMapFollowTrain')?.addEventListener('click', () => startFollowing(snapshot));
   }
@@ -1145,6 +1155,7 @@
   function startFollowing(snapshot) {
     followingSelectedTrain = true;
     details.hidden = true;
+    document.body.classList.remove('live-map-details-open');
     renderRouteFocus(snapshot);
     updateFollowStatus(snapshot);
     focusSelectionButton.setAttribute('aria-label', 'Return to followed train');
@@ -1190,6 +1201,10 @@
   }
 
   function renderStationDetails(stationId, date = BORAIL_CLOCK.now()) {
+    const detailsKey = `station:${stationId}`;
+    const previousScrollTop = detailsContent.dataset.detailsKey === detailsKey
+      ? detailsContent.scrollTop
+      : 0;
     const rows = arrivalRowsForStation(stationId, date);
     const accessible = ACCESSIBLE_STATIONS.has(stationId);
     const lines = stationLines(stationId);
@@ -1217,7 +1232,15 @@
       <h4 class="live-map-next-title">Next five trains</h4>
       <div class="live-map-arrivals">${arrivalsHtml}</div>
     `;
+    detailsContent.dataset.detailsKey = detailsKey;
     details.hidden = false;
+    detailsContent.scrollTop = previousScrollTop;
+    requestAnimationFrame(() => {
+      if (detailsContent.dataset.detailsKey === detailsKey) {
+        detailsContent.scrollTop = previousScrollTop;
+      }
+    });
+    document.body.classList.add('live-map-details-open');
     focusSelectionButton.disabled = false;
     detailsContent.querySelectorAll('[data-train-id]').forEach(button => {
       button.addEventListener('click', () => {
@@ -1269,6 +1292,9 @@
     clearRouteFocus();
     details.hidden = true;
     detailsContent.innerHTML = '';
+    detailsContent.removeAttribute('data-details-key');
+    detailsContent.scrollTop = 0;
+    document.body.classList.remove('live-map-details-open');
     focusSelectionButton.disabled = true;
     focusSelectionButton.setAttribute('aria-label', 'Return to selected train or station');
     focusSelectionButton.title = 'Return to selection';
