@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v72-exact-engineering-rails';
+const CACHE_NAME = 'borail-v73-complete-id-engineering-rails';
 
 const CORE_ASSETS = [
   './',
@@ -19,6 +19,7 @@ const CORE_ASSETS = [
   'assets/js/time.js',
   'assets/js/ad-carousel.js',
   'assets/js/live-map-route-geometry.js',
+  'assets/js/live-map-id-geometry.js',
   'assets/js/live-map.js',
   'assets/js/trip-planner-core.js',
   'assets/js/timetable.js',
@@ -29,6 +30,19 @@ const CORE_ASSETS = [
   'assets/maps/borail-flatlands-rush-hour-map.pdf',
   'assets/maps/borail-flatlands-winter-emergency-map.pdf',
   'assets/maps/borail-live-track-layout.svg',
+  'assets/maps/engineering/registry.json',
+  'assets/maps/engineering/ALocal.svg',
+  'assets/maps/engineering/AExpress.svg',
+  'assets/maps/engineering/BLocal.svg',
+  'assets/maps/engineering/BExpress.svg',
+  'assets/maps/engineering/CLocal.svg',
+  'assets/maps/engineering/DLocal.svg',
+  'assets/maps/engineering/ELocal.svg',
+  'assets/maps/engineering/FLocal.svg',
+  'assets/maps/engineering/FExpress.svg',
+  'assets/maps/engineering/GLocal.svg',
+  'assets/maps/engineering/SLocal.svg',
+  'assets/maps/engineering/SExpress.svg',
   'assets/images/ads/carousel/manifest.json',
   'assets/images/ads/carousel/01-sponsor.png',
   'assets/images/ads/carousel/02-youtube-promo.png',

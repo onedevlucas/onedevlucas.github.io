@@ -70,7 +70,7 @@ await send('Runtime.evaluate', { expression: `try {
 await send('Page.navigate', { url: 'http://127.0.0.1:8766/index.html' });
 await wait(750);
 
-assert.equal(await evaluate(`document.getElementById('splash-version').textContent`), 'V72 - 10/17/26');
+assert.equal(await evaluate(`document.getElementById('splash-version').textContent`), 'V73 - 10/17/26');
 assert.equal(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`), 0);
 await wait(2850);
 assert.ok(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`) > 0.9);
@@ -181,6 +181,8 @@ const guidedTrackGeometry = await evaluate(`(() => {
   const fSouth = path('F', 'Southbound', ['Newkirk', 'Newkirk - Oak Street']);
   const fNorth = path('F', 'Northbound', ['Newkirk - Oak Street', 'Newkirk']);
   const fTransition = path('F', 'Southbound', ['Newkirk - Oak Street', 'Hoganville', 'Bayview Park']);
+  const fExpressExact = path('F', 'Northbound', ['Whitebranch', 'New Cottage'], true);
+  const gEastExact = path('G', 'Eastbound', ['Bradford Bay', 'Bradford Square']);
   const bShared = path('B', 'Southbound', ['Mount Hindsboro', 'Perry Road', 'Oakville Exchange']);
   const cShared = path('C', 'Southbound', ['Mount Hindsboro', 'Perry Road', 'Oakville Exchange']);
   const aAirport = path('A', 'Southbound', ['Radcliff Fields', 'Oakville City Airport', 'Oakville Exchange']);
@@ -189,31 +191,47 @@ const guidedTrackGeometry = await evaluate(`(() => {
   const bWestbound = path('B', 'Northbound', ['Groveton', 'Hutchinson Point', 'Madisonboro']);
   const bEastbound = path('B', 'Southbound', ['Madisonboro', 'Hutchinson Point', 'Groveton']);
   const bToVanwood = path('B', 'Northbound', ['Madisonboro', 'Vanwood']);
-  return { count: Object.keys(BORAIL_ROUTE_GEOMETRY).length, fSouth, fNorth, fTransition, bShared, cShared, aAirport, sExpress, eRoxbury, bWestbound, bEastbound, bToVanwood };
+  return { count: Object.keys(BORAIL_ROUTE_GEOMETRY).length, fSouth, fNorth, fTransition, fExpressExact, gEastExact, bShared, cShared, aAirport, sExpress, eRoxbury, bWestbound, bEastbound, bToVanwood };
 })()`);
 assert.ok(guidedTrackGeometry.count >= 250);
-assert.deepEqual([guidedTrackGeometry.fSouth[0].x, guidedTrackGeometry.fSouth[0].y], [229, 470]);
+assert.deepEqual([guidedTrackGeometry.fSouth[0].x, guidedTrackGeometry.fSouth[0].y], [215.259, 470.823]);
 assert.deepEqual([
   guidedTrackGeometry.fSouth.at(-1).x,
   guidedTrackGeometry.fSouth.at(-1).y
-], [221, 543]);
+], [208.065, 543.631]);
 assert.equal(guidedTrackGeometry.fSouth.every(point => point.guidedTrack), true);
-assert.deepEqual([guidedTrackGeometry.fNorth[0].x, guidedTrackGeometry.fNorth[0].y], [231, 545]);
+assert.deepEqual([guidedTrackGeometry.fNorth[0].x, guidedTrackGeometry.fNorth[0].y], [246.027, 543.5]);
 assert.deepEqual([
   guidedTrackGeometry.fNorth.at(-1).x,
   guidedTrackGeometry.fNorth.at(-1).y
-], [239, 472]);
+], [253.011, 470.758]);
 assert.equal(guidedTrackGeometry.fTransition.find(point => point.station === 'Hoganville').guidedTrack, true);
-assert.deepEqual(
-  guidedTrackGeometry.bShared.map(point => [point.x, point.y]),
-  guidedTrackGeometry.cShared.map(point => [point.x, point.y])
-);
+assert.deepEqual(await evaluate(`BORailLiveMapDebug.getIdGeometryMetadata().generatedFrom`), [
+  'ALocal.svg', 'AExpress.svg', 'BLocal.svg', 'BExpress.svg',
+  'CLocal.svg', 'DLocal.svg', 'ELocal.svg', 'FLocal.svg',
+  'FExpress.svg', 'GLocal.svg', 'SLocal.svg', 'SExpress.svg'
+]);
+assert.equal(await evaluate(`Object.keys(BORAIL_ID_ROUTE_GEOMETRY).length`), 203);
+assert.deepEqual([
+  [guidedTrackGeometry.fExpressExact[0].x, guidedTrackGeometry.fExpressExact[0].y],
+  [guidedTrackGeometry.fExpressExact.at(-1).x, guidedTrackGeometry.fExpressExact.at(-1).y]
+], [[542.203, 1179.53], [471.372, 1155.152]]);
+assert.deepEqual([
+  [guidedTrackGeometry.gEastExact[0].x, guidedTrackGeometry.gEastExact[0].y],
+  [guidedTrackGeometry.gEastExact.at(-1).x, guidedTrackGeometry.gEastExact.at(-1).y]
+], [[95.225, 948.288], [161.33, 948.288]]);
+assert.deepEqual([
+  [guidedTrackGeometry.sExpress[0].x, guidedTrackGeometry.sExpress[0].y],
+  [guidedTrackGeometry.sExpress[guidedTrackGeometry.sExpress.findIndex(point => point.station === 'Newkirk - Oak Street')].x,
+   guidedTrackGeometry.sExpress[guidedTrackGeometry.sExpress.findIndex(point => point.station === 'Newkirk - Oak Street')].y]
+], [[219.902, 470.591], [220.105, 543.585]]);
 assert.equal(guidedTrackGeometry.bShared.every(point => point.guidedTrack), true);
+assert.equal(guidedTrackGeometry.cShared.every(point => point.guidedTrack), true);
 assert.equal(guidedTrackGeometry.aAirport.every(point => point.guidedTrack), true);
 assert.equal(guidedTrackGeometry.sExpress.every(point => point.guidedTrack), true);
 assert.equal(guidedTrackGeometry.eRoxbury.every(point => point.guidedTrack), true);
-assert.equal(guidedTrackGeometry.bWestbound.every(point => Math.abs(point.y - 469) < .01), true);
-assert.equal(guidedTrackGeometry.bEastbound.every(point => Math.abs(point.y - 480) < .01), true);
+assert.equal(guidedTrackGeometry.bWestbound.every(point => point.guidedTrack), true);
+assert.equal(guidedTrackGeometry.bEastbound.every(point => point.guidedTrack), true);
 assert.ok(guidedTrackGeometry.bToVanwood.length >= 3);
 assert.ok(guidedTrackGeometry.bToVanwood[0].x > guidedTrackGeometry.bToVanwood.at(-1).x);
 assert.deepEqual(await evaluate(`BORailLiveMapDebug.findServicePath('B', 'Groveton', 'Vanwood')`), [
@@ -221,8 +239,13 @@ assert.deepEqual(await evaluate(`BORailLiveMapDebug.findServicePath('B', 'Grovet
 ]);
 assert.deepEqual(await evaluate(`ROUTES.flatMap(route => route.stops.slice(0, -1).flatMap((station, index) => {
   const next = route.stops[index + 1];
-  const physicalPath = BORailLiveMapDebug.findServicePath(route.serviceId, station, next);
-  const points = BORailLiveMapDebug.getPathPoints(route.serviceId, route.dir === 'NB' ? 'Northbound' : 'Southbound', physicalPath, route.isExpress);
+  const serviceKey = route.serviceId + (route.isExpress ? '-express' : '-local');
+  const key = serviceKey + '|' + station + '|' + next;
+  return BORAIL_ID_ROUTE_GEOMETRY[key]?.length > 1 ? [] : [key];
+}))`), []);
+assert.deepEqual(await evaluate(`ROUTES.flatMap(route => route.stops.slice(0, -1).flatMap((station, index) => {
+  const next = route.stops[index + 1];
+  const points = BORailLiveMapDebug.getPathPoints(route.serviceId, route.dir === 'NB' ? 'Northbound' : 'Southbound', [station, next], route.isExpress);
   return points.length > 1 ? [] : [route.serviceId + (route.isExpress ? '-express' : '-local') + ': ' + station + ' -> ' + next];
 }))`), []);
 
@@ -393,11 +416,13 @@ if (process.env.BORAIL_LIVE_MAP_SCREENSHOT) {
   fs.writeFileSync(process.env.BORAIL_LIVE_MAP_SCREENSHOT, Buffer.from(liveMapScreenshot.data, 'base64'));
 }
 if (process.env.BORAIL_ROUTE_FOCUS_SCREENSHOT) {
+  const focusService = process.env.BORAIL_ROUTE_FOCUS_SERVICE || 'B';
+  const focusStation = process.env.BORAIL_ROUTE_FOCUS_STATION || 'Madisonboro';
   await evaluate(`(() => {
     const testDate = BORailTime.fromWallTime('2026-10-16', '07:08');
     BORailLiveMapDebug.refresh(testDate);
     const train = BORailLiveMapDebug.getActiveTrainSnapshots(testDate)
-      .find(snapshot => snapshot.serviceId === 'B' && snapshot.run.stops.some(stop => stop.name === 'Madisonboro'));
+      .find(snapshot => snapshot.serviceId === ${JSON.stringify(focusService)} && snapshot.run.stops.some(stop => stop.name === ${JSON.stringify(focusStation)}));
     if (train) BORailLiveMapDebug.selectTrain(train.id, true);
     document.getElementById('liveMapDetails').hidden = true;
     document.getElementById('liveMapView').scrollIntoView({ block: 'start' });

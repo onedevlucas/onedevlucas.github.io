@@ -276,6 +276,7 @@
   const activeSnapshots = new Map();
   const stationElements = new Map();
   const pointers = new Map();
+  const warnedMissingIdGeometry = new Set();
   let cachedRunDateKey = '';
   let cachedRuns = [];
   let selected = null;
@@ -438,6 +439,21 @@
   }
 
   function engineeringPointsFor(serviceId, isExpress, leftStation, rightStation) {
+    const serviceType = isExpress ? 'express' : 'local';
+    const idGeometryKey = `${serviceId}-${serviceType}|${leftStation}|${rightStation}`;
+    const idGeometry = window.BORAIL_ID_ROUTE_GEOMETRY?.[idGeometryKey];
+    if (idGeometry?.length > 1) {
+      // These points are generated from the user's numbered SVG sections and
+      // authored stop markers. Keep them untouched: unlike legacy geometry,
+      // their endpoints are already the exact directional stopping positions.
+      return idGeometry.map(point => [Number(point[0]), Number(point[1])]);
+    }
+    if (window.BORAIL_ID_GEOMETRY_META?.diagnostics?.[`${serviceId}-${serviceType}`] &&
+        !warnedMissingIdGeometry.has(idGeometryKey)) {
+      warnedMissingIdGeometry.add(idGeometryKey);
+      console.warn(`Missing ID-tagged engineering geometry: ${idGeometryKey}; using the previous engineering path.`);
+    }
+
     const key = edgeKey(leftStation, rightStation);
     const geometryService = serviceId === 'C' && SHARED_BC_EDGES.has(key) ? 'B' : serviceId;
     const geometryType = geometryService === 'B' && serviceId === 'C'
@@ -715,11 +731,10 @@
         const nextStop = stops[index + 1];
         const previousStop = stops[index - 1];
         const adjacent = nextStop || previousStop || stop;
-        const path = pointsForPath(findServicePath(
-          run.serviceId,
+        const path = pointsForPath([
           nextStop ? stop.name : adjacent.name,
           nextStop ? adjacent.name : stop.name
-        ), {
+        ], {
           serviceId: run.serviceId,
           direction,
           isExpress: run.isExpress
@@ -744,7 +759,7 @@
         if (nowSeconds >= stop.actualDepartureSec && nowSeconds < next.actualArrivalSec) {
           const segmentDuration = Math.max(1, next.actualArrivalSec - stop.actualDepartureSec);
           const segmentProgress = (nowSeconds - stop.actualDepartureSec) / segmentDuration;
-          const path = pointsForPath(findServicePath(run.serviceId, stop.name, next.name), {
+          const path = pointsForPath([stop.name, next.name], {
             serviceId: run.serviceId,
             direction,
             isExpress: run.isExpress
@@ -998,8 +1013,7 @@
     for (let index = 0; index < run.stops.length - 1; index += 1) {
       const left = run.stops[index].name;
       const right = run.stops[index + 1].name;
-      const stationPath = findServicePath(run.serviceId, left, right);
-      const points = pointsForPath(stationPath, {
+      const points = pointsForPath([left, right], {
         serviceId: run.serviceId,
         direction,
         isExpress: run.isExpress
@@ -1441,6 +1455,7 @@
       isExpress
     }).map(point => ({ ...point })),
     getStationCoordinates: () => ({ ...STATION_COORDS }),
+    getIdGeometryMetadata: () => ({ ...(window.BORAIL_ID_GEOMETRY_META || {}) }),
     getState: () => ({
       active: mapActive,
       activeTrainCount: activeSnapshots.size,
