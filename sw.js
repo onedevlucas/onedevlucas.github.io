@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v75-fullscreen-details-scroll';
+const CACHE_NAME = 'borail-v76-smooth-stop-game';
 
 const CORE_ASSETS = [
   './',
@@ -48,9 +48,11 @@ const CORE_ASSETS = [
   'assets/images/ads/carousel/02-youtube-promo.png',
   'assets/images/ads/carousel/03-discord.png',
   'assets/images/ads/carousel/04-mybocard.png',
+  'assets/images/ads/carousel/05-smooth-stop.png',
   'assets/images/branding/borail-logo.png',
   'assets/images/branding/favicon.png',
   'assets/images/navigation/information.png',
+  'assets/images/navigation/game-controller.svg',
   'assets/images/navigation/map.png',
   'assets/images/navigation/mybocard.svg',
   'assets/images/navigation/status.png',

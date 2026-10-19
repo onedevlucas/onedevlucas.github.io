@@ -56,9 +56,12 @@ assert.deepEqual(await evaluate(`Array.from(document.querySelectorAll('.tabbar s
   'Timetable',
   'MyBOCard',
   'Map',
+  'Game',
   'Information',
   'Status'
 ]);
+assert.match(await evaluate(`document.querySelector('.tabbar a:nth-child(4)').href`), /borail-smooth-stop\.pages\.dev/);
+assert.match(await evaluate(`document.querySelector('.tabbar a:nth-child(4) img').getAttribute('src')`), /game-controller\.svg$/);
 assert.equal(await evaluate(`document.querySelector('.tabbar a.active span').textContent.trim()`), 'MyBOCard');
 assert.equal(await evaluate(`getComputedStyle(document.getElementById('paymentModal')).display`), 'none');
 assert.notEqual(await evaluate(`getComputedStyle(document.querySelector('.tabbar a.active img')).filter`), 'none');

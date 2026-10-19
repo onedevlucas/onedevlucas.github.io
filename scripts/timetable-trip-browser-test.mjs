@@ -74,7 +74,7 @@ await send('Runtime.evaluate', { expression: `try {
 await send('Page.navigate', { url: 'http://127.0.0.1:8766/index.html' });
 await wait(750);
 
-assert.equal(await evaluate(`document.getElementById('splash-version').textContent`), 'V75 - 10/18/26');
+assert.equal(await evaluate(`document.getElementById('splash-version').textContent`), 'V76 - 10/18/26');
 assert.equal(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`), 0);
 await wait(2850);
 assert.ok(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`) > 0.9);
@@ -102,7 +102,7 @@ assert.ok(await evaluate(`(() => {
 assert.equal(await evaluate(`document.getElementById('upcomingView').hidden`), false);
 assert.equal(await evaluate(`document.getElementById('tripPlannerView').hidden`), true);
 assert.equal(await evaluate(`document.querySelector('main > .grid > aside') === null`), true);
-assert.equal(await evaluate(`document.querySelectorAll('#adCarouselTrack .ad-carousel-slide').length`), 4);
+assert.equal(await evaluate(`document.querySelectorAll('#adCarouselTrack .ad-carousel-slide').length`), 5);
 assert.equal(await evaluate(`document.getElementById('adCarousel').nextElementSibling.classList.contains('grid')`), true);
 assert.equal(await evaluate(`Math.round(document.getElementById('adCarousel').getBoundingClientRect().width / document.getElementById('adCarousel').getBoundingClientRect().height)`), 5);
 assert.equal(await evaluate(`BORailAdCarouselDebug.getState().autoIntervalMs`), 5000);
@@ -116,6 +116,22 @@ assert.equal(await evaluate(`BORailAdCarouselDebug.getState().manuallyPaused`), 
 assert.match(await evaluate(`document.querySelector('#adCarouselTrack .ad-carousel-slide:nth-child(2) a').href`), /youtube\.com\/theemfanner/);
 assert.match(await evaluate(`document.querySelector('#adCarouselTrack .ad-carousel-slide:nth-child(3) a').href`), /discord\.com\/invite\/yTVATZSsGN/);
 assert.equal(await evaluate(`document.querySelector('#adCarouselTrack .ad-carousel-slide:nth-child(4) a')`), null);
+assert.match(await evaluate(`document.querySelector('#adCarouselTrack .ad-carousel-slide:nth-child(5) a').href`), /borail-smooth-stop\.pages\.dev/);
+assert.deepEqual(await evaluate(`Array.from(document.querySelectorAll('.tabbar a')).map(link => link.textContent.trim())`), [
+  'Timetable', 'MyBOCard', 'Map', 'Game', 'Information', 'Status'
+]);
+assert.match(await evaluate(`document.querySelector('.tabbar a:nth-child(4)').href`), /borail-smooth-stop\.pages\.dev/);
+assert.match(await evaluate(`document.querySelector('.tabbar a:nth-child(4) img').getAttribute('src')`), /game-controller\.svg$/);
+assert.equal(await evaluate(`(() => {
+  const links = Array.from(document.querySelectorAll('.tabbar a'));
+  const rects = links.map(link => link.getBoundingClientRect());
+  return rects.every(rect => rect.left >= 0 && rect.right <= innerWidth)
+    && rects.every((rect, index) => index === 0 || rect.left >= rects[index - 1].right - .5);
+})()`), true);
+assert.equal(await evaluate(`(() => {
+  const image = document.querySelector('#adCarouselTrack .ad-carousel-slide:nth-child(5) img');
+  return image.complete && image.naturalWidth === 320 && image.naturalHeight === 64;
+})()`), true);
 await wait(5200);
 assert.equal(await evaluate(`BORailAdCarouselDebug.getState().activeIndex`), carouselIndexAfterManualNavigation);
 await wait(5000);

@@ -551,7 +551,7 @@ header {
   bottom: 0;
   z-index: 20;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   align-items: end;
   gap: 4px;
   padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
@@ -570,7 +570,7 @@ header {
   display: grid;
   gap: 5px;
   justify-items: center;
-  font-size: 11px;
+  font-size: clamp(8px, 2.6vw, 11px);
   font-weight: 650;
 }
 
@@ -623,6 +623,6 @@ header {
   .bocard-button { border-radius: 24px; padding: 20px; }
   .card-bottom { left: 20px; right: 20px; }
   .amount-grid { grid-template-columns: repeat(2, 1fr); }
-  .tabbar .item { font-size: 10px; }
+  .tabbar .item { font-size: 9px; }
   .tabbar .item img { width: 24px; height: 24px; }
 }

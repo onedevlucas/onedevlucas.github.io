@@ -16,5 +16,10 @@
   {
     "file": "04-mybocard.png",
     "alt": "MyBoCard advertisement"
+  },
+  {
+    "file": "05-smooth-stop.png",
+    "alt": "Play BORail Smooth Stop",
+    "href": "https://borail-smooth-stop.pages.dev/"
   }
 ]
