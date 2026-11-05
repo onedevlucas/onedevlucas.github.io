@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>BORail Settings & Notifications</title>
+  <meta name="theme-color" content="#0a0a12" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="BORail" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="assets/images/branding/borail-logo.png" />
+  <link rel="icon" type="image/png" href="assets/images/branding/favicon.png" />
+  <link rel="stylesheet" href="assets/css/settings.css" />
+  <link rel="stylesheet" href="assets/css/winter-emergency.css" />
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="title">BORail Settings</div>
+      <div class="subtle">Choose exactly which service alerts this device may receive.</div>
+    </div>
+  </header>
+
+  <main class="wrap settings-grid">
+    <section class="card notification-state-card" aria-labelledby="notificationStateTitle">
+      <div class="card-heading">
+        <div>
+          <p class="eyebrow">Push notifications</p>
+          <h1 id="notificationStateTitle">Notification Status</h1>
+        </div>
+        <span class="state-pill" id="notificationStatePill">Checking…</span>
+      </div>
+      <p id="notificationStateMessage" class="state-message" aria-live="polite">Checking this device’s notification support.</p>
+      <div class="button-row">
+        <button class="primary-button" id="enableNotifications" type="button">Enable Notifications</button>
+        <button id="disableNotifications" type="button" hidden>Disable</button>
+        <button id="installHelpButton" type="button">How to Install</button>
+      </div>
+      <div class="install-help" id="installHelp" hidden>
+        <strong>iPhone or iPad</strong>
+        <span>Open BORail in Safari, tap Share, choose “Add to Home Screen,” open the new BORail icon, then return here and tap Enable Notifications.</span>
+      </div>
+      <p class="sync-note" id="notificationSyncNote"></p>
+    </section>
+
+    <section class="card" aria-labelledby="favoriteLinesTitle">
+      <div class="card-heading compact">
+        <div>
+          <p class="eyebrow">Favorites</p>
+          <h2 id="favoriteLinesTitle">Favorite Lines</h2>
+        </div>
+        <div class="text-actions">
+          <button class="text-button" id="selectAllLines" type="button">Select All</button>
+          <button class="text-button" id="clearLines" type="button">Clear</button>
+        </div>
+      </div>
+      <p class="section-copy">Local and express services are separate favorites. Tap an icon to select it.</p>
+      <div class="line-picker" id="linePicker" aria-label="Favorite lines"></div>
+    </section>
+
+    <section class="card" aria-labelledby="favoriteStationsTitle">
+      <div class="card-heading compact">
+        <div>
+          <p class="eyebrow">Favorites</p>
+          <h2 id="favoriteStationsTitle">Favorite Stations</h2>
+        </div>
+        <button class="text-button" id="clearStations" type="button">Clear</button>
+      </div>
+      <label class="search-label" for="stationSearch">Search stations</label>
+      <input id="stationSearch" type="search" autocomplete="off" placeholder="Start typing a station name…" />
+      <div class="selected-stations" id="selectedStations" aria-live="polite"></div>
+      <div class="station-picker" id="stationPicker" aria-label="Stations"></div>
+    </section>
+
+    <section class="card" aria-labelledby="preferencesTitle">
+      <div class="card-heading compact">
+        <div>
+          <p class="eyebrow">Alert types</p>
+          <h2 id="preferencesTitle">Notification Preferences</h2>
+        </div>
+      </div>
+
+      <div class="preference-group">
+        <h3>Favorite Line Notifications</h3>
+        <label><span><strong>No Service on Line</strong><small>Unexpected suspension during operating hours only.</small></span><input type="checkbox" data-preference="lineNoService" /></label>
+        <label><span><strong>Minor Delays</strong><small>Based only on trains currently moving.</small></span><input type="checkbox" data-preference="lineMinor" /></label>
+        <label><span><strong>Major Delays</strong><small>Sends when disruption severity becomes major.</small></span><input type="checkbox" data-preference="lineMajor" /></label>
+        <label><span><strong>Normal Service Resumed</strong><small>Example: “F Line - Normal Service Resumed.”</small></span><input type="checkbox" data-preference="lineNormalResumed" /></label>
+      </div>
+
+      <div class="preference-group">
+        <h3>Favorite Station Notifications</h3>
+        <label><span><strong>Elevator Outage Reported</strong><small>Only for a selected station.</small></span><input type="checkbox" data-preference="stationElevatorOutage" /></label>
+        <label><span><strong>Elevator Fixed</strong><small>Example: “Elevator Fixed - Newkirk.”</small></span><input type="checkbox" data-preference="stationElevatorFixed" /></label>
+      </div>
+
+      <div class="preference-group">
+        <h3>System Notifications</h3>
+        <label><span><strong>Winter Emergency Service</strong><small>One alert when a Winter Emergency date begins.</small></span><input type="checkbox" data-preference="winterEmergency" /></label>
+      </div>
+    </section>
+
+    <section class="card privacy-card" aria-labelledby="privacyTitle">
+      <p class="eyebrow">Privacy</p>
+      <h2 id="privacyTitle">Data Stored for Notifications</h2>
+      <p>BORail stores only this device’s push subscription, selected lines and stations, enabled alert types, and delivery timestamps. It does not store your name, email, GPS location, or travel history.</p>
+      <button class="danger-button" id="deleteNotificationData" type="button">Delete Notification Data</button>
+    </section>
+
+    <section class="card information-card" aria-labelledby="informationTitle">
+      <img src="assets/images/navigation/information.png" alt="" width="30" height="30" />
+      <div>
+        <h2 id="informationTitle">BORail Information</h2>
+        <p>Learn more about the fictional BORail system.</p>
+      </div>
+      <a href="https://sites.google.com/view/borail-mc/home" target="_blank" rel="noopener">Open</a>
+    </section>
+  </main>
+
+  <nav class="tabbar" role="navigation" aria-label="Primary">
+    <a href="index.html"><div class="item"><img src="assets/images/navigation/timetable.png" alt="" width="26" height="26" /><span>Timetable</span></div></a>
+    <a href="mybocard.html"><div class="item"><img src="assets/images/navigation/mybocard.svg" alt="" width="26" height="26" /><span>MyBOCard</span></div></a>
+    <a href="map.html"><div class="item"><img src="assets/images/navigation/map.png" alt="" width="26" height="26" /><span>Map</span></div></a>
+    <a href="https://borail-smooth-stop.pages.dev/" target="_blank" rel="noopener"><div class="item"><img src="assets/images/navigation/game-controller.svg" alt="" width="26" height="26" /><span>Game</span></div></a>
+    <a href="status.html"><div class="item"><img src="assets/images/navigation/status.png" alt="" width="26" height="26" /><span>Status</span></div></a>
+    <a class="active" href="settings.html"><div class="item"><img src="assets/images/navigation/settings.svg" alt="" width="26" height="26" /><span>Settings</span></div></a>
+  </nav>
+
+  <script src="assets/js/time.js"></script>
+  <script src="assets/js/service-calendar.js"></script>
+  <script src="assets/js/notification-config.js"></script>
+  <script src="assets/js/borail-data.js"></script>
+  <script src="assets/js/settings.js"></script>
+  <script src="assets/js/pwa.js"></script>
+</body>
+</html>

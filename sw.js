@@ -1,4 +1,6 @@
-const CACHE_NAME = 'borail-v77-winter-emergency-final';
+const CACHE_NAME = 'borail-v78-notifications';
+const PUSH_META_CACHE = 'borail-push-meta-v1';
+const PUSH_META_URL = '/__borail_push_config__';
 
 const CORE_ASSETS = [
   './',
@@ -7,15 +9,22 @@ const CORE_ASSETS = [
   'map.html',
   'mybocard.html',
   'status.html',
+  'settings.html',
   'workbench.html',
+  'manifest.webmanifest',
   'assets/css/home.css',
   'assets/css/map.css',
   'assets/css/mybocard.css',
   'assets/css/status.css',
+  'assets/css/settings.css',
   'assets/css/timetable.css',
   'assets/css/winter-emergency.css',
   'assets/css/workbench.css',
   'assets/js/status.js',
+  'assets/js/settings.js',
+  'assets/js/borail-data.js',
+  'assets/js/notification-config.js',
+  'assets/js/pwa.js',
   'assets/js/mybocard.js',
   'assets/js/time.js',
   'assets/js/service-calendar.js',
@@ -58,6 +67,7 @@ const CORE_ASSETS = [
   'assets/images/navigation/map.png',
   'assets/images/navigation/mybocard.svg',
   'assets/images/navigation/status.png',
+  'assets/images/navigation/settings.svg',
   'assets/images/navigation/timetable.png',
   'assets/images/ui/accessibility.png',
   'assets/images/line-icons/a-express.png',
@@ -82,10 +92,89 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => Promise.all(
-      keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+      keys.filter((key) => key !== CACHE_NAME && key !== PUSH_META_CACHE).map((key) => caches.delete(key))
     ))
   );
   self.clients.claim();
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data?.type !== 'BORAIL_PUSH_CONFIG') return;
+  const payload = {
+    apiBase: String(event.data.apiBase || '').replace(/\/$/, ''),
+    id: String(event.data.id || ''),
+    manageToken: String(event.data.manageToken || '')
+  };
+  event.waitUntil(
+    caches.open(PUSH_META_CACHE).then(cache => cache.put(
+      PUSH_META_URL,
+      new Response(JSON.stringify(payload), { headers: { 'Content-Type': 'application/json' } })
+    ))
+  );
+});
+
+self.addEventListener('push', (event) => {
+  let payload = {};
+  try { payload = event.data?.json() || {}; }
+  catch { payload = { body: event.data?.text() || 'BORail service information has changed.' }; }
+  const title = payload.title || 'BORail Service Alert';
+  const options = {
+    body: payload.body || '',
+    icon: payload.icon || 'assets/images/branding/borail-logo.png',
+    badge: payload.badge || 'assets/images/branding/favicon.png',
+    tag: payload.tag || 'borail-service-alert',
+    renotify: payload.renotify !== false,
+    data: {
+      url: payload.url || 'status.html',
+      ...(payload.data || {})
+    }
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const target = new URL(event.notification.data?.url || 'status.html', self.location.origin).href;
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(openClients => {
+      const existing = openClients.find(client => client.url.startsWith(self.location.origin));
+      if (existing) {
+        existing.navigate(target);
+        return existing.focus();
+      }
+      return clients.openWindow(target);
+    })
+  );
+});
+
+self.addEventListener('pushsubscriptionchange', (event) => {
+  event.waitUntil((async () => {
+    try {
+      const cache = await caches.open(PUSH_META_CACHE);
+      const response = await cache.match(PUSH_META_URL);
+      const meta = response ? await response.json() : null;
+      if (!meta?.apiBase || !meta?.id || !meta?.manageToken) throw new Error('Missing subscription metadata');
+      const configResponse = await fetch(`${meta.apiBase}/config`);
+      const config = await configResponse.json();
+      const padding = '='.repeat((4 - config.vapidPublicKey.length % 4) % 4);
+      const raw = atob((config.vapidPublicKey + padding).replace(/-/g, '+').replace(/_/g, '/'));
+      const key = Uint8Array.from(raw, character => character.charCodeAt(0));
+      const subscription = await self.registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
+      const refreshResponse = await fetch(`${meta.apiBase}/subscriptions/${encodeURIComponent(meta.id)}/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${meta.manageToken}` },
+        body: JSON.stringify({ subscription: subscription.toJSON() })
+      });
+      if (!refreshResponse.ok) throw new Error('Subscription refresh failed');
+    } catch {
+      await self.registration.showNotification('BORail Notifications Need Attention', {
+        body: 'Open BORail Settings to reconnect notifications on this device.',
+        icon: 'assets/images/branding/borail-logo.png',
+        tag: 'borail-push-reconnect',
+        data: { url: 'settings.html' }
+      });
+    }
+  })());
 });
 
 self.addEventListener('fetch', (event) => {

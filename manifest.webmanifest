@@ -1,0 +1,20 @@
+{
+  "id": "/",
+  "name": "BORail Live Timetable",
+  "short_name": "BORail",
+  "description": "Live BORail timetable, trip planner, maps, service status, and favorite-service notifications.",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0a0a12",
+  "theme_color": "#0a0a12",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/assets/images/branding/borail-logo.png",
+      "sizes": "500x500",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

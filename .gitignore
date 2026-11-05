@@ -1,0 +1,4 @@
+notification-worker/node_modules/
+notification-worker/.wrangler/
+notification-worker/.dev.vars
+notification-worker/.env

@@ -7,7 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="BORail" />
-  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Crect width='100%25' height='100%25' fill='%230a0a0a'/%3E%3Ccircle cx='90' cy='90' r='70' fill='%23ff3b30'/%3E%3Ctext x='50%25' y='58%25' text-anchor='middle' font-family='Arial' font-size='64' fill='white'%3EB%3C/text%3E%3C/svg%3E" />
+  <meta name="theme-color" content="#0a0a12" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="assets/images/branding/borail-logo.png" />
   <link rel="icon" type="image/png" href="assets/images/branding/favicon.png">
   <link rel="stylesheet" href="assets/css/timetable.css">
   <link rel="stylesheet" href="assets/css/winter-emergency.css">
@@ -16,7 +18,7 @@
 
   <div id="splash-screen">
     <img id="splash-logo" src="assets/images/branding/borail-logo.png" alt="BORail Logo">
-    <div id="splash-version">V77 - 11/4/26</div>
+    <div id="splash-version">V78 - 11/5/26</div>
   </div>
 
   <header>
@@ -262,16 +264,16 @@
         <span>Game</span>
       </div>
     </a>
-    <a href="https://sites.google.com/view/borail-mc/home" target="_blank" rel="noopener">
-      <div class="item">
-        <img src="assets/images/navigation/information.png" alt="" width="26" height="26" />
-        <span>Information</span>
-      </div>
-    </a>
     <a href="status.html">
       <div class="item">
         <img src="assets/images/navigation/status.png" alt="" width="26" height="26" />
         <span>Status</span>
+      </div>
+    </a>
+    <a href="settings.html">
+      <div class="item">
+        <img src="assets/images/navigation/settings.svg" alt="" width="26" height="26" />
+        <span>Settings</span>
       </div>
     </a>
   </nav>
@@ -283,5 +285,6 @@
   <script src="assets/js/live-map-route-geometry.js"></script>
   <script src="assets/js/live-map-id-geometry.js"></script>
   <script src="assets/js/live-map.js"></script>
+  <script src="assets/js/pwa.js"></script>
 </body>
 </html>

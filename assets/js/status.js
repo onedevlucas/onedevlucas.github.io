@@ -738,7 +738,7 @@ if (!BORAIL_CLOCK || !BORAIL_SERVICE) throw new Error('BORail time and service h
     function renderElevatorGroup(station, outages, nowMs, repaired = false) {
       const count = outages.length;
       const countLabel = count === 1 ? '1' : String(count);
-      return `<details class="elevator-row ${repaired ? 'recently-repaired' : ''}">
+      return `<details class="elevator-row ${repaired ? 'recently-repaired' : ''}" data-station="${escapeHtml(station)}">
         <summary>
           <div class="elevator-row-main">
             <div class="elevator-station-line">
@@ -799,27 +799,60 @@ if (!BORAIL_CLOCK || !BORAIL_SERVICE) throw new Error('BORail time and service h
     }
 
     const STATUS_STATE = { statuses: SERVICES };
-    let ELEVATOR_STATE = getOrCreateElevatorState();
-    renderStatus(STATUS_STATE);
-    renderElevatorStatus(ELEVATOR_STATE);
+    let ELEVATOR_STATE = null;
 
-    window.BORailStatusDebug = {
+    function focusRequestedStatus() {
+      if (typeof location === 'undefined') return;
+      const params = new URLSearchParams(location.search);
+      const service = params.get('service');
+      const station = params.get('station');
+      const target = service
+        ? document.querySelector(`[data-service-id="${CSS.escape(service)}"]`)
+        : station
+          ? Array.from(document.querySelectorAll('.elevator-row[data-station]')).find(row => row.dataset.station === station)
+          : null;
+      if (!target) return;
+      if (target.tagName === 'DETAILS') target.open = true;
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      target.animate?.([
+        { boxShadow: '0 0 0 0 rgba(138,143,255,0)' },
+        { boxShadow: '0 0 0 4px rgba(138,143,255,.45)' },
+        { boxShadow: '0 0 0 0 rgba(138,143,255,0)' }
+      ], { duration: 1500, easing: 'ease-out' });
+    }
+
+    globalThis.BORailStatusEngine = Object.freeze({
       services: SERVICES,
-      statusState: STATUS_STATE,
       computeStatusDelaySignals,
-      renderStatus,
-      elevatorState: ELEVATOR_STATE,
       buildDailyElevatorState,
-      renderElevatorStatus
-    };
+      elevatorStatusFor,
+      elevatorUnits: ELEVATOR_UNITS
+    });
 
-    // Re-render when New York crosses into a different service window.
-    let _lastKey = scheduleKey();
-    setInterval(() => {
-      const k = scheduleKey();
-      if (k !== _lastKey){
-        _lastKey = k;
-      }
+    if (typeof document !== 'undefined') {
+      ELEVATOR_STATE = getOrCreateElevatorState();
       renderStatus(STATUS_STATE);
       renderElevatorStatus(ELEVATOR_STATE);
-    }, 30 * 1000);
+      window.setTimeout(focusRequestedStatus, 60);
+
+      window.BORailStatusDebug = {
+        services: SERVICES,
+        statusState: STATUS_STATE,
+        computeStatusDelaySignals,
+        renderStatus,
+        elevatorState: ELEVATOR_STATE,
+        buildDailyElevatorState,
+        renderElevatorStatus
+      };
+
+      // Re-render when New York crosses into a different service window.
+      let _lastKey = scheduleKey();
+      setInterval(() => {
+        const k = scheduleKey();
+        if (k !== _lastKey){
+          _lastKey = k;
+        }
+        renderStatus(STATUS_STATE);
+        renderElevatorStatus(ELEVATOR_STATE);
+      }, 30 * 1000);
+    }
