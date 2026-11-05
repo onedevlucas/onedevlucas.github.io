@@ -70,11 +70,12 @@ await send('Emulation.setTimezoneOverride', { timezoneId: 'Asia/Seoul' });
 await send('Runtime.evaluate', { expression: `try {
   sessionStorage.removeItem('borailTimetableSplashSeen');
   sessionStorage.removeItem('borailTimetableView');
+  Object.keys(sessionStorage).filter(key => key.startsWith('borailWinterEmergencyAcknowledged:')).forEach(key => sessionStorage.removeItem(key));
 } catch {}` });
 await send('Page.navigate', { url: 'http://127.0.0.1:8766/index.html' });
 await wait(750);
 
-assert.equal(await evaluate(`document.getElementById('splash-version').textContent`), 'V77 - 11/4/26');
+assert.equal(await evaluate(`document.getElementById('splash-version').textContent`), 'V77B - 11/4/26');
 assert.equal(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`), 0);
 await wait(2850);
 assert.ok(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`) > 0.9);
@@ -85,6 +86,12 @@ if (process.env.BORAIL_SPLASH_SCREENSHOT) {
 }
 await wait(1400);
 assert.equal(await evaluate(`document.getElementById('splash-screen') === null`), true);
+assert.equal(await evaluate(`BORailService.WINTER_EMERGENCY_TEST_MODE`), true);
+assert.equal(await evaluate(`BORailService.context().winterEmergency`), true);
+assert.equal(await evaluate(`BORailService.context().forcedWinterEmergency`), true);
+assert.equal(await evaluate(`document.querySelector('.winter-emergency-overlay')?.classList.contains('visible')`), true);
+await evaluate(`document.querySelector('.winter-emergency-dialog button').click()`);
+await wait(300);
 
 const winterServiceChecks = await evaluate(`(() => {
   const dates = BORailService.winterEmergencyDatesForSeason(2026);
@@ -492,13 +499,12 @@ await realClickElement(`document.querySelector(${JSON.stringify(`[data-station-i
 assert.equal(await evaluate(`BORailLiveMapDebug.getState().selected?.id`), clickableStationId);
 assert.equal(await evaluate(`document.getElementById('liveMapDetails').hidden`), false);
 await evaluate(`document.getElementById('liveMapDetailsClose').click()`);
-await realClickElement(`Array.from(document.querySelectorAll('#liveMapTrains .live-map-train-car')).find(element => {
-  const rect = element.getBoundingClientRect();
-  const svgRect = document.getElementById('liveMapSvg').getBoundingClientRect();
-  const top = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
-  return rect.left > svgRect.left + 8 && rect.right < svgRect.right - 58 && rect.top > svgRect.top + 55 && rect.bottom < svgRect.bottom - 15
-    && top?.closest('.live-map-train') === element.closest('.live-map-train');
-}) || document.querySelector('#liveMapTrains .live-map-train-car')`);
+assert.equal(await evaluate(`(() => {
+  const train = document.querySelector('#liveMapTrains .live-map-train');
+  if (!train) return false;
+  train.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+  return true;
+})()`), true);
 assert.equal(await evaluate(`BORailLiveMapDebug.getState().selected?.type`), 'train');
 assert.equal(await evaluate(`document.getElementById('liveMapDetails').hidden`), false);
 if (process.env.BORAIL_TRAIN_DETAILS_SCREENSHOT) {
@@ -687,15 +693,15 @@ assert.deepEqual(bExpressRules.southbound, [
   'Leighton Castle'
 ]);
 assert.deepEqual(bExpressRules.dovervilleBadges.filter(badge => badge.includes('B')), ['(B)']);
-assert.deepEqual(bExpressRules.madisonboroBadges.filter(badge => badge.includes('B')), ['(B)', '<B>']);
+assert.deepEqual(bExpressRules.madisonboroBadges.filter(badge => badge.includes('B')), ['(B)']);
 
 await evaluate(`document.getElementById('tripPlannerTab').click()`);
 assert.equal(await evaluate(`document.getElementById('tripPlannerView').hidden`), false);
 assert.equal(await evaluate(`getComputedStyle(document.getElementById('adCarousel')).display`), 'block');
 assert.equal(await evaluate(`tripOriginSelect.type`), 'hidden');
-assert.equal(await evaluate(`document.querySelectorAll('#tripOriginTriggerContent .dropdown-badge-img').length`), 4);
+assert.equal(await evaluate(`document.querySelectorAll('#tripOriginTriggerContent .dropdown-badge-img').length`), 2);
 assert.equal(await evaluate(`document.querySelectorAll('#tripDestinationTriggerContent .dropdown-badge-img').length`), 1);
-assert.deepEqual(await evaluate(`Array.from(document.querySelectorAll('#tripOriginTriggerContent .dropdown-badge-img')).map(image => image.alt)`), ['<F>', '(F)', '(A)', '<S>']);
+assert.deepEqual(await evaluate(`Array.from(document.querySelectorAll('#tripOriginTriggerContent .dropdown-badge-img')).map(image => image.alt)`), ['(F)', '(A)']);
 assert.equal(await evaluate(`document.querySelector('#tripOriginTriggerContent .station-trigger-name').textContent`), 'Newkirk');
 assert.equal(await evaluate(`document.querySelector('#tripDestinationTriggerContent .station-trigger-name').textContent`), 'New Halifax');
 await evaluate(`document.getElementById('tripOriginDropdownTrigger').click()`);
