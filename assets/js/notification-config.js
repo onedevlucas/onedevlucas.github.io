@@ -2,7 +2,6 @@
   'use strict';
 
   root.BORailNotificationConfig = Object.freeze({
-    // Filled with the deployed Worker URL during the one-time Cloudflare setup.
-    apiBase: ''
+    apiBase: 'https://borail-notifications.borailmc-notifications.workers.dev'
   });
 })(globalThis);

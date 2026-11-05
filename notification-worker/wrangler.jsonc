@@ -13,7 +13,7 @@
     {
       "binding": "DB",
       "database_name": "borail-notifications",
-      "database_id": "REPLACE_WITH_D1_DATABASE_ID"
+      "database_id": "b3ad7eb1-d339-478b-a028-7a1b18763171"
     }
   ]
 }
