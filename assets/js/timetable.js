@@ -1,4 +1,6 @@
 const BORAIL_CLOCK = globalThis.BORailTime;
+const BORAIL_SERVICE = globalThis.BORailService;
+if (!BORAIL_CLOCK || !BORAIL_SERVICE) throw new Error('BORail time and service helpers must load before timetable.js');
 
 // Replace this placeholder link with your actual GitHub raw repository URL asset link path!
 const ACCESSIBLE_ICON_URL = "assets/images/ui/accessibility.png";
@@ -227,24 +229,28 @@ const ROUTES = [
     stops:['Hadleigh','Carrollton','Harrington City','Madisonboro','Greens Corner','Oakville Exchange','Oakville City Center','Oakville Plaza','Leighton Castle'] }
 ];
 
+const WINTER_ROUTES = BORAIL_SERVICE.WINTER_ROUTES.map(route => ({
+  ...route,
+  stops: [...route.stops],
+  segmentTimes: route.segmentTimes ? [...route.segmentTimes] : undefined
+}));
+
+function routesForDate(date = BORAIL_CLOCK.now()) {
+  return BORAIL_SERVICE.context(date).winterEmergency ? WINTER_ROUTES : ROUTES;
+}
+
 const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
 function timeModeForMinutes(nowMin) {
-  const normalized = ((nowMin % 1440) + 1440) % 1440;
-  const rushAM = (normalized >= toMin('06:00') && normalized < toMin('09:30'));
-  const rushPM = (normalized >= toMin('17:00') && normalized < toMin('19:30'));
-  const overnight = (normalized >= toMin('22:30') || normalized < toMin('03:59'));
-
-  if (overnight) return 'overnight';
-  if (rushAM) return 'rushAM';
-  if (rushPM) return 'rushPM';
-  return 'local';
+  return BORAIL_SERVICE.timeModeForMinutes(nowMin);
 }
 
 function timeMode(now = BORAIL_CLOCK.now()) {
-  return timeModeForMinutes(BORAIL_CLOCK.clockMinutes(now));
+  return BORAIL_SERVICE.context(now).mode;
 }
 
 function isServiceAllowed(route, mode) {
+  if (mode === 'closed') return false;
+  if (mode === 'winterEmergency') return !route.isExpress;
   if (route.serviceId === 'S' && route.isExpress) {
     if (mode === 'rushAM' && route.peak === 'AM') return true;
     if (mode === 'rushPM' && route.peak === 'PM') return true;
@@ -254,14 +260,6 @@ function isServiceAllowed(route, mode) {
   const isGenericRush = (mode === 'rushAM' || mode === 'rushPM');
   if (!isGenericRush && route.isExpress) return false;
 
-  if (mode === 'overnight') {
-    if (route.serviceId === 'G') return false;
-    if (route.serviceId === 'S') return false;
-    if (route.serviceId === 'D') return false;
-    if (route.serviceId === 'F' && route.isExpress) return false;
-    if (route.serviceId === 'A' && route.isExpress) return false;
-    if (route.serviceId === 'B' && route.isExpress) return false;
-  }
   return true;
 }
 
@@ -270,7 +268,7 @@ function getEffectiveRoutePattern(route, mode) {
   const segmentTimes = route.segmentTimes ? [...route.segmentTimes] : segFor(stops);
   const isRush = mode === 'rushAM' || mode === 'rushPM';
 
-  if (route.serviceId === 'A' && !route.isExpress && !isRush) {
+  if (route.serviceId === 'A' && !route.isExpress && !isRush && mode !== 'winterEmergency') {
     const radcliffIndex = stops.indexOf('Radcliff Fields');
     if (radcliffIndex > 0 && radcliffIndex < stops.length - 1) {
       const combinedTravelTime = segmentTimes[radcliffIndex - 1] + segmentTimes[radcliffIndex];
@@ -284,49 +282,43 @@ function getEffectiveRoutePattern(route, mode) {
 
 const LINE_SERVICE = {
   A: { all: [
-    { start: '04:00', end: '05:59', every: 20 },
     { start: '06:00', end: '09:29', every: 7 },
     { start: '09:30', end: '16:59', every: 15 },
     { start: '17:00', end: '19:29', every: 7 },
-    { start: '19:30', end: '22:29', every: 20 },
+    { start: '19:30', end: '22:59', every: 20 },
   ]},
   F: { all: [
-    { start: '04:00', end: '05:59', every: 20 },
     { start: '06:00', end: '09:29', every: 7 },
     { start: '09:30', end: '16:59', every: 15 },
     { start: '17:00', end: '19:29', every: 7 },
-    { start: '19:30', end: '22:29', every: 20 },
+    { start: '19:30', end: '22:59', every: 20 },
   ]},
   B: { all: [
-    { start: '04:00', end: '05:59', every: 25 },
     { start: '06:00', end: '09:29', every: 5 },
     { start: '09:30', end: '16:59', every: 15 },
     { start: '17:00', end: '19:29', every: 5 },
-    { start: '19:30', end: '22:29', every: 25 },
+    { start: '19:30', end: '22:59', every: 25 },
   ]},
   C: { all: [
-    { start: '04:00', end: '05:59', every: 20 },
     { start: '06:00', end: '09:29', every: 7 },
     { start: '09:30', end: '16:59', every: 15 },
     { start: '17:00', end: '19:29', every: 7 },
-    { start: '19:30', end: '22:29', every: 20 },
+    { start: '19:30', end: '22:59', every: 20 },
   ]},
   E: { all: [
-    { start: '04:00', end: '05:59', every: 25 },
     { start: '06:00', end: '09:29', every: 5 },
     { start: '09:30', end: '16:59', every: 15 },
     { start: '17:00', end: '19:29', every: 5 },
-    { start: '19:30', end: '22:29', every: 25 },
+    { start: '19:30', end: '22:59', every: 25 },
   ]},
   S: { all: [
-    { start: '04:00', end: '05:59', every: 20 },
     { start: '06:00', end: '09:29', every: 7 },
     { start: '09:30', end: '16:59', every: 15 },
     { start: '17:00', end: '19:29', every: 7 },
-    { start: '19:30', end: '22:29', every: 20 },
+    { start: '19:30', end: '22:59', every: 20 },
   ]},
-  D: { all: [ { start: '05:30', end: '22:30', every: 12 } ] },
-  G: { all: [ { start: '05:30', end: '22:30', every: 12 } ] }
+  D: { all: [ { start: '06:00', end: '22:59', every: 12 } ] },
+  G: { all: [ { start: '06:00', end: '22:59', every: 12 } ] }
 };
 
 const expandDepartures = periods => {
@@ -338,71 +330,17 @@ const expandDepartures = periods => {
   return out;
 };
 
-const BASE_DELAY_RATE = 0.10;
-const RUSH_HOUR_DELAY_MULTIPLIER = 1.09;
-
-function getTrainDelayInfo(trainSeed, mode = 'local') {
-  const rng = seededRandom(trainSeed + '-delay');
-  const roll = rng();
-  const isRushHour = mode === 'rushAM' || mode === 'rushPM';
-  const delayRate = BASE_DELAY_RATE * (isRushHour ? RUSH_HOUR_DELAY_MULTIPLIER : 1);
-  const oneMinuteDelayThreshold = 1 - (BASE_DELAY_RATE * 0.20);
-
-  if (roll < 1 - delayRate) {
-    return { isDelayed: false, delaySeconds: 0, delayStartStop: -1 };
-  } else if (roll < oneMinuteDelayThreshold) {
-    const startStop = Math.floor(rng() * 2) + 2;
-    return { isDelayed: true, delaySeconds: 60, delayStartStop: startStop };
-  } else {
-    const delayMins = Math.floor(rng() * 2) + 2;
-    const startStop = Math.floor(rng() * 2) + 2;
-    return { isDelayed: true, delaySeconds: delayMins * 60, delayStartStop: startStop };
-  }
+function getTrainDelayInfo(trainSeed, mode = 'local', stopCount = 2) {
+  return BORAIL_SERVICE.delayInfo(trainSeed, mode, stopCount);
 }
 
-function calculateStopTimes(trainSeed, stops, departureMinutes, customSegmentTimes = null, mode = 'local') {
-  const rng = seededRandom(trainSeed);
-  const delayInfo = getTrainDelayInfo(trainSeed, mode);
-  const result = [];
-  const defaultSegmentSeconds = DEFAULT_SEGMENT_TIME * 60;
-  let cumulativeSeconds = 0;
-
-  for (let i = 0; i < stops.length; i++) {
-    if (i > 0) {
-      if (customSegmentTimes && customSegmentTimes[i - 1] !== undefined) {
-        cumulativeSeconds += customSegmentTimes[i - 1] * 60;
-      } else {
-        cumulativeSeconds += defaultSegmentSeconds;
-      }
-    }
-
-    const scheduledArrivalSec = departureMinutes * 60 + cumulativeSeconds;
-    const arrivalOffset = Math.floor(rng() * 21) + 5;
-    const dwellTime = Math.floor(rng() * 9) + 12;
-
-    let delaySec = 0;
-    let isStopDelayed = false;
-    if (delayInfo.isDelayed && i >= delayInfo.delayStartStop) {
-      delaySec = delayInfo.delaySeconds;
-      isStopDelayed = true;
-    }
-
-    const actualArrivalSec = scheduledArrivalSec + arrivalOffset + delaySec;
-    const actualDepartureSec = actualArrivalSec + dwellTime;
-
-    result.push({
-      name: stops[i],
-      stopIndex: i,
-      scheduledArrivalSec,
-      scheduledDepartureSec: scheduledArrivalSec + dwellTime,
-      actualArrivalSec,
-      actualDepartureSec,
-      isDelayed: isStopDelayed,
-      delaySeconds: isStopDelayed ? delayInfo.delaySeconds : 0
-    });
-  }
-
-  return { stops: result, hasDelay: delayInfo.isDelayed, delaySeconds: delayInfo.delaySeconds };
+function calculateStopTimes(trainSeed, stops, departureMinutes, customSegmentTimes = null, mode = 'local', customDwellSeconds = null) {
+  return BORAIL_SERVICE.calculateStopTimes(trainSeed, stops, departureMinutes, {
+    segmentTimes: customSegmentTimes,
+    customDwellSeconds,
+    defaultSegmentMinutes: DEFAULT_SEGMENT_TIME,
+    mode
+  });
 }
 
 function getTrainPosition(stopTimes, nowSeconds) {
@@ -434,39 +372,67 @@ const FIXED_SHUTTLE_LEAD_CARS = {
   D: { 'Veridia Nexus': 540, 'Oakville City Airport': 541 }
 };
 
+function isSingleTrainShuttleRoute(route) {
+  return Boolean(route.singleTrainShuttle || SINGLE_TRAIN_SHUTTLES.has(route.serviceId));
+}
+
+function shuttleKeyForRoute(route) {
+  return route.shuttleKey || (SINGLE_TRAIN_SHUTTLES.has(route.serviceId) ? route.serviceId : null);
+}
+
+function shuttleKeysForDate(date) {
+  return [...new Set(routesForDate(date).map(shuttleKeyForRoute).filter(Boolean))];
+}
+
+function servicePeriodsFor(serviceId, date, mode = timeMode(date)) {
+  if (mode === 'winterEmergency') return BORAIL_SERVICE.WINTER_LINE_SERVICE[serviceId] || [];
+  return LINE_SERVICE[serviceId]?.all || [];
+}
+
 const SHUTTLE_EVENTS_CACHE = new Map();
 function localDateKey(date) {
   return BORAIL_CLOCK.dateKey(date);
 }
 
-function getShuttleEventsForToday(serviceId, date = BORAIL_CLOCK.now()) {
+function getShuttleEventsForToday(shuttleKey, date = BORAIL_CLOCK.now()) {
   const dayKey = localDateKey(date);
-  const key = `${serviceId}-${dayKey}`;
+  const context = BORAIL_SERVICE.context(date);
+  const scheduleKind = context.winterEmergency ? 'winterEmergency' : 'regular';
+  const key = `${shuttleKey}-${dayKey}-${scheduleKind}`;
   if (SHUTTLE_EVENTS_CACHE.has(key)) return SHUTTLE_EVENTS_CACHE.get(key);
 
-  const routes = ROUTES.filter(r => r.serviceId === serviceId && !r.isExpress);
+  const routes = routesForDate(date).filter(route => shuttleKeyForRoute(route) === shuttleKey);
   if (routes.length < 2) {
     SHUTTLE_EVENTS_CACHE.set(key, []);
     return [];
   }
 
-  const preferredStartOrigin = (serviceId === 'G') ? 'Bradford Bay'
-                           : (serviceId === 'D') ? 'Oakville City Airport'
+  const serviceId = routes[0].serviceId;
+  const preferredStartOrigin = (shuttleKey === 'G') ? 'Bradford Bay'
+                           : (shuttleKey === 'D') ? 'Oakville City Airport'
+                           : (shuttleKey === 'F-winter-shuttle') ? 'Atkinson Junction'
                            : routes[0].origin;
 
   let curRoute = routes.find(r => r.origin === preferredStartOrigin) || routes[0];
   let otherRoute = routes.find(r => r !== curRoute) || routes[1];
 
-  const periods = LINE_SERVICE[serviceId]?.all || [{ start: '05:30', end: '22:30', every: 9999 }];
+  const periods = servicePeriodsFor(serviceId, date, context.mode);
+  if (!periods.length) {
+    SHUTTLE_EVENTS_CACHE.set(key, []);
+    return [];
+  }
   const dayStart = toMin(periods[0].start);
-  const dayEnd = toMin(periods[periods.length - 1].end);
+  const dayEnd = BORAIL_SERVICE.LAST_ORIGIN_DEPARTURE_MINUTE;
 
   const rng = seededRandom(`${key}-shuttle-seq`);
-  let t0 = dayStart + Math.floor(rng() * 3);
+  let t0 = dayStart + (shuttleKey === 'F-winter-shuttle' ? 0 : Math.floor(rng() * 3));
 
   const events = [];
-  while (t0 <= dayEnd) {
+  while (t0 < dayEnd) {
     const seg = curRoute.segmentTimes ? curRoute.segmentTimes : segFor(curRoute.stops);
+    const customDwellSeconds = curRoute.intermediateDwellMinutes
+      ? curRoute.stops.map((_, index) => index > 0 && index < curRoute.stops.length - 1 ? curRoute.intermediateDwellMinutes * 60 : 0)
+      : null;
     let cur = t0;
 
     for (let i = 0; i < curRoute.stops.length; i++) {
@@ -483,12 +449,14 @@ function getShuttleEventsForToday(serviceId, date = BORAIL_CLOCK.now()) {
         departureMin: t0,
         origin: curRoute.origin,
         dir: curRoute.dir,
-        isSingleShuttle: true
+        isSingleShuttle: true,
+        shuttleKey,
+        customDwellSeconds
       });
-      if (i < seg.length) cur += seg[i];
+      if (i < seg.length) cur += seg[i] + ((customDwellSeconds?.[i] || 0) / 60);
     }
 
-    const layover = 1 + rng() * 2;
+    const layover = curRoute.terminalLayoverMinutes ?? (1 + rng() * 2);
     t0 = cur + layover;
 
     const tmp = curRoute;
@@ -500,8 +468,9 @@ function getShuttleEventsForToday(serviceId, date = BORAIL_CLOCK.now()) {
   return events;
 }
 
-function getRouteDepartureMinutes(routeDef) {
-  const periods = LINE_SERVICE[routeDef.serviceId]?.all || [];
+function getRouteDepartureMinutes(routeDef, date = BORAIL_CLOCK.now()) {
+  const mode = timeMode(date);
+  const periods = servicePeriodsFor(routeDef.serviceId, date, mode);
   const dep = expandDepartures(periods);
 
   const branchSeed = `${routeDef.serviceId}-${routeDef.tag}-${routeDef.origin}-${routeDef.destination}`;
@@ -512,7 +481,7 @@ function getRouteDepartureMinutes(routeDef) {
   return deps.map(t0 => {
     let slottedDepartureTime = t0;
 
-    if (!SINGLE_TRAIN_SHUTTLES.has(routeDef.serviceId)) {
+    if (mode !== 'winterEmergency' && !isSingleTrainShuttleRoute(routeDef)) {
       if (routeDef.serviceId === 'F' && !routeDef.isExpress) {
         if (routeDef.origin === 'Boylston') slottedDepartureTime += 3;
       } else if (routeDef.serviceId === 'C') {
@@ -526,11 +495,11 @@ function getRouteDepartureMinutes(routeDef) {
       }
     }
     return slottedDepartureTime;
-  });
+  }).filter(BORAIL_SERVICE.isOriginDepartureAllowed);
 }
 
-function tripsForRoute(routeDef, mode = 'local') {
-  const deps = getRouteDepartureMinutes(routeDef);
+function tripsForRoute(routeDef, mode = 'local', date = BORAIL_CLOCK.now()) {
+  const deps = getRouteDepartureMinutes(routeDef, date);
   const effectiveRoute = getEffectiveRoutePattern(routeDef, mode);
   const seg = effectiveRoute.segmentTimes;
   const stops = effectiveRoute.stops;
@@ -569,6 +538,7 @@ function getTrainDirection(serviceId, destination) {
   }
   if (serviceId === 'B') {
     if (destination === 'Leighton Castle') return 'Eastbound';
+    if (destination === 'Mount Hindsboro') return 'Southbound';
     if (destination === 'Harrington City' || destination === 'Hadleigh') return 'Northbound';
   }
 
@@ -599,55 +569,50 @@ function getTrainDirection(serviceId, destination) {
 }
 
 function arrivalsForStation(stationId, now = BORAIL_CLOCK.now()) {
-  const nowMinRaw = BORAIL_CLOCK.clockMinutes(now);
-  const mode = timeMode(now);
+  const nowSeconds = BORAIL_CLOCK.clockSeconds(now);
   const horizon = 6 * 60;
-  const stationName = stationId;
   const out = [];
-  const handledShuttles = new Set();
 
-  ROUTES.forEach(r => {
-    if (!isServiceAllowed(r, mode)) return;
-
-    if (SINGLE_TRAIN_SHUTTLES.has(r.serviceId)) {
-      if (handledShuttles.has(r.serviceId)) return;
-      handledShuttles.add(r.serviceId);
-
-      const trips = getShuttleEventsForToday(r.serviceId);
-      for (const trip of trips) {
-        if (trip.station !== stationName) continue;
-
-        let arr = trip.time;
-        let nowMin = nowMinRaw;
-        if (mode === 'overnight') {
-          if (arr < toMin('06:30')) arr += 1440;
-          if (nowMinRaw < toMin('06:30')) nowMin += 1440;
-        }
-
-        const minsAway = arr - nowMin;
-        if (minsAway >= -1 && minsAway <= horizon) {
-          if (trip.destination === stationName) continue;
-          out.push({ ...trip, timeMin: arr, minsAway, mode });
-        }
-      }
-      return;
-    }
-
-    const trips = tripsForRoute(r, mode);
-    for (const trip of trips) {
-      if (trip.station !== stationName) continue;
-      let arr = trip.time;
-      let nowMin = nowMinRaw;
-      if (mode === 'overnight') {
-        if (arr < toMin('06:30')) arr += 1440;
-        if (nowMinRaw < toMin('06:30')) nowMin += 1440;
-      }
-      const minsAway = arr - nowMin;
-      if (minsAway >= -1 && minsAway <= horizon) {
-        if (trip.destination === stationName) continue;
-        out.push({ ...trip, timeMin: arr, minsAway, mode });
-      }
-    }
+  buildScheduledRuns(now, true).forEach(run => {
+    const stationIndex = run.stops.findIndex(stop => stop.name === stationId);
+    if (stationIndex < 0 || stationIndex === run.stops.length - 1) return;
+    const first = run.stops[0];
+    const last = run.stops[run.stops.length - 1];
+    const trainActive = nowSeconds >= first.actualArrivalSec && nowSeconds < last.actualDepartureSec;
+    const delayVisible = trainActive && run.hasDelay && run.delayStartSec !== null && nowSeconds >= run.delayStartSec;
+    const visibleStops = delayVisible
+      ? run.stops
+      : run.stops.map(stop => ({
+          ...stop,
+          actualArrivalSec: stop.scheduledArrivalSec,
+          actualDepartureSec: stop.scheduledDepartureSec,
+          isDelayed: false,
+          delaySeconds: 0
+        }));
+    const stationStop = visibleStops[stationIndex];
+    const minsAway = (stationStop.actualArrivalSec - nowSeconds) / 60;
+    if (minsAway < -1 || minsAway > horizon) return;
+    out.push({
+      station: stationId,
+      time: stationStop.actualArrivalSec / 60,
+      timeMin: stationStop.actualArrivalSec / 60,
+      minsAway,
+      destination: run.destination,
+      serviceId: run.serviceId,
+      isExpress: run.isExpress,
+      tag: run.tag,
+      color: SERVICE_META[run.serviceId].color,
+      stops: visibleStops.map(stop => stop.name),
+      segmentTimes: run.segmentTimes,
+      customDwellSeconds: run.customDwellSeconds,
+      departureMin: run.departureMin,
+      origin: run.origin,
+      dir: run.dir,
+      isSingleShuttle: run.isSingleShuttle,
+      mode: run.mode,
+      precomputedStopTimes: { ...run, stops: visibleStops, hasDelay: delayVisible },
+      delayVisible
+    });
   });
 
   out.sort((a, b) => a.timeMin - b.timeMin);
@@ -666,17 +631,19 @@ const INACTIVE_STATION_FALLBACKS = {
 
 function buildScheduledRuns(planningDate, includeExpress = true) {
   const runs = [];
+  const dayContext = BORAIL_SERVICE.context(planningDate);
+  const activeRoutes = routesForDate(planningDate);
 
-  ROUTES.forEach(route => {
-    if (SINGLE_TRAIN_SHUTTLES.has(route.serviceId)) return;
+  activeRoutes.forEach(route => {
+    if (isSingleTrainShuttleRoute(route)) return;
     if (!includeExpress && route.isExpress) return;
 
-    getRouteDepartureMinutes(route).forEach(departureMin => {
-      const mode = timeModeForMinutes(departureMin);
+    getRouteDepartureMinutes(route, planningDate).forEach(departureMin => {
+      const mode = dayContext.winterEmergency ? 'winterEmergency' : timeModeForMinutes(departureMin);
       if (!isServiceAllowed(route, mode)) return;
       const effectiveRoute = getEffectiveRoutePattern(route, mode);
       const trainSeed = `${route.serviceId}-${route.tag}-${departureMin}-${route.origin}-${route.destination}`;
-      const stopTimes = calculateStopTimes(trainSeed, effectiveRoute.stops, departureMin, effectiveRoute.segmentTimes, mode);
+      const stopTimes = calculateStopTimes(trainSeed, effectiveRoute.stops, departureMin, effectiveRoute.segmentTimes, mode, route.customDwellSeconds);
       runs.push({
         id: `${trainSeed}-${localDateKey(planningDate)}`,
         serviceId: route.serviceId,
@@ -686,21 +653,27 @@ function buildScheduledRuns(planningDate, includeExpress = true) {
         destination: route.destination,
         departureMin,
         mode,
+        dir: route.dir,
+        segmentTimes: effectiveRoute.segmentTimes,
+        customDwellSeconds: route.customDwellSeconds || null,
+        isSingleShuttle: false,
         trainSeed,
         hasDelay: stopTimes.hasDelay,
         delaySeconds: stopTimes.delaySeconds,
+        delayStartStop: stopTimes.delayStartStop,
+        delayStartSec: stopTimes.delayStartSec,
         stops: stopTimes.stops
       });
     });
   });
 
-  SINGLE_TRAIN_SHUTTLES.forEach(serviceId => {
-    const originEvents = getShuttleEventsForToday(serviceId, planningDate)
+  shuttleKeysForDate(planningDate).forEach(shuttleKey => {
+    const originEvents = getShuttleEventsForToday(shuttleKey, planningDate)
       .filter(event => event.station === event.origin);
     originEvents.forEach(event => {
-      const mode = timeModeForMinutes(event.departureMin);
+      const mode = dayContext.winterEmergency ? 'winterEmergency' : timeModeForMinutes(event.departureMin);
       const trainSeed = `${event.serviceId}-${event.tag}-${event.departureMin}-${event.origin}-${event.destination}`;
-      const stopTimes = calculateStopTimes(trainSeed, event.stops, event.departureMin, event.segmentTimes, mode);
+      const stopTimes = calculateStopTimes(trainSeed, event.stops, event.departureMin, event.segmentTimes, mode, event.customDwellSeconds);
       runs.push({
         id: `${trainSeed}-${localDateKey(planningDate)}`,
         serviceId: event.serviceId,
@@ -710,9 +683,16 @@ function buildScheduledRuns(planningDate, includeExpress = true) {
         destination: event.destination,
         departureMin: event.departureMin,
         mode,
+        dir: event.dir,
+        segmentTimes: event.segmentTimes,
+        customDwellSeconds: event.customDwellSeconds || null,
+        isSingleShuttle: true,
+        shuttleKey,
         trainSeed,
         hasDelay: stopTimes.hasDelay,
         delaySeconds: stopTimes.delaySeconds,
+        delayStartStop: stopTimes.delayStartStop,
+        delayStartSec: stopTimes.delayStartSec,
         stops: stopTimes.stops
       });
     });
@@ -721,20 +701,49 @@ function buildScheduledRuns(planningDate, includeExpress = true) {
   return runs;
 }
 
-function stationHasActiveService(stationName, mode, includeExpress = true) {
-  return ROUTES.some(route => {
+function runsWithCurrentlyVisibleDelays(runs, planningDate, now = BORAIL_CLOCK.now()) {
+  const sameServiceDate = BORAIL_CLOCK.dateKey(planningDate) === BORAIL_CLOCK.dateKey(now);
+  const nowSeconds = BORAIL_CLOCK.clockSeconds(now);
+  return runs.map(run => {
+    const firstStop = run.stops[0];
+    const lastStop = run.stops[run.stops.length - 1];
+    const isActive = sameServiceDate
+      && nowSeconds >= firstStop.actualArrivalSec
+      && nowSeconds < lastStop.actualDepartureSec;
+    const delayVisible = isActive
+      && run.hasDelay
+      && run.delayStartSec !== null
+      && nowSeconds >= run.delayStartSec;
+    if (delayVisible) return run;
+    return {
+      ...run,
+      hasDelay: false,
+      delaySeconds: 0,
+      stops: run.stops.map(stop => ({
+        ...stop,
+        actualArrivalSec: stop.scheduledArrivalSec,
+        actualDepartureSec: stop.scheduledDepartureSec,
+        isDelayed: false,
+        delaySeconds: 0
+      }))
+    };
+  });
+}
+
+function stationHasActiveService(stationName, mode, includeExpress = true, date = BORAIL_CLOCK.now()) {
+  return routesForDate(date).some(route => {
     if (!includeExpress && route.isExpress) return false;
     if (!isServiceAllowed(route, mode)) return false;
     return getEffectiveRoutePattern(route, mode).stops.includes(stationName);
   });
 }
 
-function resolvePlanningStation(stationName, mode) {
-  if (stationHasActiveService(stationName, mode, true)) {
+function resolvePlanningStation(stationName, mode, date = BORAIL_CLOCK.now()) {
+  if (stationHasActiveService(stationName, mode, true, date)) {
     return { requested: stationName, effective: stationName, fallback: false };
   }
   const fallbackStation = INACTIVE_STATION_FALLBACKS[stationName];
-  if (fallbackStation && stationHasActiveService(fallbackStation, mode, true)) {
+  if (fallbackStation && stationHasActiveService(fallbackStation, mode, true, date)) {
     return { requested: stationName, effective: fallbackStation, fallback: true };
   }
   return { requested: stationName, effective: stationName, fallback: false, unavailable: true };
@@ -743,14 +752,14 @@ function resolvePlanningStation(stationName, mode) {
 function planBORailTrip(originName, destinationName, planningDate) {
   const startTimeSec = BORAIL_CLOCK.clockSeconds(planningDate);
   const mode = timeMode(planningDate);
-  const origin = resolvePlanningStation(originName, mode);
-  const destination = resolvePlanningStation(destinationName, mode);
+  const origin = resolvePlanningStation(originName, mode, planningDate);
+  const destination = resolvePlanningStation(destinationName, mode, planningDate);
 
   if (origin.effective === destination.effective) {
     return { journeys: [], mode, origin, destination, sameEffectiveStation: true, planningDate };
   }
 
-  const allRuns = buildScheduledRuns(planningDate, true);
+  const allRuns = runsWithCurrentlyVisibleDelays(buildScheduledRuns(planningDate, true), planningDate);
   const localRuns = allRuns.filter(run => !run.isExpress);
   const departureOffsets = [0, 5, 10, 15, 20, 30].map(minutes => minutes * 60);
   const collectJourneys = runs => {
@@ -818,7 +827,8 @@ function formatTripDuration(totalSeconds) {
 function plannerModeLabel(mode) {
   if (mode === 'rushAM') return 'AM Rush';
   if (mode === 'rushPM') return 'PM Rush';
-  if (mode === 'overnight') return 'Overnight';
+  if (mode === 'winterEmergency') return 'Winter Emergency';
+  if (mode === 'closed') return 'No Service';
   return 'Local Only';
 }
 
@@ -870,7 +880,7 @@ let tripDestinationDropdown;
 
 function getBadgesForStation(stationId, { serviceOrder = null, expressFirst = false } = {}) {
   const linesMap = {};
-  ROUTES.forEach(route => {
+  routesForDate().forEach(route => {
     if (route.stops.includes(stationId)) {
       if (!linesMap[route.serviceId]) {
         linesMap[route.serviceId] = { local: false, express: false };
@@ -1060,8 +1070,10 @@ function renderClock() {
   const mode = timeMode(now);
   serviceState.textContent = (mode === 'rushAM' || mode === 'rushPM') ? 'Service: Rush (LCL+EXP)' :
                              (mode === 'local') ? 'Service: Local only' :
-                             'Service: Overnight';
-  serviceState.classList.toggle('late-night', mode === 'overnight');
+                             (mode === 'winterEmergency') ? 'Service: Winter Emergency' :
+                             'Service: No Service';
+  serviceState.classList.toggle('late-night', mode === 'closed');
+  serviceState.classList.toggle('winter-emergency', mode === 'winterEmergency');
 }
 
 function iconFor(serviceId, isExpress) {
@@ -1169,7 +1181,8 @@ function getTripPlanningDate(showError = true) {
 function updatePlannerServiceState(date) {
   const mode = timeMode(date);
   plannerServiceState.textContent = `Service: ${plannerModeLabel(mode)}`;
-  plannerServiceState.classList.toggle('late-night', mode === 'overnight');
+  plannerServiceState.classList.toggle('late-night', mode === 'closed');
+  plannerServiceState.classList.toggle('winter-emergency', mode === 'winterEmergency');
 }
 
 function routePillHtml(leg) {
@@ -1200,7 +1213,7 @@ function transferSummaryHtml(journey) {
 function renderTripLeg(leg, nextLeg) {
   const meta = SERVICE_META[leg.serviceId];
   const consist = getTrainConsist(leg.trainSeed, leg.serviceId, leg.isExpress);
-  if (SINGLE_TRAIN_SHUTTLES.has(leg.serviceId)) {
+  if (leg.isSingleShuttle || SINGLE_TRAIN_SHUTTLES.has(leg.serviceId)) {
     consist.model = 'MTC-T 110';
     consist.cars = 2;
     const fixed = FIXED_SHUTTLE_LEAD_CARS[leg.serviceId] && FIXED_SHUTTLE_LEAD_CARS[leg.serviceId][leg.destination];
@@ -1398,14 +1411,15 @@ function renderArrivals() {
       const trainSeed = `${r.serviceId}-${r.tag}-${r.departureMin}-${r.origin}-${r.destination}`;
       const consist = getTrainConsist(trainSeed, r.serviceId, r.isExpress);
 
-      if (SINGLE_TRAIN_SHUTTLES.has(r.serviceId)) {
+      if (r.isSingleShuttle || SINGLE_TRAIN_SHUTTLES.has(r.serviceId)) {
         consist.model = 'MTC-T 110';
         consist.cars = 2;
         const fixed = FIXED_SHUTTLE_LEAD_CARS[r.serviceId] && FIXED_SHUTTLE_LEAD_CARS[r.serviceId][r.destination];
         if (typeof fixed === 'number') consist.leadCar = fixed;
       }
 
-      const stopTimes = calculateStopTimes(trainSeed, r.stops, r.departureMin, r.segmentTimes, r.mode);
+      const stopTimes = r.precomputedStopTimes
+        || calculateStopTimes(trainSeed, r.stops, r.departureMin, r.segmentTimes, r.mode, r.customDwellSeconds);
       const pos = getTrainPosition(stopTimes, nowSeconds);
       const minsText = (r.minsAway <= 0) ? 'Now' : `${Math.round(r.minsAway)} min`;
       const trainId = `${r.serviceId}-${r.tag}-${r.departureMin}-${idx}`.replace(/[^a-zA-Z0-9_-]/g,'');
@@ -1595,6 +1609,8 @@ findTripsButton.addEventListener('click', findAndRenderTrips);
 window.BORailTripDebug = {
   planBORailTrip,
   buildScheduledRuns,
+  runsWithCurrentlyVisibleDelays,
+  arrivalsForStation,
   resolvePlanningStation,
   getEffectiveRoutePattern,
   timeModeForMinutes,

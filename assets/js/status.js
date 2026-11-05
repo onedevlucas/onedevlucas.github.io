@@ -1,18 +1,6 @@
 const BORAIL_CLOCK = globalThis.BORailTime;
-
-// ----- base line probabilities (shared by local/express variants) -----
-    const BASE_LINES = [
-      { letter:'A', color:'var(--line-Green)',  probs:{ ok:90, minor:3, major:5, none:2 } }, // formerly Green
-      { letter:'F', color:'var(--line-Red)',    probs:{ ok:85, minor:9, major:4, none:2 } }, // formerly Red
-      { letter:'G', color:'var(--line-Gold)',   probs:{ ok:95, minor:2, major:2, none:1 } }, // formerly Gold
-      { letter:'D', color:'var(--line-Orange)', probs:{ ok:99, minor:0, major:0, none:1 } }, // formerly Orange
-      { letter:'B', color:'var(--line-Blue)',   probs:{ ok:80, minor:4, major:15, none:1 } }, // formerly Blue
-      { letter:'C', color:'var(--line-Pink)',   probs:{ ok:86, minor:4, major:5, none:5 } }, // formerly Pink
-      { letter:'E', color:'var(--line-Brown)',  probs:{ ok:86, minor:1, major:9, none:4 } }, // formerly Brown
-      // new Silver Line
-      { letter:'S', color:'var(--line-Silver)', probs:{ ok:90, minor:4, major:4, none:2 } },
-    ];
-    const BASE = Object.fromEntries(BASE_LINES.map(x => [x.letter, x]));
+const BORAIL_SERVICE = globalThis.BORailService;
+if (!BORAIL_CLOCK || !BORAIL_SERVICE) throw new Error('BORail time and service helpers must load before status.js');
 
     // ----- services shown on the status page -----
     // nameHtml is inserted via innerHTML
@@ -44,56 +32,21 @@ const BORAIL_CLOCK = globalThis.BORailTime;
       // S (Silver) - Local + Express
       { id:'S-local',   nameHtml:'Line',        icon:'assets/images/line-icons/s-local.png',    letter:'S', mode:'local'   },
       { id:'S-express', nameHtml:'Line',  icon:'assets/images/line-icons/s-express.png',  letter:'S', mode:'express' },
-    ].map(s => ({ ...s, ...BASE[s.letter] }));
+    ];
 
-    // 3 reasons per type (white text in details)
-    const REASONS = {
-      minor: [
-        'Signal Maintenance - Causing Reduced Speed On Tracks',
-        'Track Inspection In Progress - Possible Track Damage, Crews Assisting.',
-        'Platform Crowding - Passengers Delaying Trains at Platform.'
-      ],
-      major: [
-        'Disabled Train On Tracks — Crews Assisting; Expect Extended Delays.',
-        'Switch Malfunction Near A Junction - Single-Tracking Through The Area.',
-        'Police Activity At A Station - Trains Are Bypassing Station.'
-      ],
-      none: [
-        'Severe Weather Impacted — Service Suspended until further notice.',
-        'Electrical Outage on track - Service Suspended until further notice.',
-        'Emergency Track Repair - Service Suspended until further notice.',
-        'Signal System Fault - Service Suspended until further notice.',
-        'Staff Shortage - Service Suspended until further notice.',
-        'Fire/Smoke Incident - Service Suspended until further notice.'
-      ]
-    };
-
-    // ----- time-based service rules (uses New York time) -----
-    const SCHEDULE = {
-      morningRushStart: 6*60 + 30,   // 6:30 AM
-      morningRushEnd:   9*60 + 30,   // 9:30 AM
-      eveningRushStart: 17*60 + 0,   // 5:00 PM
-      eveningRushEnd:   19*60 + 30,  // 7:30 PM
-      lateNightStart:   22*60 + 30,  // 10:30 PM
-      lateNightEnd:     6*60 + 30    // 6:30 AM
-    };
-
-    const LATE_NIGHT_OFF = new Set(['S-local','S-express','G-local','D-local']);
-    const STATUS_DELAY_MINOR_MIN_TRAINS = 6;
-    const STATUS_DELAY_MAJOR_MIN_TRAINS = 12;
-    const STATUS_DELAY_LOOKAHEAD_MIN = 120;
-    const STATUS_BASE_DELAY_RATE = 0.10;
-    const STATUS_RUSH_DELAY_MULTIPLIER = 1.09;
+    const STATUS_DELAY_MINOR_MIN_TRAINS = 1;
+    const STATUS_DELAY_MAJOR_MIN_TRAINS = 3;
+    const STATUS_SERVICE_LOOKAHEAD_MIN = 6 * 60;
 
     const STATUS_LINE_SERVICE = {
-      A: [{ start: '04:00', end: '05:59', every: 20 }, { start: '06:00', end: '09:29', every: 7 }, { start: '09:30', end: '16:59', every: 15 }, { start: '17:00', end: '19:29', every: 7 }, { start: '19:30', end: '22:29', every: 20 }],
-      F: [{ start: '04:00', end: '05:59', every: 20 }, { start: '06:00', end: '09:29', every: 7 }, { start: '09:30', end: '16:59', every: 15 }, { start: '17:00', end: '19:29', every: 7 }, { start: '19:30', end: '22:29', every: 20 }],
-      B: [{ start: '04:00', end: '05:59', every: 25 }, { start: '06:00', end: '09:29', every: 5 }, { start: '09:30', end: '16:59', every: 15 }, { start: '17:00', end: '19:29', every: 5 }, { start: '19:30', end: '22:29', every: 25 }],
-      C: [{ start: '04:00', end: '05:59', every: 20 }, { start: '06:00', end: '09:29', every: 7 }, { start: '09:30', end: '16:59', every: 15 }, { start: '17:00', end: '19:29', every: 7 }, { start: '19:30', end: '22:29', every: 20 }],
-      E: [{ start: '04:00', end: '05:59', every: 25 }, { start: '06:00', end: '09:29', every: 5 }, { start: '09:30', end: '16:59', every: 15 }, { start: '17:00', end: '19:29', every: 5 }, { start: '19:30', end: '22:29', every: 25 }],
-      S: [{ start: '04:00', end: '05:59', every: 20 }, { start: '06:00', end: '09:29', every: 7 }, { start: '09:30', end: '16:59', every: 15 }, { start: '17:00', end: '19:29', every: 7 }, { start: '19:30', end: '22:29', every: 20 }],
-      D: [{ start: '05:30', end: '22:30', every: 12 }],
-      G: [{ start: '05:30', end: '22:30', every: 12 }]
+      A: [{ start: '06:00', end: '09:29', every: 7 }, { start: '09:30', end: '16:59', every: 15 }, { start: '17:00', end: '19:29', every: 7 }, { start: '19:30', end: '22:59', every: 20 }],
+      F: [{ start: '06:00', end: '09:29', every: 7 }, { start: '09:30', end: '16:59', every: 15 }, { start: '17:00', end: '19:29', every: 7 }, { start: '19:30', end: '22:59', every: 20 }],
+      B: [{ start: '06:00', end: '09:29', every: 5 }, { start: '09:30', end: '16:59', every: 15 }, { start: '17:00', end: '19:29', every: 5 }, { start: '19:30', end: '22:59', every: 25 }],
+      C: [{ start: '06:00', end: '09:29', every: 7 }, { start: '09:30', end: '16:59', every: 15 }, { start: '17:00', end: '19:29', every: 7 }, { start: '19:30', end: '22:59', every: 20 }],
+      E: [{ start: '06:00', end: '09:29', every: 5 }, { start: '09:30', end: '16:59', every: 15 }, { start: '17:00', end: '19:29', every: 5 }, { start: '19:30', end: '22:59', every: 25 }],
+      S: [{ start: '06:00', end: '09:29', every: 7 }, { start: '09:30', end: '16:59', every: 15 }, { start: '17:00', end: '19:29', every: 7 }, { start: '19:30', end: '22:59', every: 20 }],
+      D: [{ start: '06:00', end: '22:59', every: 12 }],
+      G: [{ start: '06:00', end: '22:59', every: 12 }]
     };
 
     const STATUS_DELAY_ROUTES = [
@@ -103,8 +56,8 @@ const BORAIL_CLOCK = globalThis.BORailTime;
       { serviceId:'F', isExpress:false, tag:'LCL', origin:'Newkirk', destination:'Boylston', stopCount:11 },
       { serviceId:'F', isExpress:true, tag:'EXP', origin:'Whitebranch', destination:'Newkirk', stopCount:10 },
       { serviceId:'F', isExpress:true, tag:'EXP', origin:'Newkirk', destination:'Whitebranch', stopCount:10 },
-      { serviceId:'G', isExpress:false, tag:'LCL', origin:'Bradford Bay', destination:'Berwick Hall', stopCount:4 },
-      { serviceId:'G', isExpress:false, tag:'LCL', origin:'Berwick Hall', destination:'Bradford Bay', stopCount:4 },
+      { serviceId:'G', isExpress:false, tag:'LCL', origin:'Bradford Bay', destination:'Berwick Hall', stopCount:4, segmentTimes:[1.5,1.5,2] },
+      { serviceId:'G', isExpress:false, tag:'LCL', origin:'Berwick Hall', destination:'Bradford Bay', stopCount:4, segmentTimes:[1.5,1.5,1.5] },
       { serviceId:'S', isExpress:false, tag:'LCL', origin:'Ralston-Finch East', destination:'Burlington - University of NCU', stopCount:8 },
       { serviceId:'S', isExpress:false, tag:'LCL', origin:'Burlington - University of NCU', destination:'Ralston-Finch East', stopCount:8 },
       { serviceId:'S', isExpress:true, tag:'EXP', origin:'Ralston-Finch East', destination:'Newkirk', stopCount:7, peak:'AM' },
@@ -232,22 +185,9 @@ const BORAIL_CLOCK = globalThis.BORailTime;
       }))
     );
 
-    function minutesNowNewYork(){
-      return BORAIL_CLOCK.clockMinutes();
-    }
-
-    function getScheduleState(){
-      const m = minutesNowNewYork();
-      const late = (m >= SCHEDULE.lateNightStart) || (m < SCHEDULE.lateNightEnd);
-      const morningRush = (m >= SCHEDULE.morningRushStart) && (m < SCHEDULE.morningRushEnd);
-      const eveningRush = (m >= SCHEDULE.eveningRushStart) && (m < SCHEDULE.eveningRushEnd);
-      const rush = morningRush || eveningRush;
-      return { m, late, rush };
-    }
-
     function scheduleKey(){
-      const s = getScheduleState();
-      return s.late ? 'late' : (s.rush ? 'rush' : 'noexpress');
+      const serviceContext = BORAIL_SERVICE.context();
+      return `${serviceContext.dateKey}-${serviceContext.mode}`;
     }
 
     function seededRandom(seed) {
@@ -270,17 +210,12 @@ const BORAIL_CLOCK = globalThis.BORailTime;
     };
 
     function statusTimeModeForMinutes(nowMin) {
-      const normalized = ((nowMin % 1440) + 1440) % 1440;
-      const rushAM = (normalized >= toMin('06:00') && normalized < toMin('09:30'));
-      const rushPM = (normalized >= toMin('17:00') && normalized < toMin('19:30'));
-      const overnight = (normalized >= toMin('22:30') || normalized < toMin('03:59'));
-      if (overnight) return 'overnight';
-      if (rushAM) return 'rushAM';
-      if (rushPM) return 'rushPM';
-      return 'local';
+      return BORAIL_SERVICE.timeModeForMinutes(nowMin);
     }
 
     function statusServiceAllowed(route, mode) {
+      if (mode === 'closed') return false;
+      if (mode === 'winterEmergency') return !route.isExpress;
       if (route.serviceId === 'S' && route.isExpress) {
         if (mode === 'rushAM' && route.peak === 'AM') return true;
         if (mode === 'rushPM' && route.peak === 'PM') return true;
@@ -290,10 +225,6 @@ const BORAIL_CLOCK = globalThis.BORailTime;
       const isRush = mode === 'rushAM' || mode === 'rushPM';
       if (!isRush && route.isExpress) return false;
 
-      if (mode === 'overnight') {
-        if (route.serviceId === 'G' || route.serviceId === 'S' || route.serviceId === 'D') return false;
-        if (route.serviceId === 'F' && route.isExpress) return false;
-      }
       return true;
     }
 
@@ -315,284 +246,228 @@ const BORAIL_CLOCK = globalThis.BORailTime;
       return out;
     }
 
-    function statusRouteDepartureMinutes(route) {
-      const dep = statusExpandDepartures(STATUS_LINE_SERVICE[route.serviceId] || []);
-      const branchSeed = `${route.serviceId}-${route.tag}-${route.origin}-${route.destination}`;
-      const rng = seededRandom(branchSeed);
-      const baseOffset = Math.floor(rng() * 3);
-
-      return dep.map(t0 => {
-        let slotted = t0 + baseOffset;
-        if (route.serviceId === 'F' && !route.isExpress && route.origin === 'Boylston') slotted += 3;
-        else if (route.serviceId === 'C' && (route.destination === 'Oakville City Airport' || route.origin === 'Oakville City Airport')) slotted += 4;
-        else if (route.serviceId === 'A' && route.isExpress) slotted += 3;
-        else if (route.serviceId === 'B' && route.isExpress) slotted += 2;
-        else if (route.serviceId === 'S' && route.isExpress) slotted += 3;
-        return slotted;
-      });
-    }
-
-    function statusTrainDelayInfo(trainSeed, mode) {
-      const rng = seededRandom(trainSeed + '-delay');
-      const roll = rng();
-      const isRushHour = mode === 'rushAM' || mode === 'rushPM';
-      const delayRate = STATUS_BASE_DELAY_RATE * (isRushHour ? STATUS_RUSH_DELAY_MULTIPLIER : 1);
-      const oneMinuteDelayThreshold = 1 - (STATUS_BASE_DELAY_RATE * 0.20);
-
-      if (roll < 1 - delayRate) {
-        return { isDelayed: false, delaySeconds: 0, delayStartStop: -1 };
+    function statusRoutesForDate(date) {
+      if (BORAIL_SERVICE.context(date).winterEmergency) {
+        return BORAIL_SERVICE.WINTER_ROUTES.map(route => ({
+          ...route,
+          stopCount: route.stops.length,
+          segmentTimes: route.segmentTimes ? [...route.segmentTimes] : null
+        }));
       }
-      if (roll < oneMinuteDelayThreshold) {
-        return { isDelayed: true, delaySeconds: 60, delayStartStop: Math.floor(rng() * 2) + 2 };
-      }
-      return {
-        isDelayed: true,
-        delaySeconds: (Math.floor(rng() * 2) + 2) * 60,
-        delayStartStop: Math.floor(rng() * 2) + 2
-      };
-    }
-
-    function computeStatusDelaySignals(now = new Date()) {
-      const nowParts = BORAIL_CLOCK.parts(now);
-      const nowMin = nowParts.hour * 60 + nowParts.minute + (nowParts.second / 60);
-      const mode = statusTimeModeForMinutes(nowMin);
-      const windowStart = nowMin;
-      const windowEnd = nowMin + STATUS_DELAY_LOOKAHEAD_MIN;
-      const byLetter = {};
-
-      for (const route of STATUS_DELAY_ROUTES) {
-        if (!statusServiceAllowed(route, mode)) continue;
-        const stopCount = statusEffectiveStopCount(route, mode);
-        const routeDurationMin = Math.max(4, (stopCount - 1) * 1.5 + stopCount * 0.35);
-
-        for (const baseDeparture of statusRouteDepartureMinutes(route)) {
-          for (const departureMin of [baseDeparture - 1440, baseDeparture, baseDeparture + 1440]) {
-            if (departureMin > windowEnd) continue;
-            if (departureMin + routeDurationMin < windowStart) continue;
-
-            const trainSeed = `${route.serviceId}-${route.tag}-${baseDeparture}-${route.origin}-${route.destination}`;
-            const delayInfo = statusTrainDelayInfo(trainSeed, mode);
-            const bucket = byLetter[route.serviceId] || { total: 0, delayed: 0, maxDelaySeconds: 0 };
-            bucket.total += 1;
-
-            const delayCanAffectStops = delayInfo.isDelayed && delayInfo.delayStartStop < stopCount;
-            const delayStartsMin = departureMin + Math.max(0, delayInfo.delayStartStop) * 1.5;
-            if (delayCanAffectStops && delayStartsMin <= windowEnd) {
-              bucket.delayed += 1;
-              bucket.maxDelaySeconds = Math.max(bucket.maxDelaySeconds, delayInfo.delaySeconds);
-            }
-            byLetter[route.serviceId] = bucket;
-          }
-        }
-      }
-
-      return Object.fromEntries(BASE_LINES.map(({ letter }) => {
-        const bucket = byLetter[letter] || { total: 0, delayed: 0, maxDelaySeconds: 0 };
-        const type = bucket.delayed >= STATUS_DELAY_MAJOR_MIN_TRAINS
-          ? 'major'
-          : (bucket.delayed >= STATUS_DELAY_MINOR_MIN_TRAINS ? 'minor' : 'ok');
-        const delayedWord = bucket.delayed === 1 ? 'train' : 'trains';
-        return [letter, {
-          type,
-          delayed: bucket.delayed,
-          total: bucket.total,
-          maxDelaySeconds: bucket.maxDelaySeconds,
-          reason: `Timetable is showing ${bucket.delayed} delayed ${delayedWord} on the ${letter} line in the next 2 hours. Longest delay: ${Math.max(0, Math.round(bucket.maxDelaySeconds / 60))} min.`
-        }];
+      return STATUS_DELAY_ROUTES.map(route => ({
+        ...route,
+        singleTrainShuttle: !route.isExpress && (route.serviceId === 'G' || route.serviceId === 'D'),
+        shuttleKey: !route.isExpress && (route.serviceId === 'G' || route.serviceId === 'D') ? route.serviceId : null
       }));
     }
 
-    function scheduledOverride(service){
-      const s = getScheduleState();
-
-      // Late night shutdown (10:30 PM–6:30 AM): S (local+express), G, D
-      if (s.late && LATE_NIGHT_OFF.has(service.id)) {
-        return {
-          cls: 'nosvc',
-          label: 'NO SERVICE',
-          reason: 'Service does not operate 10:30 PM–6:30 AM New York time.',
-          always: true
-        };
-      }
-
-      // Express only during rush windows
-      if (service.mode === 'express' && !s.rush) {
-        return {
-          cls: 'nosvc',
-          label: 'NO SERVICE',
-          reason: 'Express service operates only 6:30 AM–9:30 AM and 5:00 PM–7:30 PM New York time.',
-          always: false
-        };
-      }
-
-      return null;
+    function statusPeriodsFor(route, mode) {
+      return mode === 'winterEmergency'
+        ? BORAIL_SERVICE.WINTER_LINE_SERVICE[route.serviceId] || []
+        : STATUS_LINE_SERVICE[route.serviceId] || [];
     }
 
-    function pickStatus(p){
-      // returns one of: 'ok' | 'minor' | 'major' | 'none'
-      const r = Math.random()*100;
-      if (r < p.ok) return 'ok';
-      if (r < p.ok + p.minor) return 'minor';
-      if (r < p.ok + p.minor + p.major) return 'major';
-      return 'none';
+    function statusRouteDepartureMinutes(route, mode) {
+      const dep = statusExpandDepartures(statusPeriodsFor(route, mode));
+      const branchSeed = `${route.serviceId}-${route.tag}-${route.origin}-${route.destination}`;
+      const rng = seededRandom(branchSeed);
+      const baseOffset = Math.floor(rng() * 3);
+      return dep.map(t0 => {
+        let slotted = t0 + baseOffset;
+        if (mode !== 'winterEmergency') {
+          if (route.serviceId === 'F' && !route.isExpress && route.origin === 'Boylston') slotted += 3;
+          else if (route.serviceId === 'C' && (route.destination === 'Oakville City Airport' || route.origin === 'Oakville City Airport')) slotted += 4;
+          else if (route.serviceId === 'A' && route.isExpress) slotted += 3;
+          else if (route.serviceId === 'B' && route.isExpress) slotted += 2;
+          else if (route.serviceId === 'S' && route.isExpress) slotted += 3;
+        }
+        return slotted;
+      }).filter(BORAIL_SERVICE.isOriginDepartureAllowed);
+    }
+
+    function statusRouteDurationMin(route, mode) {
+      const stopCount = statusEffectiveStopCount(route, mode);
+      const travel = route.segmentTimes?.length
+        ? route.segmentTimes.reduce((sum, value) => sum + value, 0)
+        : Math.max(0, stopCount - 1) * 1.5;
+      const dwell = route.intermediateDwellMinutes
+        ? Math.max(0, stopCount - 2) * route.intermediateDwellMinutes
+        : Math.max(0, stopCount - 1) * 0.3;
+      return Math.max(1.5, travel + dwell);
+    }
+
+    function statusShuttleTravelMin(route, mode) {
+      const stopCount = statusEffectiveStopCount(route, mode);
+      const travel = route.segmentTimes?.length
+        ? route.segmentTimes.reduce((sum, value) => sum + value, 0)
+        : Math.max(0, stopCount - 1) * 1.5;
+      const intermediateDwell = route.intermediateDwellMinutes
+        ? Math.max(0, stopCount - 2) * route.intermediateDwellMinutes
+        : 0;
+      return Math.max(1.5, travel + intermediateDwell);
+    }
+
+    function statusShuttleDescriptors(routes, date, mode) {
+      const descriptors = [];
+      const groups = new Map();
+      routes.filter(route => route.singleTrainShuttle).forEach(route => {
+        const key = route.shuttleKey || route.serviceId;
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(route);
+      });
+      groups.forEach((group, shuttleKey) => {
+        if (group.length < 2) return;
+        const preferredOrigin = shuttleKey === 'G' ? 'Bradford Bay'
+          : shuttleKey === 'D' ? 'Oakville City Airport'
+          : shuttleKey === 'F-winter-shuttle' ? 'Atkinson Junction'
+          : group[0].origin;
+        let current = group.find(route => route.origin === preferredOrigin) || group[0];
+        let opposite = group.find(route => route !== current) || group[1];
+        const scheduleKind = mode === 'winterEmergency' ? 'winterEmergency' : 'regular';
+        const cacheKey = `${shuttleKey}-${BORAIL_CLOCK.dateKey(date)}-${scheduleKind}`;
+        const rng = seededRandom(`${cacheKey}-shuttle-seq`);
+        let departureMin = BORAIL_SERVICE.OPEN_MINUTE + (shuttleKey === 'F-winter-shuttle' ? 0 : Math.floor(rng() * 3));
+        while (departureMin < BORAIL_SERVICE.LAST_ORIGIN_DEPARTURE_MINUTE) {
+          const durationMin = statusShuttleTravelMin(current, mode);
+          descriptors.push({ route: current, departureMin, durationMin, mode });
+          departureMin += durationMin + (current.terminalLayoverMinutes ?? (1 + rng() * 2));
+          [current, opposite] = [opposite, current];
+        }
+      });
+      return descriptors;
+    }
+
+    function statusRunDescriptors(now) {
+      const serviceContext = BORAIL_SERVICE.context(now);
+      const dayMode = serviceContext.winterEmergency ? 'winterEmergency' : 'local';
+      const routes = statusRoutesForDate(now);
+      const descriptors = statusShuttleDescriptors(routes, now, dayMode);
+      routes.filter(route => !route.singleTrainShuttle).forEach(route => {
+        statusRouteDepartureMinutes(route, dayMode).forEach(departureMin => {
+          const mode = serviceContext.winterEmergency ? 'winterEmergency' : statusTimeModeForMinutes(departureMin);
+          if (!statusServiceAllowed(route, mode)) return;
+          descriptors.push({ route, departureMin, durationMin: statusRouteDurationMin(route, mode), mode });
+        });
+      });
+      return descriptors.map(descriptor => {
+        const runMode = serviceContext.winterEmergency
+          ? 'winterEmergency'
+          : statusTimeModeForMinutes(descriptor.departureMin);
+        descriptor.mode = runMode;
+        const stopCount = statusEffectiveStopCount(descriptor.route, descriptor.mode);
+        const trainSeed = `${descriptor.route.serviceId}-${descriptor.route.tag}-${descriptor.departureMin}-${descriptor.route.origin}-${descriptor.route.destination}`;
+        const customDwellSeconds = descriptor.route.intermediateDwellMinutes
+          ? Array.from({ length: stopCount }, (_, index) => index > 0 && index < stopCount - 1 ? descriptor.route.intermediateDwellMinutes * 60 : 0)
+          : null;
+        const timing = BORAIL_SERVICE.calculateStopTimes(
+          trainSeed,
+          Array.from({ length: stopCount }, (_, index) => `stop-${index}`),
+          descriptor.departureMin,
+          {
+            segmentTimes: descriptor.route.segmentTimes || null,
+            customDwellSeconds,
+            mode: descriptor.mode
+          }
+        );
+        const firstStop = timing.stops[0];
+        const lastStop = timing.stops[timing.stops.length - 1];
+        return {
+          ...descriptor,
+          trainSeed,
+          delayInfo: {
+            isDelayed: timing.hasDelay,
+            delaySeconds: timing.delaySeconds,
+            delayStartStop: timing.delayStartStop
+          },
+          startMin: firstStop.actualArrivalSec / 60,
+          delayStartsMin: timing.delayStartSec === null ? null : timing.delayStartSec / 60,
+          endMin: lastStop.actualDepartureSec / 60,
+          serviceKey: `${descriptor.route.serviceId}-${descriptor.route.isExpress ? 'express' : 'local'}`
+        };
+      });
+    }
+
+    function computeStatusDelaySignals(now = BORAIL_CLOCK.now()) {
+      const serviceContext = BORAIL_SERVICE.context(now);
+      const nowMin = serviceContext.minutes;
+      const descriptors = statusRunDescriptors(now);
+      return Object.fromEntries(SERVICES.map(service => {
+        const relevant = descriptors.filter(run => run.serviceKey === service.id);
+        const active = relevant.filter(run => nowMin >= run.startMin && nowMin < run.endMin);
+        const delayed = active.filter(run => run.delayInfo.isDelayed && run.delayStartsMin !== null && nowMin >= run.delayStartsMin);
+        const nextDeparture = relevant.filter(run => run.departureMin > nowMin).sort((left, right) => left.departureMin - right.departureMin)[0];
+        const suspendedForWinter = serviceContext.winterEmergency && service.mode === 'express';
+        let type = 'ok';
+        if (delayed.length >= STATUS_DELAY_MAJOR_MIN_TRAINS) type = 'major';
+        else if (delayed.length >= STATUS_DELAY_MINOR_MIN_TRAINS) type = 'minor';
+        else if (!active.length) {
+          const returnsSoon = nextDeparture && nextDeparture.departureMin - nowMin <= STATUS_SERVICE_LOOKAHEAD_MIN;
+          type = !serviceContext.operatingWindowOpen || suspendedForWinter || !returnsSoon ? 'noservice' : 'noactive';
+        } else if (serviceContext.winterEmergency) {
+          type = 'winter';
+        }
+        const maxDelaySeconds = delayed.reduce((maximum, run) => Math.max(maximum, run.delayInfo.delaySeconds), 0);
+        const reason = delayed.length
+          ? `${delayed.length} of ${active.length} active ${service.letter} ${service.mode} trains are delayed. Longest current delay: ${Math.round(maxDelaySeconds / 60)} min. Future trains are not included.`
+          : type === 'noactive'
+            ? `No ${service.letter} ${service.mode} train is actively moving right now. Service remains scheduled.`
+            : type === 'noservice'
+              ? suspendedForWinter
+                ? 'Express service is suspended under Winter Emergency protocols.'
+                : 'No service is operating now or scheduled within the applicable service window.'
+              : serviceContext.winterEmergency
+                ? 'Winter Emergency service is operating with reduced frequency. Allow extra travel time.'
+                : `All ${active.length} active ${service.letter} ${service.mode} ${active.length === 1 ? 'train is' : 'trains are'} currently on time.`;
+        return [service.id, {
+          type,
+          delayed: delayed.length,
+          total: active.length,
+          maxDelaySeconds,
+          reason,
+          winterEmergency: serviceContext.winterEmergency,
+          nextDepartureMin: nextDeparture?.departureMin ?? null
+        }];
+      }));
     }
 
     function renderStatus(state, delaySignals = computeStatusDelaySignals()){
       const host = document.getElementById('statusList');
       host.innerHTML = state.statuses.map((stObj) => {
-        const delaySignal = delaySignals[stObj.letter];
-        const displayObj = delaySignal ? { ...stObj, type: delaySignal.type, delaySignal } : stObj;
+        const signal = delaySignals[stObj.id] || { type: 'noservice', reason: 'No service information is available.' };
         const svcName = stObj.nameHtml;
-        const st = displayObj.type; // 'ok' | 'minor' | 'major' | 'none'
+        const st = signal.type;
 
         const icon = `<img class="lnicon" src="${stObj.icon}" alt="${stObj.letter} ${stObj.mode}" loading="lazy" onerror="this.style.display='none'">`;
         const left = `<div class="name">${svcName}</div>`;
 
-        const forced = scheduledOverride(stObj);
-        if (forced && (forced.always || st === 'ok')){
-          // schedule-based "NO SERVICE" row (clickable for explanation)
-          return `
-            <details class="srow" data-service-id="${stObj.id}" data-status-type="${st}">
-              <summary>
-                ${icon}
-                ${left}
-                <span class="pill ${forced.cls}">${forced.label}<span class="arrow">▸</span></span>
-              </summary>
-              <div class="reason">${forced.reason}</div>
-            </details>`;
-        }
-
         if (st === 'ok'){
-          // plain row (not clickable)
           return `
             <div class="row" data-service-id="${stObj.id}" data-status-type="${st}">
               ${icon}
               ${left}
               <span class="pill ok">No Disruptions</span>
             </div>`;
-        } else {
-          // details row (clickable)
-          const cls = st==='minor' ? 'warn' : (st==='major' ? 'bad' : 'nosvc');
-          const label =
-            st==='minor' ? 'Minor Disruptions' :
-            st==='major' ? 'Major Disruptions' : 'NO SERVICE';
-
-          // fixed reason pulled from the stored reasonIndex
-          const pool =
-            st==='minor' ? REASONS.minor :
-            st==='major' ? REASONS.major : REASONS.none;
-          const reasonText = displayObj.delaySignal?.reason || pool[displayObj.reasonIndex] || pool[0];
-
-          return `
-            <details class="srow" data-service-id="${stObj.id}" data-status-type="${st}">
-              <summary>
-                ${icon}
-                ${left}
-                <span class="pill ${cls}">${label}<span class="arrow">▸</span></span>
-              </summary>
-              <div class="reason">${reasonText}</div>
-            </details>`;
         }
+        const cls = st === 'minor' ? 'warn'
+          : st === 'major' ? 'bad'
+          : st === 'noactive' ? 'idle'
+          : st === 'winter' ? 'winter'
+          : 'nosvc';
+        const label = st === 'minor' ? 'Minor Disruptions'
+          : st === 'major' ? 'Major Disruptions'
+          : st === 'noactive' ? 'No Active Trains'
+          : st === 'winter' ? 'Winter Emergency Service'
+          : 'NO SERVICE';
+        return `
+          <details class="srow" data-service-id="${stObj.id}" data-status-type="${st}">
+            <summary>
+              ${icon}
+              ${left}
+              <span class="pill ${cls}">${label}<span class="arrow">▸</span></span>
+            </summary>
+            <div class="reason">${signal.reason}</div>
+          </details>`;
       }).join('');
-    }
-
-    // --- 12-hour persistence (per device) ---
-    const WINDOW_MS = 12 * 60 * 60 * 1000; // 12 hours
-    const STORAGE_KEY = 'borail_status_window_v3';
-
-    // Load previously saved state, or null
-    function loadStatusState() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        return raw ? JSON.parse(raw) : null;
-      } catch { return null; }
-    }
-
-    function saveStatusState(state) {
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-      catch { /* ignore */ }
-    }
-
-    function createNewStatusState() {
-      // One disruption status per letter, shared across local/express variants.
-      const byLetter = {};
-      for (const ln of BASE_LINES) {
-        const type = pickStatus(ln.probs); // 'ok' | 'minor' | 'major' | 'none'
-        let reasonIndex = -1;
-        if (type !== 'ok') {
-          const pool =
-            type === 'minor' ? REASONS.minor :
-            type === 'major' ? REASONS.major : REASONS.none;
-          reasonIndex = Math.floor(Math.random() * pool.length);
-        }
-        byLetter[ln.letter] = { type, reasonIndex };
-      }
-
-      return {
-        start: Date.now(),
-        statuses: SERVICES.map(svc => {
-          const shared = byLetter[svc.letter] || { type: 'ok', reasonIndex: -1 };
-          return {
-            id: svc.id,
-            nameHtml: svc.nameHtml,
-            icon: svc.icon,
-            letter: svc.letter,
-            mode: svc.mode,
-            color: svc.color,
-            type: shared.type,
-            reasonIndex: shared.reasonIndex
-          };
-        })
-      };
-    }
-
-    function normalizeStatusState(state) {
-      const existing = Array.isArray(state?.statuses) ? state.statuses : [];
-      const byLetter = {};
-
-      for (const service of existing) {
-        if (!service?.letter || byLetter[service.letter]) continue;
-        byLetter[service.letter] = {
-          type: service.type || 'ok',
-          reasonIndex: Number.isInteger(service.reasonIndex) ? service.reasonIndex : -1
-        };
-      }
-
-      return {
-        start: Number(state?.start) || Date.now(),
-        statuses: SERVICES.map(service => {
-          const shared = byLetter[service.letter] || { type: 'ok', reasonIndex: -1 };
-          return {
-            id: service.id,
-            nameHtml: service.nameHtml,
-            icon: service.icon,
-            letter: service.letter,
-            mode: service.mode,
-            color: service.color,
-            type: shared.type,
-            reasonIndex: shared.reasonIndex
-          };
-        })
-      };
-    }
-
-    // Get state: reuse if under 12h, otherwise create/replace
-    function getOrCreateStatusState() {
-      const cur = loadStatusState();
-      if (!cur) {
-        const fresh = createNewStatusState();
-        saveStatusState(fresh);
-        return fresh;
-      }
-      const age = Date.now() - cur.start;
-      if (age >= WINDOW_MS) {
-        const fresh = createNewStatusState();
-        saveStatusState(fresh);
-        return fresh;
-      }
-      const normalized = normalizeStatusState(cur);
-      saveStatusState(normalized);
-      return normalized;
     }
 
     function escapeHtml(value) {
@@ -923,7 +798,7 @@ const BORAIL_CLOCK = globalThis.BORailTime;
       }
     }
 
-    const STATUS_STATE = getOrCreateStatusState();
+    const STATUS_STATE = { statuses: SERVICES };
     let ELEVATOR_STATE = getOrCreateElevatorState();
     renderStatus(STATUS_STATE);
     renderElevatorStatus(ELEVATOR_STATE);
@@ -931,7 +806,6 @@ const BORAIL_CLOCK = globalThis.BORailTime;
     window.BORailStatusDebug = {
       services: SERVICES,
       statusState: STATUS_STATE,
-      normalizeStatusState,
       computeStatusDelaySignals,
       renderStatus,
       elevatorState: ELEVATOR_STATE,
@@ -945,7 +819,7 @@ const BORAIL_CLOCK = globalThis.BORailTime;
       const k = scheduleKey();
       if (k !== _lastKey){
         _lastKey = k;
-        renderStatus(STATUS_STATE);
       }
+      renderStatus(STATUS_STATE);
       renderElevatorStatus(ELEVATOR_STATE);
     }, 30 * 1000);

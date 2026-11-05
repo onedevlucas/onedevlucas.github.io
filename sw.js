@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v76-smooth-stop-game';
+const CACHE_NAME = 'borail-v77-winter-emergency-service';
 
 const CORE_ASSETS = [
   './',
@@ -13,10 +13,12 @@ const CORE_ASSETS = [
   'assets/css/mybocard.css',
   'assets/css/status.css',
   'assets/css/timetable.css',
+  'assets/css/winter-emergency.css',
   'assets/css/workbench.css',
   'assets/js/status.js',
   'assets/js/mybocard.js',
   'assets/js/time.js',
+  'assets/js/service-calendar.js',
   'assets/js/ad-carousel.js',
   'assets/js/live-map-route-geometry.js',
   'assets/js/live-map-id-geometry.js',

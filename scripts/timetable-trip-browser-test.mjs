@@ -74,7 +74,7 @@ await send('Runtime.evaluate', { expression: `try {
 await send('Page.navigate', { url: 'http://127.0.0.1:8766/index.html' });
 await wait(750);
 
-assert.equal(await evaluate(`document.getElementById('splash-version').textContent`), 'V76 - 10/18/26');
+assert.equal(await evaluate(`document.getElementById('splash-version').textContent`), 'V77 - 11/4/26');
 assert.equal(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`), 0);
 await wait(2850);
 assert.ok(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`) > 0.9);
@@ -85,6 +85,66 @@ if (process.env.BORAIL_SPLASH_SCREENSHOT) {
 }
 await wait(1400);
 assert.equal(await evaluate(`document.getElementById('splash-screen') === null`), true);
+
+const winterServiceChecks = await evaluate(`(() => {
+  const dates = BORailService.winterEmergencyDatesForSeason(2026);
+  const date = BORailTime.fromWallTime(dates[0], '12:00');
+  const runs = BORailTripDebug.buildScheduledRuns(date, true);
+  const futureVisibleRuns = BORailTripDebug.runsWithCurrentlyVisibleDelays(runs, date, BORailTime.fromWallTime('2026-11-04', '12:00'));
+  const cRuns = runs.filter(run => run.serviceId === 'C');
+  const eRuns = runs.filter(run => run.serviceId === 'E');
+  const fShuttleRuns = runs.filter(run => run.shuttleKey === 'F-winter-shuttle');
+  const delayedRuns = runs.filter(run => run.hasDelay);
+  return {
+    dates,
+    mode: BORailService.context(date).mode,
+    hasExpress: runs.some(run => run.isExpress),
+    allOriginsInWindow: runs.every(run => run.departureMin >= 360 && run.departureMin < 1380),
+    delayedRate: delayedRuns.length / runs.length,
+    delayRangeOk: delayedRuns.every(run => run.delaySeconds >= 300 && run.delaySeconds <= 900),
+    cSkipsAirport: cRuns.length > 0 && cRuns.every(run => !run.stops.some(stop => stop.name === 'Oakville City Airport')),
+    eSkipsTyford: eRuns.length > 0 && eRuns.every(run => !run.stops.some(stop => stop.name === 'Tyford Farms')),
+    fShuttleCount: fShuttleRuns.length,
+    fShuttleStopsCorrect: fShuttleRuns.every(run => {
+      const pattern = run.stops.map(stop => stop.name).join('|');
+      return pattern === 'Atkinson Junction|Garner|Kenilworth' || pattern === 'Kenilworth|Garner|Atkinson Junction';
+    }),
+    futureDelaysHidden: futureVisibleRuns.every(run => !run.hasDelay && run.stops.every(stop => !stop.isDelayed)),
+    finishingRunsAfterEleven: runs.some(run => run.stops.at(-1).actualDepartureSec > 23 * 3600),
+    winterJourneyExpress: BORailTripDebug.planBORailTrip('Newkirk', 'Mount River', date).journeys.some(journey => journey.hasExpress)
+  };
+})()`);
+assert.equal(winterServiceChecks.dates.length, 10);
+assert.equal(new Set(winterServiceChecks.dates).size, 10);
+assert.equal(winterServiceChecks.mode, 'winterEmergency');
+assert.equal(winterServiceChecks.hasExpress, false);
+assert.equal(winterServiceChecks.allOriginsInWindow, true);
+assert.ok(winterServiceChecks.delayedRate >= .5 && winterServiceChecks.delayedRate <= .7);
+assert.equal(winterServiceChecks.delayRangeOk, true);
+assert.equal(winterServiceChecks.cSkipsAirport, true);
+assert.equal(winterServiceChecks.eSkipsTyford, true);
+assert.ok(winterServiceChecks.fShuttleCount > 10);
+assert.equal(winterServiceChecks.fShuttleStopsCorrect, true);
+assert.equal(winterServiceChecks.futureDelaysHidden, true);
+assert.equal(winterServiceChecks.finishingRunsAfterEleven, true);
+assert.equal(winterServiceChecks.winterJourneyExpress, false);
+
+const emergencyDateKey = winterServiceChecks.dates[0];
+await evaluate(`(() => {
+  sessionStorage.removeItem('borailWinterEmergencyAcknowledged:' + ${JSON.stringify(emergencyDateKey)});
+  BORailService.initializeEmergencyNotice(BORailTime.fromWallTime(${JSON.stringify(emergencyDateKey)}, '12:00'));
+})()`);
+await wait(120);
+assert.equal(await evaluate(`document.querySelector('.winter-emergency-overlay')?.classList.contains('visible')`), true);
+assert.match(await evaluate(`document.querySelector('.winter-emergency-dialog').textContent`), /Winter Emergency Notice/);
+assert.match(await evaluate(`document.querySelector('.winter-emergency-actions a').getAttribute('href')`), /winter-emergency-map\.pdf$/);
+if (process.env.BORAIL_EMERGENCY_SCREENSHOT) {
+  const emergencyScreenshot = await send('Page.captureScreenshot', { format: 'png' });
+  fs.writeFileSync(process.env.BORAIL_EMERGENCY_SCREENSHOT, Buffer.from(emergencyScreenshot.data, 'base64'));
+}
+await evaluate(`document.querySelector('.winter-emergency-dialog button').click()`);
+await wait(300);
+assert.equal(await evaluate(`document.querySelector('.winter-emergency-overlay') === null`), true);
 
 assert.equal(await evaluate('document.title'), 'BORail Live Timetable');
 assert.equal(await evaluate(`document.querySelector('footer').textContent`), '© BORail • Built for iPhone • Works offline after first load');
@@ -108,7 +168,7 @@ assert.equal(await evaluate(`Math.round(document.getElementById('adCarousel').ge
 assert.equal(await evaluate(`BORailAdCarouselDebug.getState().autoIntervalMs`), 5000);
 assert.equal(await evaluate(`BORailAdCarouselDebug.getState().manualPauseMs`), 10000);
 const carouselIndexBeforeAutomaticNavigation = await evaluate(`BORailAdCarouselDebug.getState().activeIndex`);
-await wait(1200);
+await wait(5200);
 assert.notEqual(await evaluate(`BORailAdCarouselDebug.getState().activeIndex`), carouselIndexBeforeAutomaticNavigation);
 await evaluate(`document.getElementById('adCarouselNext').click()`);
 const carouselIndexAfterManualNavigation = await evaluate(`BORailAdCarouselDebug.getState().activeIndex`);
@@ -435,7 +495,9 @@ await evaluate(`document.getElementById('liveMapDetailsClose').click()`);
 await realClickElement(`Array.from(document.querySelectorAll('#liveMapTrains .live-map-train-car')).find(element => {
   const rect = element.getBoundingClientRect();
   const svgRect = document.getElementById('liveMapSvg').getBoundingClientRect();
-  return rect.left > svgRect.left + 8 && rect.right < svgRect.right - 58 && rect.top > svgRect.top + 55 && rect.bottom < svgRect.bottom - 15;
+  const top = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+  return rect.left > svgRect.left + 8 && rect.right < svgRect.right - 58 && rect.top > svgRect.top + 55 && rect.bottom < svgRect.bottom - 15
+    && top?.closest('.live-map-train') === element.closest('.live-map-train');
 }) || document.querySelector('#liveMapTrains .live-map-train-car')`);
 assert.equal(await evaluate(`BORailLiveMapDebug.getState().selected?.type`), 'train');
 assert.equal(await evaluate(`document.getElementById('liveMapDetails').hidden`), false);
@@ -589,7 +651,7 @@ assert.equal(radcliffRules.atkinsToAirportMinutes, 3);
 assert.equal(radcliffRules.offPeakFallback.effective, 'Oakville City Airport');
 assert.equal(radcliffRules.offPeakFallback.fallback, true);
 assert.equal(radcliffRules.rushFallback.fallback, false);
-assert.equal(await evaluate(`arrivalsForStation('Radcliff Fields', BORailTime.fromWallTime('2026-08-01', '12:00')).length`), 0);
+assert.ok(await evaluate(`arrivalsForStation('Radcliff Fields', BORailTime.fromWallTime('2026-08-01', '12:00')).every(arrival => arrival.minsAway > 240)`));
 assert.ok(await evaluate(`arrivalsForStation('Radcliff Fields', BORailTime.fromWallTime('2026-08-01', '07:00')).length`) > 0);
 
 const bExpressRules = await evaluate(`(() => {
@@ -760,103 +822,76 @@ await send('Page.navigate', { url: 'http://127.0.0.1:8766/index.html' });
 await wait(200);
 assert.equal(await evaluate(`document.getElementById('splash-screen') === null`), true);
 
-await evaluate(`(() => {
-  localStorage.setItem('borail_status_window_v3', JSON.stringify({
-    start: Date.now(),
-    statuses: [
-      { id: 'A-local', letter: 'A', mode: 'local', type: 'major', reasonIndex: 1 },
-      { id: 'A-express', letter: 'A', mode: 'express', type: 'ok', reasonIndex: -1 },
-      { id: 'B-local', letter: 'B', mode: 'local', type: 'minor', reasonIndex: 2 }
-    ]
-  }));
-  return true;
-})()`);
 await send('Page.navigate', { url: 'http://127.0.0.1:8766/status.html' });
 await wait(700);
 await evaluate(`BORailStatusDebug.renderStatus(BORailStatusDebug.statusState, {
-  A: {
-    type: 'major',
-    delayed: 12,
-    total: 20,
-    maxDelaySeconds: 180,
-    reason: 'Timetable is showing 12 delayed trains on the A line in the next 2 hours. Longest delay: 3 min.'
+  'A-local': {
+    type: 'major', delayed: 3, total: 4, maxDelaySeconds: 600,
+    reason: '3 of 4 active A local trains are delayed. Future trains are not included.'
   },
-  B: {
-    type: 'minor',
-    delayed: 6,
-    total: 18,
-    maxDelaySeconds: 120,
-    reason: 'Timetable is showing 6 delayed trains on the B line in the next 2 hours. Longest delay: 2 min.'
+  'A-express': {
+    type: 'noservice', delayed: 0, total: 0, maxDelaySeconds: 0,
+    reason: 'Express service is not operating now.'
+  },
+  'F-local': {
+    type: 'noactive', delayed: 0, total: 0, maxDelaySeconds: 0,
+    reason: 'No F local train is actively moving right now. Service remains scheduled.'
+  },
+  'B-local': {
+    type: 'ok', delayed: 0, total: 2, maxDelaySeconds: 0,
+    reason: 'All 2 active B local trains are currently on time.'
   }
 })`);
-const pairedStatuses = await evaluate(`(() => {
-  const byId = Object.fromEntries(BORailStatusDebug.statusState.statuses.map(service => [service.id, service]));
-  return {
-    hasBExpress: BORailStatusDebug.services.some(service => service.id === 'B-express'),
-    aLocal: byId['A-local'],
-    aExpress: byId['A-express'],
-    bLocal: byId['B-local'],
-    bExpress: byId['B-express'],
-    renderedBExpress: Boolean(document.querySelector('[data-service-id="B-express"]')),
-    aLocalPill: document.querySelector('[data-service-id="A-local"] .pill')?.textContent.trim(),
-    aExpressPill: document.querySelector('[data-service-id="A-express"] .pill')?.textContent.trim(),
-    bLocalPill: document.querySelector('[data-service-id="B-local"] .pill')?.textContent.trim(),
-    bExpressPill: document.querySelector('[data-service-id="B-express"] .pill')?.textContent.trim(),
-    aLocalReason: document.querySelector('[data-service-id="A-local"] .reason')?.textContent.trim(),
-    aExpressReason: document.querySelector('[data-service-id="A-express"] .reason')?.textContent.trim(),
-    bLocalReason: document.querySelector('[data-service-id="B-local"] .reason')?.textContent.trim(),
-    bExpressReason: document.querySelector('[data-service-id="B-express"] .reason')?.textContent.trim()
-  };
-})()`);
-assert.equal(pairedStatuses.hasBExpress, true);
-assert.equal(pairedStatuses.renderedBExpress, true);
-assert.equal(pairedStatuses.aLocal.type, pairedStatuses.aExpress.type);
-assert.equal(pairedStatuses.aLocal.reasonIndex, pairedStatuses.aExpress.reasonIndex);
-assert.equal(pairedStatuses.bLocal.type, pairedStatuses.bExpress.type);
-assert.equal(pairedStatuses.bLocal.reasonIndex, pairedStatuses.bExpress.reasonIndex);
-assert.equal(pairedStatuses.aLocalPill, pairedStatuses.aExpressPill);
-assert.equal(pairedStatuses.bLocalPill, pairedStatuses.bExpressPill);
-assert.equal(pairedStatuses.aLocalReason, pairedStatuses.aExpressReason);
-assert.equal(pairedStatuses.bLocalReason, pairedStatuses.bExpressReason);
-await evaluate(`BORailStatusDebug.renderStatus(BORailStatusDebug.statusState, {
-  A: {
-    type: 'major',
-    delayed: 12,
-    total: 18,
-    maxDelaySeconds: 180,
-    reason: 'Timetable is showing 12 delayed trains on the A line in the next 2 hours. Longest delay: 3 min.'
-  },
-  F: {
-    type: 'minor',
-    delayed: 6,
-    total: 14,
-    maxDelaySeconds: 120,
-    reason: 'Timetable is showing 6 delayed trains on the F line in the next 2 hours. Longest delay: 2 min.'
-  },
-  B: {
-    type: 'ok',
-    delayed: 5,
-    total: 16,
-    maxDelaySeconds: 60,
-    reason: 'Timetable is showing 5 delayed trains on the B line in the next 2 hours. Longest delay: 1 min.'
-  }
-})`);
-const delayOverride = await evaluate(`(() => ({
+const independentStatuses = await evaluate(`(() => ({
   aLocalType: document.querySelector('[data-service-id="A-local"]').dataset.statusType,
   aExpressType: document.querySelector('[data-service-id="A-express"]').dataset.statusType,
   aLocalReason: document.querySelector('[data-service-id="A-local"] .reason')?.textContent.trim(),
-  aExpressReason: document.querySelector('[data-service-id="A-express"] .reason')?.textContent.trim(),
   fLocalType: document.querySelector('[data-service-id="F-local"]').dataset.statusType,
+  fLocalPill: document.querySelector('[data-service-id="F-local"] .pill')?.textContent.trim(),
   bLocalType: document.querySelector('[data-service-id="B-local"]').dataset.statusType,
   bLocalPill: document.querySelector('[data-service-id="B-local"] .pill')?.textContent.trim()
 }))()`);
-assert.equal(delayOverride.aLocalType, 'major');
-assert.equal(delayOverride.aExpressType, 'major');
-assert.match(delayOverride.aLocalReason, /12 delayed trains/);
-assert.equal(delayOverride.aLocalReason, delayOverride.aExpressReason);
-assert.equal(delayOverride.fLocalType, 'minor');
-assert.equal(delayOverride.bLocalType, 'ok');
-assert.match(delayOverride.bLocalPill, /No Disruptions/);
+assert.equal(independentStatuses.aLocalType, 'major');
+assert.equal(independentStatuses.aExpressType, 'noservice');
+assert.match(independentStatuses.aLocalReason, /active A local trains/);
+assert.equal(independentStatuses.fLocalType, 'noactive');
+assert.match(independentStatuses.fLocalPill, /No Active Trains/);
+assert.equal(independentStatuses.bLocalType, 'ok');
+assert.match(independentStatuses.bLocalPill, /No Disruptions/);
+
+const activeStatusChecks = await evaluate(`(() => {
+  const emergencyDate = BORailService.winterEmergencyDatesForSeason(2026)[0];
+  const emergencySignals = BORailStatusDebug.computeStatusDelaySignals(BORailTime.fromWallTime(emergencyDate, '12:00'));
+  const closedSignals = BORailStatusDebug.computeStatusDelaySignals(BORailTime.fromWallTime('2026-11-04', '05:00'));
+  const finishingSignals = BORailStatusDebug.computeStatusDelaySignals(BORailTime.fromWallTime('2026-11-04', '23:00'));
+  const fullyClosedSignals = BORailStatusDebug.computeStatusDelaySignals(BORailTime.fromWallTime('2026-11-04', '23:45'));
+  let noActiveFound = false;
+  let activeDelayReason = '';
+  for (let minute = 360; minute < 1380; minute += 1) {
+    const hour = String(Math.floor(minute / 60)).padStart(2, '0');
+    const part = String(minute % 60).padStart(2, '0');
+    const signals = BORailStatusDebug.computeStatusDelaySignals(BORailTime.fromWallTime(emergencyDate, hour + ':' + part));
+    if (signals['D-local'].type === 'noactive') noActiveFound = true;
+    const delayedSignal = Object.values(signals).find(signal => signal.delayed > 0);
+    if (delayedSignal) activeDelayReason = delayedSignal.reason;
+    if (noActiveFound && activeDelayReason) break;
+  }
+  return {
+    expressSuspended: ['A-express','B-express','F-express','S-express'].every(id => emergencySignals[id].type === 'noservice'),
+    allClosed: Object.values(closedSignals).every(signal => signal.type === 'noservice'),
+    finalTripsMayFinish: Object.values(finishingSignals).some(signal => signal.total > 0 && signal.type !== 'noservice'),
+    allStoppedLater: Object.values(fullyClosedSignals).every(signal => signal.type === 'noservice'),
+    noActiveFound,
+    activeDelayReason
+  };
+})()`);
+assert.equal(activeStatusChecks.expressSuspended, true);
+assert.equal(activeStatusChecks.allClosed, true);
+assert.equal(activeStatusChecks.finalTripsMayFinish, true);
+assert.equal(activeStatusChecks.allStoppedLater, true);
+assert.equal(activeStatusChecks.noActiveFound, true);
+assert.match(activeStatusChecks.activeDelayReason, /active .* trains are delayed/);
+assert.match(activeStatusChecks.activeDelayReason, /Future trains are not included/);
 
 const elevatorInitial = await evaluate(`(() => {
   const active = BORailElevatorDebug.state.outages.filter(outage => BORailElevatorDebug.getStatus(outage) !== 'repaired');

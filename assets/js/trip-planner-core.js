@@ -95,6 +95,7 @@
             runId: run.id,
             serviceId: run.serviceId,
             isExpress: Boolean(run.isExpress),
+            isSingleShuttle: Boolean(run.isSingleShuttle),
             tag: run.tag,
             origin: run.origin,
             destination: run.destination,

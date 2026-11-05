@@ -638,7 +638,7 @@
 
   function stationAriaLabel(stationName) {
     const lines = new Set();
-    ROUTES.forEach(route => {
+    routesForDate().forEach(route => {
       if (route.stops.includes(stationName)) lines.add(`${route.serviceId} ${route.isExpress ? 'express' : 'local'}`);
     });
     return `${stationName} station. ${[...lines].join(', ') || 'No active line information'}. Select for next trains.`;
@@ -697,7 +697,7 @@
 
   function consistForRun(run) {
     const consist = getTrainConsist(run.trainSeed, run.serviceId, run.isExpress);
-    if (SINGLE_TRAIN_SHUTTLES.has(run.serviceId)) {
+    if (run.isSingleShuttle || SINGLE_TRAIN_SHUTTLES.has(run.serviceId)) {
       consist.model = 'MTC-T 110';
       consist.cars = 2;
       const fixed = FIXED_SHUTTLE_LEAD_CARS[run.serviceId]?.[run.destination];
@@ -936,8 +936,11 @@
     const mode = timeMode(date);
     serviceState.textContent = mode === 'rushAM' ? 'AM Rush service'
       : mode === 'rushPM' ? 'PM Rush service'
-      : mode === 'overnight' ? 'Overnight service'
+      : mode === 'winterEmergency' ? 'Winter Emergency service'
+      : mode === 'closed' ? 'No service — final trains may be completing trips'
       : 'Regular service';
+    serviceState.classList.toggle('late-night', mode === 'closed');
+    serviceState.classList.toggle('winter-emergency', mode === 'winterEmergency');
   }
 
   function updateFilterSummary() {
@@ -1169,7 +1172,7 @@
 
   function stationLines(stationId) {
     const lines = new Map();
-    ROUTES.forEach(route => {
+    routesForDate().forEach(route => {
       if (!route.stops.includes(stationId)) return;
       if (!lines.has(route.serviceId)) lines.set(route.serviceId, { local: false, express: false });
       lines.get(route.serviceId)[route.isExpress ? 'express' : 'local'] = true;
