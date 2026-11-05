@@ -70,12 +70,11 @@ await send('Emulation.setTimezoneOverride', { timezoneId: 'Asia/Seoul' });
 await send('Runtime.evaluate', { expression: `try {
   sessionStorage.removeItem('borailTimetableSplashSeen');
   sessionStorage.removeItem('borailTimetableView');
-  Object.keys(sessionStorage).filter(key => key.startsWith('borailWinterEmergencyAcknowledged:')).forEach(key => sessionStorage.removeItem(key));
 } catch {}` });
 await send('Page.navigate', { url: 'http://127.0.0.1:8766/index.html' });
 await wait(750);
 
-assert.equal(await evaluate(`document.getElementById('splash-version').textContent`), 'V77B - 11/4/26');
+assert.equal(await evaluate(`document.getElementById('splash-version').textContent`), 'V77 - 11/4/26');
 assert.equal(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`), 0);
 await wait(2850);
 assert.ok(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`) > 0.9);
@@ -86,12 +85,6 @@ if (process.env.BORAIL_SPLASH_SCREENSHOT) {
 }
 await wait(1400);
 assert.equal(await evaluate(`document.getElementById('splash-screen') === null`), true);
-assert.equal(await evaluate(`BORailService.WINTER_EMERGENCY_TEST_MODE`), true);
-assert.equal(await evaluate(`BORailService.context().winterEmergency`), true);
-assert.equal(await evaluate(`BORailService.context().forcedWinterEmergency`), true);
-assert.equal(await evaluate(`document.querySelector('.winter-emergency-overlay')?.classList.contains('visible')`), true);
-await evaluate(`document.querySelector('.winter-emergency-dialog button').click()`);
-await wait(300);
 
 const winterServiceChecks = await evaluate(`(() => {
   const dates = BORailService.winterEmergencyDatesForSeason(2026);
@@ -693,15 +686,15 @@ assert.deepEqual(bExpressRules.southbound, [
   'Leighton Castle'
 ]);
 assert.deepEqual(bExpressRules.dovervilleBadges.filter(badge => badge.includes('B')), ['(B)']);
-assert.deepEqual(bExpressRules.madisonboroBadges.filter(badge => badge.includes('B')), ['(B)']);
+assert.deepEqual(bExpressRules.madisonboroBadges.filter(badge => badge.includes('B')), ['(B)', '<B>']);
 
 await evaluate(`document.getElementById('tripPlannerTab').click()`);
 assert.equal(await evaluate(`document.getElementById('tripPlannerView').hidden`), false);
 assert.equal(await evaluate(`getComputedStyle(document.getElementById('adCarousel')).display`), 'block');
 assert.equal(await evaluate(`tripOriginSelect.type`), 'hidden');
-assert.equal(await evaluate(`document.querySelectorAll('#tripOriginTriggerContent .dropdown-badge-img').length`), 2);
+assert.equal(await evaluate(`document.querySelectorAll('#tripOriginTriggerContent .dropdown-badge-img').length`), 4);
 assert.equal(await evaluate(`document.querySelectorAll('#tripDestinationTriggerContent .dropdown-badge-img').length`), 1);
-assert.deepEqual(await evaluate(`Array.from(document.querySelectorAll('#tripOriginTriggerContent .dropdown-badge-img')).map(image => image.alt)`), ['(F)', '(A)']);
+assert.deepEqual(await evaluate(`Array.from(document.querySelectorAll('#tripOriginTriggerContent .dropdown-badge-img')).map(image => image.alt)`), ['<F>', '(F)', '(A)', '<S>']);
 assert.equal(await evaluate(`document.querySelector('#tripOriginTriggerContent .station-trigger-name').textContent`), 'Newkirk');
 assert.equal(await evaluate(`document.querySelector('#tripDestinationTriggerContent .station-trigger-name').textContent`), 'New Halifax');
 await evaluate(`document.getElementById('tripOriginDropdownTrigger').click()`);

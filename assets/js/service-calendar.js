@@ -9,7 +9,6 @@
   const WINTER_START = { month: 12, day: 10 };
   const WINTER_END = { month: 3, day: 10 };
   const WINTER_EMERGENCY_DAY_COUNT = 10;
-  const WINTER_EMERGENCY_TEST_MODE = true;
   const WINTER_DELAY_RATE = 0.60;
   const WINTER_DELAY_MINUTES = { min: 5, max: 15 };
   const BASE_DELAY_RATE = 0.10;
@@ -142,11 +141,8 @@
     const minutes = parts.hour * 60 + parts.minute + parts.second / 60;
     const dateKey = keyForParts(parts);
     const seasonStartYear = seasonStartYearForParts(parts);
-    const scheduledWinterEmergency = seasonStartYear !== null
+    const winterEmergency = seasonStartYear !== null
       && winterEmergencyDatesForSeason(seasonStartYear).includes(dateKey);
-    const currentNewYorkDateKey = keyForParts(CLOCK.parts(CLOCK.now()));
-    const forcedWinterEmergency = WINTER_EMERGENCY_TEST_MODE && dateKey === currentNewYorkDateKey;
-    const winterEmergency = scheduledWinterEmergency || forcedWinterEmergency;
     const operatingWindowOpen = minutes >= OPEN_MINUTE && minutes < LAST_ORIGIN_DEPARTURE_MINUTE;
     let mode = 'closed';
     if (operatingWindowOpen) {
@@ -162,7 +158,6 @@
       mode,
       operatingWindowOpen,
       winterEmergency,
-      forcedWinterEmergency,
       winterSeason: seasonStartYear !== null,
       seasonStartYear,
       emergencyDates: seasonStartYear === null ? [] : winterEmergencyDatesForSeason(seasonStartYear)
@@ -297,7 +292,6 @@
     OPEN_MINUTE,
     LAST_ORIGIN_DEPARTURE_MINUTE,
     WINTER_EMERGENCY_DAY_COUNT,
-    WINTER_EMERGENCY_TEST_MODE,
     WINTER_DELAY_RATE,
     WINTER_DELAY_MINUTES,
     WINTER_ROUTES,

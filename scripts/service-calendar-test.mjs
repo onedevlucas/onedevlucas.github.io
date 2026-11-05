@@ -7,13 +7,9 @@ const clock = globalThis.BORailTime;
 const service = globalThis.BORailService;
 
 assert.equal(service.context(clock.fromWallTime('2026-11-04', '05:59')).mode, 'closed');
-assert.equal(service.context(clock.fromWallTime('2026-11-04', '06:00')).mode, 'winterEmergency');
-assert.equal(service.context(clock.fromWallTime('2026-11-04', '22:59')).mode, 'winterEmergency');
+assert.equal(service.context(clock.fromWallTime('2026-11-04', '06:00')).mode, 'rushAM');
+assert.equal(service.context(clock.fromWallTime('2026-11-04', '22:59')).mode, 'local');
 assert.equal(service.context(clock.fromWallTime('2026-11-04', '23:00')).mode, 'closed');
-assert.equal(service.WINTER_EMERGENCY_TEST_MODE, true);
-assert.equal(service.context(clock.fromWallTime('2026-11-04', '12:00')).forcedWinterEmergency, true);
-assert.equal(service.timeModeForMinutes(6 * 60), 'rushAM');
-assert.equal(service.timeModeForMinutes(22 * 60 + 59), 'local');
 assert.equal(service.isOriginDepartureAllowed(22 * 60 + 59), true);
 assert.equal(service.isOriginDepartureAllowed(23 * 60), false);
 

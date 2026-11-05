@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v77b-winter-emergency-test';
+const CACHE_NAME = 'borail-v77-winter-emergency-final';
 
 const CORE_ASSETS = [
   './',
