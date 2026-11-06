@@ -232,6 +232,38 @@
     };
   }
 
+  // A return trip uses the same physical train: it cannot depart until the
+  // previous trip's actual terminal departure plus its layover.
+  function singleShuttleRuns(routes, shuttleKey, date = CLOCK.now()) {
+    if (routes.length < 2) return [];
+    const currentContext = context(date);
+    const scheduleKind = currentContext.winterEmergency ? 'winterEmergency' : 'regular';
+    const random = seededRandom(`${shuttleKey}-${currentContext.dateKey}-${scheduleKind}-shuttle-seq`);
+    const preferredOrigin = shuttleKey === 'G' ? 'Bradford Bay'
+      : shuttleKey === 'D' ? 'Oakville City Airport'
+      : shuttleKey === 'F-winter-shuttle' ? 'Atkinson Junction' : routes[0].origin;
+    let route = routes.find(item => item.origin === preferredOrigin) || routes[0];
+    let opposite = routes.find(item => item !== route);
+    let departureMin = OPEN_MINUTE + (shuttleKey === 'F-winter-shuttle' ? 0 : Math.floor(random() * 3));
+    const runs = [];
+    while (departureMin < LAST_ORIGIN_DEPARTURE_MINUTE) {
+      const stops = route.stops || Array.from({ length: route.stopCount }, (_, index) => `stop-${index}`);
+      const customDwellSeconds = route.intermediateDwellMinutes
+        ? stops.map((_, index) => index > 0 && index < stops.length - 1 ? route.intermediateDwellMinutes * 60 : 0)
+        : null;
+      const mode = currentContext.winterEmergency ? 'winterEmergency' : timeModeForMinutes(departureMin);
+      const trainSeed = `${route.serviceId}-${route.tag}-${departureMin}-${route.origin}-${route.destination}`;
+      const timing = calculateStopTimes(trainSeed, stops, departureMin, {
+        mode, segmentTimes: route.segmentTimes || null, customDwellSeconds
+      });
+      runs.push({ route, departureMin, trainSeed, customDwellSeconds, timing, mode });
+      const layover = route.terminalLayoverMinutes ?? (1 + random() * 2);
+      departureMin = timing.stops.at(-1).actualDepartureSec / 60 + layover;
+      [route, opposite] = [opposite, route];
+    }
+    return runs;
+  }
+
   function initializeEmergencyNotice(date = CLOCK.now()) {
     if (typeof document === 'undefined') return null;
     const current = context(date);
@@ -254,7 +286,7 @@
         <h2 id="winterEmergencyTitle">Winter Emergency Notice!</h2>
         <p id="winterEmergencyMessage">A significant snowstorm is affecting the State of Newkirk. All BORail service has switched to Winter Emergency protocols. Please allow extra travel time: trains are operating less frequently and may be delayed by low visibility and snow accumulation.</p>
         <div class="winter-emergency-actions">
-          <a href="assets/maps/borail-flatlands-winter-emergency-map.pdf" target="_blank" rel="noopener">View Winter Emergency Map</a>
+          <a href="map-viewer.html?map=winter">View Winter Emergency Map</a>
           <button type="button">I Understand</button>
         </div>
       </section>`;
@@ -301,6 +333,7 @@
     timeModeForMinutes,
     delayInfo,
     calculateStopTimes,
+    singleShuttleRuns,
     winterEmergencyDatesForSeason,
     isOriginDepartureAllowed: minutes => Number(minutes) >= OPEN_MINUTE && Number(minutes) < LAST_ORIGIN_DEPARTURE_MINUTE,
     initializeEmergencyNotice

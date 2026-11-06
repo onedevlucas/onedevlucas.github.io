@@ -11,10 +11,16 @@
   "orientation": "any",
   "icons": [
     {
-      "src": "/assets/images/branding/borail-logo.png",
-      "sizes": "500x500",
+      "src": "/assets/images/branding/app-icon-192-v79.png",
+      "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/images/branding/app-icon-512-v79.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }

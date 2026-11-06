@@ -316,23 +316,7 @@ if (!BORAIL_CLOCK || !BORAIL_SERVICE) throw new Error('BORail time and service h
         groups.get(key).push(route);
       });
       groups.forEach((group, shuttleKey) => {
-        if (group.length < 2) return;
-        const preferredOrigin = shuttleKey === 'G' ? 'Bradford Bay'
-          : shuttleKey === 'D' ? 'Oakville City Airport'
-          : shuttleKey === 'F-winter-shuttle' ? 'Atkinson Junction'
-          : group[0].origin;
-        let current = group.find(route => route.origin === preferredOrigin) || group[0];
-        let opposite = group.find(route => route !== current) || group[1];
-        const scheduleKind = mode === 'winterEmergency' ? 'winterEmergency' : 'regular';
-        const cacheKey = `${shuttleKey}-${BORAIL_CLOCK.dateKey(date)}-${scheduleKind}`;
-        const rng = seededRandom(`${cacheKey}-shuttle-seq`);
-        let departureMin = BORAIL_SERVICE.OPEN_MINUTE + (shuttleKey === 'F-winter-shuttle' ? 0 : Math.floor(rng() * 3));
-        while (departureMin < BORAIL_SERVICE.LAST_ORIGIN_DEPARTURE_MINUTE) {
-          const durationMin = statusShuttleTravelMin(current, mode);
-          descriptors.push({ route: current, departureMin, durationMin, mode });
-          departureMin += durationMin + (current.terminalLayoverMinutes ?? (1 + rng() * 2));
-          [current, opposite] = [opposite, current];
-        }
+        descriptors.push(...BORAIL_SERVICE.singleShuttleRuns(group, shuttleKey, date));
       });
       return descriptors;
     }

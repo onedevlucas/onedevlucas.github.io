@@ -4,13 +4,17 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>BORail System Map</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="BORail" />
   <meta name="theme-color" content="#0a0a12" />
   <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="apple-touch-icon" href="assets/images/branding/borail-logo.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/images/branding/apple-touch-icon-v79.png" />
   <!-- (Optional) favicon to match index -->
   <link rel="icon" type="image/png" href="assets/images/branding/favicon.png">
   <link rel="stylesheet" href="assets/css/map.css">
   <link rel="stylesheet" href="assets/css/winter-emergency.css">
+  <link rel="stylesheet" href="assets/css/app-shell.css">
 </head>
 <body>
   <header>
@@ -29,25 +33,25 @@
 
     <!-- Day Time Map -->
     <div class="map-card">
-      <a class="mapbtn" href="assets/maps/borail-flatlands-rush-hour-map.pdf" target="_blank" rel="noopener">Rush Hour Map</a>
+      <a class="mapbtn" href="map-viewer.html?map=rush">Rush Hour Map</a>
       <div class="map-caption">6:00AM - 9:30AM & 5:00PM - 7:30PM Service Hours</div>
     </div>
 
     <!-- Night Time Map -->
     <div class="map-card">
-      <a class="mapbtn" href="assets/maps/borail-flatlands-regular-service-map.pdf" target="_blank" rel="noopener">Regular Service Map</a>
+      <a class="mapbtn" href="map-viewer.html?map=regular">Regular Service Map</a>
       <div class="map-caption">9:30AM - 5:00PM & 7:30PM - 11:00PM Service Hours</div>
     </div>
 
     <!-- Winter Emergency Map -->
     <div class="map-card">
-      <a class="mapbtn" href="assets/maps/borail-flatlands-winter-emergency-map.pdf" target="_blank" rel="noopener">Winter Emergency Map</a>
+      <a class="mapbtn" href="map-viewer.html?map=winter">Winter Emergency Map</a>
       <div class="map-caption">Map Service during Winter Emergencies</div>
     </div>
 
     <!-- Route Map -->
     <div class="map-card">
-      <a class="mapbtn" href="assets/maps/borail-flatlands-route-map.pdf" target="_blank" rel="noopener">Route Map</a>
+      <a class="mapbtn" href="map-viewer.html?map=route">Route Map</a>
       <div class="map-caption">In-Depth Concurrent Line Map</div>
     </div>
 

@@ -407,38 +407,17 @@ function getShuttleEventsForToday(shuttleKey, date = BORAIL_CLOCK.now()) {
     return [];
   }
 
-  const serviceId = routes[0].serviceId;
-  const preferredStartOrigin = (shuttleKey === 'G') ? 'Bradford Bay'
-                           : (shuttleKey === 'D') ? 'Oakville City Airport'
-                           : (shuttleKey === 'F-winter-shuttle') ? 'Atkinson Junction'
-                           : routes[0].origin;
-
-  let curRoute = routes.find(r => r.origin === preferredStartOrigin) || routes[0];
-  let otherRoute = routes.find(r => r !== curRoute) || routes[1];
-
-  const periods = servicePeriodsFor(serviceId, date, context.mode);
-  if (!periods.length) {
-    SHUTTLE_EVENTS_CACHE.set(key, []);
-    return [];
-  }
-  const dayStart = toMin(periods[0].start);
-  const dayEnd = BORAIL_SERVICE.LAST_ORIGIN_DEPARTURE_MINUTE;
-
-  const rng = seededRandom(`${key}-shuttle-seq`);
-  let t0 = dayStart + (shuttleKey === 'F-winter-shuttle' ? 0 : Math.floor(rng() * 3));
-
   const events = [];
-  while (t0 < dayEnd) {
+  BORAIL_SERVICE.singleShuttleRuns(routes, shuttleKey, date).forEach(run => {
+    const curRoute = run.route;
+    const t0 = run.departureMin;
     const seg = curRoute.segmentTimes ? curRoute.segmentTimes : segFor(curRoute.stops);
-    const customDwellSeconds = curRoute.intermediateDwellMinutes
-      ? curRoute.stops.map((_, index) => index > 0 && index < curRoute.stops.length - 1 ? curRoute.intermediateDwellMinutes * 60 : 0)
-      : null;
-    let cur = t0;
+    const customDwellSeconds = run.customDwellSeconds;
 
     for (let i = 0; i < curRoute.stops.length; i++) {
       events.push({
         station: curRoute.stops[i],
-        time: cur,
+        time: run.timing.stops[i].scheduledArrivalSec / 60,
         destination: curRoute.destination,
         serviceId: curRoute.serviceId,
         isExpress: false,
@@ -453,16 +432,8 @@ function getShuttleEventsForToday(shuttleKey, date = BORAIL_CLOCK.now()) {
         shuttleKey,
         customDwellSeconds
       });
-      if (i < seg.length) cur += seg[i] + ((customDwellSeconds?.[i] || 0) / 60);
     }
-
-    const layover = curRoute.terminalLayoverMinutes ?? (1 + rng() * 2);
-    t0 = cur + layover;
-
-    const tmp = curRoute;
-    curRoute = otherRoute;
-    otherRoute = tmp;
-  }
+  });
 
   SHUTTLE_EVENTS_CACHE.set(key, events);
   return events;
@@ -1066,7 +1037,7 @@ document.addEventListener('click', (e) => {
 function renderClock() {
   const now = BORAIL_CLOCK.now();
   const nowParts = BORAIL_CLOCK.parts(now);
-  nowText.textContent = `New York: ${formatTime24Full(BORAIL_CLOCK.clockSeconds(now))} ${nowParts.zoneName}`;
+  nowText.textContent = `${formatTime24Full(BORAIL_CLOCK.clockSeconds(now))} ${nowParts.zoneName}`;
   const mode = timeMode(now);
   serviceState.textContent = (mode === 'rushAM' || mode === 'rushPM') ? 'Service: Rush (LCL+EXP)' :
                              (mode === 'local') ? 'Service: Local only' :
@@ -1168,7 +1139,7 @@ function getTripPlanningDate(showError = true) {
   }
   const date = BORAIL_CLOCK.fromWallTime(tripDateInput.value, tripTimeInput.value);
   if (!date) {
-    if (showError) renderTripPlannerMessage('That departure time is invalid.', 'Please choose another New York date and time. Daylight-saving clock changes can skip some times.');
+    if (showError) renderTripPlannerMessage('That departure time is invalid.', 'Please choose another EST/EDT date and time. Daylight-saving clock changes can skip some times.');
     return null;
   }
   if (date.getTime() < BORAIL_CLOCK.now().getTime() - 60000) {

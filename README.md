@@ -69,3 +69,7 @@ Current limitations: the starter world contains only the Green Line, drafts are 
 Keep public HTML entry pages at the repository root so existing links continue to work. Put new static files in the matching `assets/` subfolder and use root-relative page paths such as `assets/images/navigation/map.png`.
 
 For advertisements, add `.png` files to `assets/images/ads/carousel/`; numeric filename prefixes such as `01-` and `02-` control their order. Add an optional `href` and custom `alt` entry to `links.json` when an image should be clickable. GitHub Actions regenerates `manifest.json` after those files change; locally, run `node scripts/generate-ad-manifest.mjs` before previewing.
+
+The public map buttons open `map-viewer.html`, which displays 5000-pixel previews with pinch/drag/zoom controls and a persistent Back to Maps button. Original PDFs remain downloadable. After replacing a map PDF, run `node scripts/render-map-previews.mjs` (requires Poppler's `pdfinfo` and `pdftoppm`) and commit its matching PNG preview. Include both in offline caching when adding new maps.
+
+Run `node scripts/shuttle-test.mjs` when changing shuttle timing. G, D, and the Winter Emergency F shuttle share one return-trip generator across the timetable and Status/notification engine. Every return waits for the previous actual terminal departure plus layover, including delays.

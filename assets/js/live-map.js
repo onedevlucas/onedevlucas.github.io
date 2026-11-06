@@ -932,7 +932,7 @@
 
   function updateClockAndService(date) {
     const parts = BORAIL_CLOCK.parts(date);
-    clock.textContent = `New York ${formatTime24Full(BORAIL_CLOCK.clockSeconds(date))} ${parts.zoneName}`;
+    clock.textContent = `${formatTime24Full(BORAIL_CLOCK.clockSeconds(date))} ${parts.zoneName}`;
     const mode = timeMode(date);
     serviceState.textContent = mode === 'rushAM' ? 'AM Rush service'
       : mode === 'rushPM' ? 'PM Rush service'
@@ -1415,7 +1415,14 @@
     }
   }
 
+  function updateVisibleViewport() {
+    const viewport = window.visualViewport;
+    document.documentElement.style.setProperty('--live-map-viewport-height', `${viewport?.height || window.innerHeight}px`);
+    document.documentElement.style.setProperty('--live-map-viewport-top', `${viewport?.offsetTop || 0}px`);
+  }
+
   function toggleExpandedMap() {
+    updateVisibleViewport();
     const enabled = document.body.classList.toggle('live-map-focus-mode');
     expandButton.textContent = enabled ? '×' : '⛶';
     expandButton.setAttribute('aria-label', enabled ? 'Exit expanded live map' : 'Expand the live map');
@@ -1431,6 +1438,10 @@
   }
 
   function initializeEvents() {
+    window.addEventListener('resize', updateVisibleViewport);
+    window.visualViewport?.addEventListener('resize', updateVisibleViewport);
+    window.visualViewport?.addEventListener('scroll', updateVisibleViewport);
+    updateVisibleViewport();
     document.addEventListener('borail:viewchange', event => {
       mapActive = event.detail?.view === 'map';
       if (mapActive) requestAnimationFrame(() => refreshTrains(BORAIL_CLOCK.now(), true));

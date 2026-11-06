@@ -9,16 +9,17 @@
   <meta name="apple-mobile-web-app-title" content="BORail" />
   <meta name="theme-color" content="#0a0a12" />
   <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="apple-touch-icon" href="assets/images/branding/borail-logo.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/images/branding/apple-touch-icon-v79.png" />
   <link rel="icon" type="image/png" href="assets/images/branding/favicon.png">
   <link rel="stylesheet" href="assets/css/timetable.css">
   <link rel="stylesheet" href="assets/css/winter-emergency.css">
+  <link rel="stylesheet" href="assets/css/app-shell.css">
 </head>
 <body>
 
   <div id="splash-screen">
     <img id="splash-logo" src="assets/images/branding/borail-logo.png" alt="BORail Logo">
-    <div id="splash-version">V78 - 11/5/26</div>
+    <div id="splash-version">V79 - 11/5/26</div>
   </div>
 
   <header>
@@ -141,7 +142,7 @@
   </div>
 
   <div class="trip-planner-note">
-    All times use New York time (EST/EDT). Routes use the current BORail timetable, active local/express service, simulated delays, and a minimum two-minute transfer window.
+    All times use EST/EDT. Routes use the current BORail timetable, active local/express service, simulated delays, and a minimum two-minute transfer window.
   </div>
   <div id="tripPlannerResults" class="trip-results">
     <div class="trip-empty-state">
@@ -205,7 +206,7 @@
         <button type="button" id="liveMapFocusSelection" aria-label="Return to selected train or station" title="Return to selection" disabled>◎</button>
         <button type="button" id="liveMapExpand" aria-label="Expand the live map" title="Expand map">⛶</button>
       </div>
-      <div class="live-map-clock" id="liveMapClock">New York —</div>
+      <div class="live-map-clock" id="liveMapClock">EST/EDT —</div>
       <div class="live-map-follow-status" id="liveMapFollowStatus" hidden>
         <span id="liveMapFollowStatusContent"></span>
         <button type="button" id="liveMapStopFollowing" aria-label="Stop following train" title="Stop following train">×</button>
@@ -223,7 +224,7 @@
       <div id="liveMapDetailsContent"></div>
     </aside>
   </div>
-  <p class="live-map-disclaimer">Positions are calculated from the official BORail timetable and New York time. This map does not use GPS.</p>
+  <p class="live-map-disclaimer">Positions are calculated from the official BORail timetable and EST/EDT. This map does not use GPS.</p>
 </div>
       </div>
 

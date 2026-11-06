@@ -1,0 +1,26 @@
+:root { color-scheme: dark; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #f3f4f8; background: #0a0a12; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
+body { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+.viewer-header { flex: 0 0 auto; display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; padding: max(10px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 10px max(12px, env(safe-area-inset-left)); background: #141421; border-bottom: 1px solid #303041; z-index: 2; }
+.viewer-header h1 { flex: 1 1 180px; margin: 0; font-size: 16px; }
+a, button { color: #c3c5ff; background: #202030; border: 1px solid #3d3d54; border-radius: 10px; padding: 10px 12px; font: inherit; font-size: 12px; font-weight: 700; text-decoration: none; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+.back-button { color: #fff; background: #555ad0; border-color: #797fe9; }
+#downloadMap { font-size: 11px; }
+#mapViewport { position: relative; flex: 1 1 auto; min-height: 0; width: 100%; overflow: hidden; background: #08080c; touch-action: none; cursor: grab; outline-offset: -3px; }
+#mapViewport:active { cursor: grabbing; }
+#mapImage { position: absolute; top: 0; left: 0; max-width: none; user-select: none; -webkit-user-select: none; pointer-events: none; transform-origin: 0 0; }
+#mapLoading { position: absolute; top: 45%; left: 10%; right: 10%; color: #bdbdcc; text-align: center; }
+.viewer-toolbar { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 10px max(12px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); background: #141421; border-top: 1px solid #303041; z-index: 2; }
+.viewer-toolbar > span { color: #a0a3ad; font-size: 11px; }
+.zoom-controls { display: flex; align-items: center; gap: 7px; }
+.zoom-controls button { min-width: 44px; touch-action: manipulation; cursor: pointer; }
+.zoom-controls output { min-width: 45px; font-size: 12px; text-align: center; font-variant-numeric: tabular-nums; }
+button:disabled { opacity: .4; }
+@media (max-width: 560px) {
+  .viewer-header h1 { order: 3; flex-basis: 100%; font-size: 14px; }
+  #downloadMap { margin-left: auto; }
+  .viewer-toolbar { justify-content: center; }
+  .viewer-toolbar > span { width: 100%; text-align: center; }
+}

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v78-notifications';
+const CACHE_NAME = 'borail-v79-home-screen-map-fixes';
 const PUSH_META_CACHE = 'borail-push-meta-v1';
 const PUSH_META_URL = '/__borail_push_config__';
 
@@ -7,6 +7,7 @@ const CORE_ASSETS = [
   'index.html',
   'home.html',
   'map.html',
+  'map-viewer.html',
   'mybocard.html',
   'status.html',
   'settings.html',
@@ -14,6 +15,8 @@ const CORE_ASSETS = [
   'manifest.webmanifest',
   'assets/css/home.css',
   'assets/css/map.css',
+  'assets/css/map-viewer.css',
+  'assets/css/app-shell.css',
   'assets/css/mybocard.css',
   'assets/css/status.css',
   'assets/css/settings.css',
@@ -25,6 +28,7 @@ const CORE_ASSETS = [
   'assets/js/borail-data.js',
   'assets/js/notification-config.js',
   'assets/js/pwa.js',
+  'assets/js/map-viewer.js',
   'assets/js/mybocard.js',
   'assets/js/time.js',
   'assets/js/service-calendar.js',
@@ -40,6 +44,10 @@ const CORE_ASSETS = [
   'assets/maps/borail-flatlands-route-map.pdf',
   'assets/maps/borail-flatlands-rush-hour-map.pdf',
   'assets/maps/borail-flatlands-winter-emergency-map.pdf',
+  'assets/maps/borail-flatlands-regular-service-map.png',
+  'assets/maps/borail-flatlands-route-map.png',
+  'assets/maps/borail-flatlands-rush-hour-map.png',
+  'assets/maps/borail-flatlands-winter-emergency-map.png',
   'assets/maps/borail-live-track-layout.svg',
   'assets/maps/engineering/registry.json',
   'assets/maps/engineering/ALocal.svg',
@@ -62,6 +70,9 @@ const CORE_ASSETS = [
   'assets/images/ads/carousel/05-smooth-stop.png',
   'assets/images/branding/borail-logo.png',
   'assets/images/branding/favicon.png',
+  'assets/images/branding/apple-touch-icon-v79.png',
+  'assets/images/branding/app-icon-192-v79.png',
+  'assets/images/branding/app-icon-512-v79.png',
   'assets/images/navigation/information.png',
   'assets/images/navigation/game-controller.svg',
   'assets/images/navigation/map.png',
