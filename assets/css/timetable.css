@@ -27,56 +27,6 @@
         padding-bottom: calc(78px + env(safe-area-inset-bottom));
     }
 
-    #splash-screen {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background-color: var(--bg);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 14px;
-      z-index: 9999;
-      opacity: 1;
-      animation: fadeOutSplash 0.5s ease-in-out 3.8s forwards;
-    }
-
-    #splash-logo {
-      width: 280px;
-      height: auto;
-      opacity: 0;
-      animation: dynamicLogoIntro 2.8s ease-in-out forwards;
-    }
-
-    #splash-version {
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 600;
-      letter-spacing: .6px;
-      opacity: 0;
-      transform: scale(.86) translateY(-3px);
-      animation: popSplashVersion .18s cubic-bezier(.2, 1.65, .45, 1) 2.8s forwards;
-    }
-
-    @keyframes dynamicLogoIntro {
-      0% { opacity: 0; transform: scale(0.95); }
-      18% { opacity: 1; transform: scale(1); }
-      38% { opacity: 0.18; }
-      56% { opacity: 1; }
-      74% { opacity: 0.18; }
-      90%, 100% { opacity: 1; transform: scale(1); }
-    }
-
-    @keyframes popSplashVersion {
-      to { opacity: 1; transform: scale(1) translateY(0); }
-    }
-
-    @keyframes fadeOutSplash {
-      to { opacity: 0; visibility: hidden; }
-    }
 
     header {
       position: sticky; top: 0; z-index: 10;
@@ -977,6 +927,10 @@
     }
     .journey-warning.delay-warning { border-color: rgba(255,90,95,.28); background: rgba(255,90,95,.07); color: #ffc0c2; }
     .trip-details { padding: 0 15px 15px; border-top: 1px solid rgba(255,255,255,.07); }
+    .trip-notifications { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin: 12px 0; font-size: 12px; }
+    .trip-notifications button { width: auto; min-height: 44px; padding: 8px 14px; color: var(--text); background: rgba(138,143,255,.16); cursor: pointer; }
+    .trip-notifications button:disabled { opacity: .65; cursor: default; }
+    .trip-notifications a { color: #a7aaff; }
     .trip-leg { margin-top: 13px; }
     .trip-leg-card {
       display: flex;

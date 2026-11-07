@@ -75,6 +75,14 @@ button:disabled { opacity: .48; cursor: not-allowed; }
 .sync-note { min-height: 17px; margin: 10px 0 0 !important; color: var(--muted); font-size: 11px; }
 .sync-note.error { color: #ff9a94; }
 .section-copy { margin: 10px 0 12px; font-size: 12px; }
+.saved-trip-list { display: grid; gap: 10px; color: var(--muted); font-size: 13px; }
+.saved-trip-row { display: grid; gap: 6px; padding: 12px; border: 1px solid rgba(255,255,255,.12); border-radius: 12px; }
+.saved-trip-row strong { color: var(--text); }
+.saved-trip-row summary { cursor: pointer; }
+.saved-trip-row ol { padding-inline-start: 22px; }
+.saved-trip-row li + li { margin-top: 6px; }
+#savedTrips { scroll-margin-top: 110px; }
+#savedTrips a { color: var(--accent); }
 .line-picker { display: grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap: 8px; }
 .line-choice { min-height: 70px; padding: 8px 4px; display: grid; place-items: center; gap: 4px; border-radius: 14px; }
 .line-choice img { width: 34px; height: 34px; object-fit: contain; filter: saturate(.35) brightness(.65); transition: filter .18s ease, transform .18s ease; }

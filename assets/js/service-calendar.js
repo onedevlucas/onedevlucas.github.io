@@ -136,12 +136,12 @@
     return selected;
   }
 
-  function context(date = CLOCK.now()) {
+  function context(date = CLOCK.now(), { allowWinter = true } = {}) {
     const parts = CLOCK.parts(date);
     const minutes = parts.hour * 60 + parts.minute + parts.second / 60;
     const dateKey = keyForParts(parts);
     const seasonStartYear = seasonStartYearForParts(parts);
-    const winterEmergency = seasonStartYear !== null
+    const winterEmergency = allowWinter && seasonStartYear !== null
       && winterEmergencyDatesForSeason(seasonStartYear).includes(dateKey);
     const operatingWindowOpen = minutes >= OPEN_MINUTE && minutes < LAST_ORIGIN_DEPARTURE_MINUTE;
     let mode = 'closed';
@@ -160,7 +160,7 @@
       winterEmergency,
       winterSeason: seasonStartYear !== null,
       seasonStartYear,
-      emergencyDates: seasonStartYear === null ? [] : winterEmergencyDatesForSeason(seasonStartYear)
+      emergencyDates: !allowWinter || seasonStartYear === null ? [] : winterEmergencyDatesForSeason(seasonStartYear)
     };
   }
 
@@ -234,9 +234,9 @@
 
   // A return trip uses the same physical train: it cannot depart until the
   // previous trip's actual terminal departure plus its layover.
-  function singleShuttleRuns(routes, shuttleKey, date = CLOCK.now()) {
+  function singleShuttleRuns(routes, shuttleKey, date = CLOCK.now(), options) {
     if (routes.length < 2) return [];
-    const currentContext = context(date);
+    const currentContext = context(date, options);
     const scheduleKind = currentContext.winterEmergency ? 'winterEmergency' : 'regular';
     const random = seededRandom(`${shuttleKey}-${currentContext.dateKey}-${scheduleKind}-shuttle-seq`);
     const preferredOrigin = shuttleKey === 'G' ? 'Bradford Bay'

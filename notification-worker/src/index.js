@@ -2,10 +2,12 @@ import { buildPushPayload } from '@block65/webcrypto-web-push';
 import '../../assets/js/time.js';
 import '../../assets/js/service-calendar.js';
 import '../../assets/js/status.js';
+import { prepareTrip, tripCandidates, tripIsComplete, TRIP_LIMIT } from './trips.js';
 
 const CLOCK = globalThis.BORailTime;
 const SERVICE = globalThis.BORailService;
 const STATUS = globalThis.BORailStatusEngine;
+const SCHEDULE = globalThis.BORailSchedule;
 
 const ALLOWED_ORIGINS = new Set([
   'https://rideborailmc.net',
@@ -36,7 +38,7 @@ function corsHeaders(request) {
 function json(request, value, status = 200) {
   return new Response(JSON.stringify(value), {
     status,
-    headers: { 'Content-Type': 'application/json; charset=utf-8', ...corsHeaders(request) }
+    headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', ...corsHeaders(request) }
   });
 }
 
@@ -143,6 +145,45 @@ async function deleteSubscription(request, env, id) {
   return json(request, { ok: true });
 }
 
+async function manageTrips(request, env, subscriptionId, tripId) {
+  if (!await requireManagedSubscription(request, env, subscriptionId)) {
+    return json(request, { error: 'This device is not subscribed. Enable notifications in Settings.' }, 404);
+  }
+  const now = new Date();
+  if (request.method === 'GET' && !tripId) {
+    const { results } = await env.DB.prepare(`SELECT id, trip_json, flags_json FROM saved_trips
+      WHERE subscription_id = ? AND expires_at > ? ORDER BY starts_at`).bind(subscriptionId, now.getTime()).all();
+    return json(request, { trips: results.map(row => ({
+      id: row.id, ...JSON.parse(row.trip_json), replan: JSON.parse(row.flags_json).includes('replan')
+    })) });
+  }
+  if (request.method === 'POST' && !tripId) {
+    if (Number(request.headers.get('Content-Length')) > 8192) return json(request, { error: 'Trip is too large.' }, 413);
+    const trip = prepareTrip(await request.json(), now);
+    const encoded = JSON.stringify(trip);
+    const journeyKey = JSON.stringify([trip.origin, trip.destination, ...trip.legs.map(leg =>
+      [leg.runId, leg.boardStation, leg.alightStation])]);
+    const id = crypto.randomUUID();
+    const result = await env.DB.prepare(`INSERT OR IGNORE INTO saved_trips
+      (id, subscription_id, date_key, starts_at, expires_at, journey_key, trip_json)
+      SELECT ?, ?, ?, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM saved_trips
+        WHERE subscription_id = ? AND expires_at > ?) < ?`)
+      .bind(id, subscriptionId, trip.dateKey, trip.startsAt, trip.expiresAt, journeyKey, encoded,
+        subscriptionId, now.getTime(), TRIP_LIMIT).run();
+    if (result.meta.changes) return json(request, { id, ...trip }, 201);
+    const duplicate = await env.DB.prepare('SELECT id, trip_json FROM saved_trips WHERE subscription_id = ? AND journey_key = ?')
+      .bind(subscriptionId, journeyKey).first();
+    if (duplicate) return json(request, { id: duplicate.id, ...JSON.parse(duplicate.trip_json) });
+    return json(request, { error: `You can save up to ${TRIP_LIMIT} trips. Cancel a trip in Settings to save another.` }, 409);
+  }
+  if (request.method === 'DELETE' && tripId) {
+    await env.DB.prepare('DELETE FROM saved_trips WHERE subscription_id = ? AND id = ?')
+      .bind(subscriptionId, tripId).run();
+    return json(request, { ok: true });
+  }
+  return json(request, { error: 'Not found.' }, 404);
+}
+
 async function setServiceOverride(request, env) {
   if (!env.ADMIN_TOKEN || !timingSafeEqual(parseBearer(request), env.ADMIN_TOKEN)) return json(request, { error: 'Unauthorized.' }, 401);
   const body = await request.json();
@@ -173,7 +214,9 @@ function lineEvent(serviceId, eventType, signal, now) {
     'line-minor': { title: `${label} - Minor Delays`, body: signal.reason, preference: 'lineMinor' },
     'line-major': { title: `${label} - Major Delays`, body: signal.reason, preference: 'lineMajor' },
     'line-noservice': { title: `${label} - No Service`, body: signal.reason, preference: 'lineNoService' },
-    'line-normal': { title: `${label} - Normal Service Resumed`, body: `${label} trains are operating normally again.`, preference: 'lineNormalResumed' }
+    'line-normal': { title: `${label} - Normal Service Resumed`, body: signal.delayed
+      ? 'Delays have fallen below the line-wide alert threshold.'
+      : `${label} trains are operating normally again.`, preference: 'lineNormalResumed' }
   };
   const definition = definitions[eventType];
   return {
@@ -211,10 +254,14 @@ function decideLineTransition(serviceId, previous, current, signal, now) {
   return { lastDisruption, event };
 }
 
-async function insertEvent(env, event, now = new Date()) {
-  await env.DB.prepare(`INSERT OR IGNORE INTO events
+function eventStatement(env, event, now) {
+  return env.DB.prepare(`INSERT OR IGNORE INTO events
     (id, event_type, target_id, payload_json, created_at, processed_at) VALUES (?, ?, ?, ?, ?, NULL)`)
-    .bind(event.id, event.eventType, event.targetId || null, JSON.stringify({ ...event.payload, preference: event.preference }), now.toISOString()).run();
+    .bind(event.id, event.eventType, event.targetId || null, JSON.stringify({ ...event.payload, preference: event.preference }), now.toISOString());
+}
+
+async function insertEvent(env, event, now) {
+  await eventStatement(env, event, now).run();
 }
 
 async function evaluateLineTransitions(env, now) {
@@ -222,6 +269,9 @@ async function evaluateLineTransitions(env, now) {
   const overrideRows = await env.DB.prepare(`SELECT * FROM service_overrides
     WHERE expires_at IS NULL OR expires_at > ?`).bind(now.toISOString()).all();
   const overrides = new Map((overrideRows.results || []).map(row => [row.service_id, row]));
+  const states = await env.DB.prepare("SELECT * FROM event_state WHERE state_key LIKE 'line:%'").all();
+  const previousStates = new Map(states.results.map(row => [row.state_key, row]));
+  const writes = [];
 
   for (const service of STATUS.services) {
     const signal = { ...signals[service.id] };
@@ -232,17 +282,70 @@ async function evaluateLineTransitions(env, now) {
       signal.reason = override.reason;
     }
     const key = `line:${service.id}`;
-    const previous = await env.DB.prepare('SELECT * FROM event_state WHERE state_key = ?').bind(key).first();
+    const previous = previousStates.get(key);
     const transition = decideLineTransition(service.id, previous, current, signal, now);
     const { lastDisruption, event } = transition;
 
-    await env.DB.prepare(`INSERT INTO event_state (state_key, current_state, last_disruption, detail_json, updated_at)
+    if (previous?.current_state === current && previous?.last_disruption === lastDisruption) continue;
+    writes.push(env.DB.prepare(`INSERT INTO event_state (state_key, current_state, last_disruption, detail_json, updated_at)
       VALUES (?, ?, ?, ?, ?) ON CONFLICT(state_key) DO UPDATE SET
       current_state = excluded.current_state, last_disruption = excluded.last_disruption,
       detail_json = excluded.detail_json, updated_at = excluded.updated_at`)
-      .bind(key, current, lastDisruption, JSON.stringify(signal), now.toISOString()).run();
-    if (event) await insertEvent(env, event, now);
+      .bind(key, current, lastDisruption, JSON.stringify(signal), now.toISOString()));
+    if (event) writes.push(eventStatement(env, event, now));
   }
+  if (writes.length) await env.DB.batch(writes);
+}
+
+async function evaluateTrips(env, now) {
+  const nowMs = now.getTime();
+  const current = SERVICE.context(now);
+  const previousDate = CLOCK.dateKey(CLOCK.startOfDay(now).getTime() - 1);
+  await env.DB.prepare('DELETE FROM saved_trips WHERE expires_at <= ?').bind(nowMs).run();
+  const { results } = await env.DB.prepare(`SELECT * FROM saved_trips
+    WHERE date_key BETWEEN ? AND ? AND (starts_at <= ? OR (? = 1 AND date_key = ?))
+    AND flags_json NOT LIKE '%"replan"%' ORDER BY starts_at`)
+    .bind(previousDate, current.dateKey, nowMs + 20 * 60_000, Number(current.winterEmergency), current.dateKey).all();
+  const indexedTrips = results.map(row => ({ row, trip: JSON.parse(row.trip_json) }));
+  const wanted = new Map();
+  for (const { row, trip } of indexedTrips) {
+    if (!wanted.has(row.date_key)) wanted.set(row.date_key, new Set());
+    trip.legs.forEach(leg => wanted.get(row.date_key).add(leg.runId));
+  }
+  const indexes = new Map();
+  const writes = [];
+  for (const { row, trip } of indexedTrips) {
+    if (!indexes.has(row.date_key)) {
+      const date = CLOCK.fromWallTime(row.date_key, '12:00');
+      indexes.set(row.date_key, {
+        runs: new Map(SCHEDULE.buildScheduledRuns(date, true, { runIds: wanted.get(row.date_key) }).map(run => [run.id, run])),
+        winterEmergency: SERVICE.context(date).winterEmergency
+      });
+    }
+    const { runs, winterEmergency } = indexes.get(row.date_key);
+    const flags = JSON.parse(row.flags_json);
+    if (tripIsComplete(trip, runs, now)) {
+      writes.push(env.DB.prepare('DELETE FROM saved_trips WHERE id = ?').bind(row.id));
+      if (writes.length >= 6) break;
+      continue;
+    }
+    const candidates = tripCandidates(trip, runs, now, { winterEmergency, flags })
+      .slice(0, Math.max(1, 5 - writes.length));
+    if (!candidates.length) continue;
+    for (const { key, deadline, ...payload } of candidates) {
+      flags.push(key);
+      writes.push(eventStatement(env, {
+        id: `trip:${row.id}:${key}`,
+        eventType: 'trip-update',
+        targetId: row.id,
+        payload: { ...payload, tag: `borail-trip-${row.id}-${key}`, deadline }
+      }, now));
+    }
+    writes.push(env.DB.prepare('UPDATE saved_trips SET flags_json = ? WHERE id = ?')
+      .bind(JSON.stringify(flags), row.id));
+    if (writes.length >= 6) break;
+  }
+  if (writes.length) await env.DB.batch(writes);
 }
 
 async function evaluateWinterEmergency(env, now) {
@@ -326,9 +429,6 @@ async function sendPush(env, subscription, payload) {
 }
 
 async function deliverEvent(env, event, subscription) {
-  const previous = await env.DB.prepare('SELECT * FROM deliveries WHERE subscription_id = ? AND event_id = ?')
-    .bind(subscription.id, event.id).first();
-  if (previous?.status === 'sent' || previous?.status === 'expired') return false;
   const now = new Date().toISOString();
   await env.DB.prepare(`INSERT INTO deliveries (subscription_id, event_id, status, attempts, last_attempt_at)
     VALUES (?, ?, 'pending', 1, ?) ON CONFLICT(subscription_id, event_id) DO UPDATE SET
@@ -336,7 +436,7 @@ async function deliverEvent(env, event, subscription) {
     .bind(subscription.id, event.id, now).run();
   try {
     const storedPayload = JSON.parse(event.payload_json);
-    const { preference: _preference, ...payload } = storedPayload;
+    const { preference: _preference, deadline: _deadline, ...payload } = storedPayload;
     const response = await sendPush(env, subscription, payload);
     if (response.ok) {
       await env.DB.prepare(`UPDATE deliveries SET status = 'sent', delivered_at = ?
@@ -359,22 +459,40 @@ async function deliverEvent(env, event, subscription) {
 }
 
 async function processPendingEvents(env) {
-  const eventRows = await env.DB.prepare('SELECT * FROM events WHERE processed_at IS NULL ORDER BY created_at LIMIT 50').all();
+  const eventRows = await env.DB.prepare(`SELECT events.*, saved_trips.subscription_id AS trip_subscription_id
+    FROM events LEFT JOIN saved_trips ON events.event_type = 'trip-update' AND events.target_id = saved_trips.id
+    WHERE processed_at IS NULL ORDER BY created_at LIMIT 12`).all();
+  if (!eventRows.results.length) return;
   const subscriptions = (await env.DB.prepare('SELECT * FROM subscriptions').all()).results || [];
+  const ids = eventRows.results.map(event => event.id);
+  const { results: priorDeliveries } = await env.DB.prepare(`SELECT subscription_id, event_id FROM deliveries
+    WHERE event_id IN (${ids.map(() => '?').join(',')}) AND (status IN ('sent', 'expired') OR attempts >= 3)`)
+    .bind(...ids).all();
+  const finished = new Set(priorDeliveries.map(row => JSON.stringify([row.event_id, row.subscription_id])));
+  const writes = [];
+  let budget = 6;
   for (const event of eventRows.results || []) {
     let retry = false;
+    const tripEvent = event.event_type === 'trip-update';
+    const deadline = tripEvent ? JSON.parse(event.payload_json).deadline : null;
     for (const subscription of subscriptions) {
-      if (!wantsEvent(subscription, event)) continue;
+      if (tripEvent ? subscription.id !== event.trip_subscription_id || Date.now() >= deadline : !wantsEvent(subscription, event)) continue;
+      if (finished.has(JSON.stringify([event.id, subscription.id]))) continue;
+      if (!budget) { retry = true; break; }
+      budget -= 1;
       retry = (await deliverEvent(env, event, subscription)) || retry;
     }
-    if (!retry) await env.DB.prepare('UPDATE events SET processed_at = ? WHERE id = ?').bind(new Date().toISOString(), event.id).run();
+    if (!retry) writes.push(env.DB.prepare('UPDATE events SET processed_at = ? WHERE id = ?').bind(new Date().toISOString(), event.id));
+    if (!budget) break;
   }
+  if (writes.length) await env.DB.batch(writes);
 }
 
 async function runNotificationCycle(env, date = new Date()) {
   await evaluateLineTransitions(env, date);
   await evaluateWinterEmergency(env, date);
   await evaluateElevators(env, date);
+  await evaluateTrips(env, date);
   await processPendingEvents(env);
 }
 
@@ -390,6 +508,9 @@ export default {
         return json(request, { vapidPublicKey: env.VAPID_SERVER_PUBLIC_KEY });
       }
       if (request.method === 'POST' && url.pathname === '/subscriptions') return await createSubscription(request, env);
+      const tripMatch = /^\/subscriptions\/([^/]+)\/trips(?:\/([^/]+))?$/.exec(url.pathname);
+      if (tripMatch) return await manageTrips(request, env, decodeURIComponent(tripMatch[1]),
+        tripMatch[2] && decodeURIComponent(tripMatch[2]));
       const subscriptionMatch = /^\/subscriptions\/([^/]+)(?:\/(refresh))?$/.exec(url.pathname);
       if (subscriptionMatch) {
         const id = decodeURIComponent(subscriptionMatch[1]);
@@ -410,4 +531,4 @@ export default {
   }
 };
 
-export { decideLineTransition, elevatorCandidate, lineEvent, normalizePreferences, runNotificationCycle, serviceLabel };
+export { decideLineTransition, elevatorCandidate, evaluateTrips, lineEvent, normalizePreferences, runNotificationCycle, serviceLabel };

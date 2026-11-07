@@ -2,13 +2,11 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-// Exercise the real timetable functions before their DOM initialization.
+// Exercise the same schedule used by the timetable and notification worker.
 const context = vm.createContext({ console });
-for (const file of ['time.js', 'service-calendar.js']) {
+for (const file of ['time.js', 'service-calendar.js', 'schedule.js']) {
   vm.runInContext(fs.readFileSync(new URL(`../assets/js/${file}`, import.meta.url), 'utf8'), context);
 }
-const timetable = fs.readFileSync(new URL('../assets/js/timetable.js', import.meta.url), 'utf8');
-vm.runInContext(timetable.slice(0, timetable.indexOf('const dropdownContainer =')), context);
 const clock = context.BORailTime;
 const service = context.BORailService;
 const dates = ['2026-11-05', '2026-07-15', '2026-03-08', '2026-11-01', ...service.winterEmergencyDatesForSeason(2026)];

@@ -2,3 +2,56 @@
 :root { color-scheme: dark; background-color: #0a0a12; }
 html { min-height: 100%; background-color: #0a0a12; }
 body { min-height: 100vh; min-height: 100dvh; background-color: #0a0a12; }
+
+#splash-screen {
+  position: fixed;
+  inset: 0;
+  background-color: #0a0a12;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  z-index: 9999;
+  opacity: 1;
+  animation: fadeOutSplash 0.5s ease-in-out 3.8s forwards;
+}
+
+#splash-logo {
+  width: min(280px, 80vw);
+  height: auto;
+  opacity: 0;
+  animation: dynamicLogoIntro 2.8s ease-in-out forwards;
+}
+
+#splash-version {
+  color: #a0a3ad;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .6px;
+  opacity: 0;
+  transform: scale(.86) translateY(-3px);
+  animation: popSplashVersion .18s cubic-bezier(.2, 1.65, .45, 1) 2.8s forwards;
+}
+
+@keyframes dynamicLogoIntro {
+  0% { opacity: 0; transform: scale(0.95); }
+  18% { opacity: 1; transform: scale(1); }
+  38% { opacity: 0.18; }
+  56% { opacity: 1; }
+  74% { opacity: 0.18; }
+  90%, 100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes popSplashVersion {
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes fadeOutSplash {
+  to { opacity: 0; visibility: hidden; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #splash-screen { animation: fadeOutSplash .15s ease-out 1s forwards; }
+  #splash-logo, #splash-version { animation: none; opacity: 1; transform: none; }
+}

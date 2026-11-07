@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v79-home-screen-map-fixes';
+const CACHE_NAME = 'borail-v80-trip-notifications';
 const PUSH_META_CACHE = 'borail-push-meta-v1';
 const PUSH_META_URL = '/__borail_push_config__';
 
@@ -25,6 +25,8 @@ const CORE_ASSETS = [
   'assets/css/workbench.css',
   'assets/js/status.js',
   'assets/js/settings.js',
+  'assets/js/saved-trips.js',
+  'assets/js/schedule.js',
   'assets/js/borail-data.js',
   'assets/js/notification-config.js',
   'assets/js/pwa.js',
@@ -147,11 +149,13 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const target = new URL(event.notification.data?.url || 'status.html', self.location.origin).href;
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(openClients => {
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async openClients => {
       const existing = openClients.find(client => client.url.startsWith(self.location.origin));
       if (existing) {
-        existing.navigate(target);
-        return existing.focus();
+        try {
+          const navigated = await existing.navigate(target);
+          if (navigated) return navigated.focus();
+        } catch { /* open a new client if navigation failed */ }
       }
       return clients.openWindow(target);
     })
@@ -191,7 +195,9 @@ self.addEventListener('pushsubscriptionchange', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
-  const requestPath = new URL(event.request.url).pathname;
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin) return;
+  const requestPath = url.pathname;
   const networkFirst = ['document', 'script', 'style'].includes(event.request.destination) ||
     requestPath.endsWith('/assets/images/ads/carousel/manifest.json');
 

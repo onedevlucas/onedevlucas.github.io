@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const htmlFiles = ['index.html', 'home.html', 'map.html', 'map-viewer.html', 'mybocard.html', 'status.html', 'settings.html', 'workbench.html'];
 const scriptFiles = ['assets/js/time.js', 'assets/js/service-calendar.js', 'assets/js/ad-carousel.js', 'assets/js/trip-planner-core.js', 'assets/js/timetable.js', 'assets/js/live-map-route-geometry.js', 'assets/js/live-map-id-geometry.js', 'assets/js/live-map.js', 'assets/js/mybocard.js', 'assets/js/status.js', 'assets/js/notification-config.js', 'assets/js/borail-data.js', 'assets/js/settings.js', 'assets/js/pwa.js', 'assets/js/workbench-core.js', 'assets/js/workbench.js', 'sw.js'];
-scriptFiles.push('assets/js/map-viewer.js');
+scriptFiles.push('assets/js/map-viewer.js', 'assets/js/schedule.js', 'assets/js/saved-trips.js');
 const webFiles = [...htmlFiles, ...scriptFiles];
 
 const references = [];

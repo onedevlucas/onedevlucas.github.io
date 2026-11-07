@@ -259,6 +259,7 @@
     } finally {
       elements.enable.disabled = false;
       await updateState();
+      root.BORailSavedTrips?.refreshList();
     }
   }
 
@@ -272,10 +273,16 @@
           headers: { Authorization: `Bearer ${device.manageToken}` }
         });
       }
+    } catch (error) {
+      elements.disable.disabled = false;
+      setSyncNote(`Could not remove this device’s subscription. Try again: ${error.message}`, true);
+      return;
+    }
+    try {
       const subscription = await currentSubscription();
       if (subscription) await subscription.unsubscribe();
-    } catch (error) {
-      setSyncNote(`Local notifications were removed. Server cleanup can be retried later: ${error.message}`, true);
+    } catch {
+      setSyncNote('The server subscription was removed. The browser could not clear its local notification registration.', true);
     } finally {
       device = null;
       localStorage.removeItem(DEVICE_KEY);
@@ -286,7 +293,8 @@
       }
       elements.disable.disabled = false;
       await updateState();
-      if (!elements.syncNote.classList.contains('error')) setSyncNote(clearPreferences ? 'All notification data on this device was deleted.' : 'Notifications disabled. Your favorites remain saved on this device.');
+      root.BORailSavedTrips?.refreshList();
+      if (!elements.syncNote.classList.contains('error')) setSyncNote(clearPreferences ? 'All notification data on this device was deleted.' : 'Notifications disabled and saved trips removed. Your favorites remain on this device.');
     }
   }
 
@@ -352,7 +360,7 @@
   elements.enable.addEventListener('click', enableNotifications);
   elements.disable.addEventListener('click', () => disableNotifications());
   elements.deleteData.addEventListener('click', () => {
-    if (root.confirm('Delete this device’s BORail notification subscription, favorites, and alert preferences?')) {
+    if (root.confirm('Delete this device’s BORail notification subscription, saved trips, favorites, and alert preferences?')) {
       disableNotifications({ clearPreferences: true });
     }
   });

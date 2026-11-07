@@ -34,8 +34,8 @@ if (!BORAIL_CLOCK || !BORAIL_SERVICE) throw new Error('BORail time and service h
       { id:'S-express', nameHtml:'Line',  icon:'assets/images/line-icons/s-express.png',  letter:'S', mode:'express' },
     ];
 
-    const STATUS_DELAY_MINOR_MIN_TRAINS = 1;
-    const STATUS_DELAY_MAJOR_MIN_TRAINS = 3;
+    const STATUS_DELAY_MINOR_MIN_TRAINS = 3;
+    const STATUS_DELAY_MAJOR_MIN_TRAINS = 4;
     const STATUS_SERVICE_LOOKAHEAD_MIN = 6 * 60;
 
     const STATUS_LINE_SERVICE = {
@@ -371,10 +371,18 @@ if (!BORAIL_CLOCK || !BORAIL_SERVICE) throw new Error('BORail time and service h
       });
     }
 
-    function computeStatusDelaySignals(now = BORAIL_CLOCK.now()) {
+    function computeStatusDelaySignals(now = BORAIL_CLOCK.now(), scheduledRuns) {
       const serviceContext = BORAIL_SERVICE.context(now);
       const nowMin = serviceContext.minutes;
-      const descriptors = statusRunDescriptors(now);
+      const runs = scheduledRuns ?? globalThis.BORailSchedule?.buildScheduledRuns(now, true, { statusMinute: nowMin });
+      const descriptors = runs ? runs.map(run => ({
+        serviceKey: `${run.serviceId}-${run.isExpress ? 'express' : 'local'}`,
+        departureMin: run.departureMin,
+        startMin: run.stops ? run.stops[0].actualArrivalSec / 60 : Infinity,
+        endMin: run.stops ? run.stops.at(-1).actualDepartureSec / 60 : -Infinity,
+        delayStartsMin: run.delayStartSec == null ? null : run.delayStartSec / 60,
+        delayInfo: { isDelayed: run.hasDelay, delaySeconds: run.delaySeconds }
+      })) : statusRunDescriptors(now);
       return Object.fromEntries(SERVICES.map(service => {
         const relevant = descriptors.filter(run => run.serviceKey === service.id);
         const active = relevant.filter(run => nowMin >= run.startMin && nowMin < run.endMin);
@@ -392,7 +400,7 @@ if (!BORAIL_CLOCK || !BORAIL_SERVICE) throw new Error('BORail time and service h
         }
         const maxDelaySeconds = delayed.reduce((maximum, run) => Math.max(maximum, run.delayInfo.delaySeconds), 0);
         const reason = delayed.length
-          ? `${delayed.length} of ${active.length} active ${service.letter} ${service.mode} trains are delayed. Longest current delay: ${Math.round(maxDelaySeconds / 60)} min. Future trains are not included.`
+          ? `${service.letter} ${service.mode} ${delayed.length === 1 ? 'train' : 'trains'} delayed. Longest current delay: ${Math.round(maxDelaySeconds / 60)} ${maxDelaySeconds === 60 ? 'minute' : 'minutes'}.`
           : type === 'noactive'
             ? `No ${service.letter} ${service.mode} train is actively moving right now. Service remains scheduled.`
             : type === 'noservice'
@@ -817,7 +825,11 @@ if (!BORAIL_CLOCK || !BORAIL_SERVICE) throw new Error('BORail time and service h
       ELEVATOR_STATE = getOrCreateElevatorState();
       renderStatus(STATUS_STATE);
       renderElevatorStatus(ELEVATOR_STATE);
-      window.setTimeout(focusRequestedStatus, 60);
+      if (document.getElementById('splash-screen')) {
+        document.addEventListener('borail:splashend', focusRequestedStatus, { once: true });
+      } else {
+        window.setTimeout(focusRequestedStatus, 60);
+      }
 
       window.BORailStatusDebug = {
         services: SERVICES,
