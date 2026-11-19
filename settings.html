@@ -126,6 +126,70 @@
       </div>
       <a href="https://sites.google.com/view/borail-mc/home" target="_blank" rel="noopener">Open</a>
     </section>
+    <section class="card operations-card" aria-labelledby="adminSignIn">
+      <button type="button" class="primary-button admin-sign-in" id="adminSignIn" aria-expanded="false" aria-controls="adminLogin">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2 21 6v6c0 5-5 8-9 10-4-2-9-5-9-10V6l9-4Z"/><path d="m8 12 3 3 5-6"/></svg>
+        <strong>Admin Sign In</strong>
+      </button>
+      <form id="adminLogin" class="operations-form" hidden>
+        <label>Password <input type="password" id="adminPassword" autocomplete="current-password" required maxlength="256" /></label>
+        <div class="button-row"><button type="button" id="showAdminPassword">Show password</button><button type="submit">Sign In</button></div>
+      </form>
+      <p id="adminMessage" role="status"></p>
+      <div id="operationsDashboard" hidden>
+        <div class="card-heading compact">
+          <h2>Operations Control</h2>
+          <button type="button" id="adminLogout">Sign Out</button>
+        </div>
+        <details open><summary>Network Overview</summary><div id="adminOverview"></div></details>
+        <details open><summary>Station, Service and System Control</summary>
+          <form id="operationsAction" class="operations-form">
+            <label>Control <select id="opsKind"><option value="station">Station</option><option value="service">Line or Express Service</option><option value="system">Entire System</option></select></label>
+            <label id="opsTargetLabel">Applies to <select id="opsTarget"></select></label>
+            <label>Action <select id="opsAction"><option value="close">Close / Shut down</option><option value="restore">Reopen / Reactivate</option></select></label>
+            <label>Start (EST/EDT, blank for now) <input type="datetime-local" id="opsStart" /></label>
+            <label id="opsEndLabel">Expected end (EST/EDT, blank for indefinite) <input type="datetime-local" id="opsEnd" /></label>
+            <label id="opsReasonLabel">Public reason <textarea id="opsReason" rows="2" maxlength="240"></textarea></label>
+            <label id="opsRecoveryLabel" hidden>Recovery delay window (minutes) <input type="number" id="opsRecovery" value="30" min="0" max="180" /></label>
+            <button type="submit">Add to Draft</button>
+          </form>
+        </details>
+        <details><summary>Train Control</summary>
+          <form id="trainSearch" class="operations-form">
+            <label>Service day (EST/EDT) <input type="date" id="opsTrainDate" required /></label>
+            <label>Origin departure at or after <input type="time" id="opsTrainTime" value="06:00" required /></label>
+            <label>Service <select id="opsTrainService"></select></label>
+            <label>Direction <select id="opsTrainDirection"><option value="">Any direction</option><option>NB</option><option>SB</option><option>EB</option><option>WB</option></select></label>
+            <label>Origin <select id="opsTrainOrigin"></select></label>
+            <label>Destination <select id="opsTrainDestination"></select></label>
+            <button type="submit">Find Trains</button>
+          </form>
+          <div id="opsTrainResults"></div>
+          <form id="trainEdit" class="operations-form" hidden>
+            <p id="opsTrainLocked"></p>
+            <label>Stops in travel order (one station per line) <textarea id="opsTrainStops" rows="8"></textarea></label>
+            <label>Add station <select id="opsTrainStation"></select></label>
+            <button type="button" id="opsAppendStation">Append Station</button>
+            <label class="ops-checkbox"><input type="checkbox" id="opsAdvanced" /> Allow advanced detours and reversals</label>
+            <div class="button-row">
+              <button name="trainAction" value="edit">Add Edit to Draft</button>
+              <button name="trainAction" value="restore">Restore Original Schedule</button>
+              <button name="trainAction" value="cancel">Cancel This Run</button>
+            </div>
+          </form>
+        </details>
+        <details open><summary>Draft Changes</summary>
+          <div id="adminDraft"></div>
+          <div class="button-row">
+            <button type="button" id="opsPreview">Preview Draft</button>
+            <button type="button" id="opsDiscard">Discard Draft</button>
+            <button type="button" class="primary-button" id="opsPublish" disabled>Push Now</button>
+          </div>
+          <div id="opsPreviewResults" aria-live="polite"></div>
+        </details>
+        <details><summary>History</summary><div id="adminHistory"></div></details>
+      </div>
+    </section>
   </main>
 
   <nav class="tabbar" role="navigation" aria-label="Primary">
@@ -142,6 +206,9 @@
   <script src="assets/js/notification-config.js"></script>
   <script src="assets/js/saved-trips.js"></script>
   <script src="assets/js/borail-data.js"></script>
+  <script src="assets/js/operations.js"></script>
+  <script src="assets/js/operations-client.js"></script>
+  <script src="assets/js/admin-operations.js"></script>
   <script src="assets/js/settings.js"></script>
   <script src="assets/js/pwa.js"></script>
 </body>

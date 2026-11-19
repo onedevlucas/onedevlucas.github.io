@@ -3,6 +3,7 @@ import '../../assets/js/time.js';
 import '../../assets/js/service-calendar.js';
 import '../../assets/js/status.js';
 import { prepareTrip, tripCandidates, tripIsComplete, TRIP_LIMIT } from './trips.js';
+import { operationsRequest, operationsSnapshot, operationalEvents, describeService } from './operations.js';
 
 const CLOCK = globalThis.BORailTime;
 const SERVICE = globalThis.BORailService;
@@ -154,12 +155,12 @@ async function manageTrips(request, env, subscriptionId, tripId) {
     const { results } = await env.DB.prepare(`SELECT id, trip_json, flags_json FROM saved_trips
       WHERE subscription_id = ? AND expires_at > ? ORDER BY starts_at`).bind(subscriptionId, now.getTime()).all();
     return json(request, { trips: results.map(row => ({
-      id: row.id, ...JSON.parse(row.trip_json), replan: JSON.parse(row.flags_json).includes('replan')
+      ...JSON.parse(row.trip_json), id: row.id, replan: JSON.parse(row.flags_json).includes('replan')
     })) });
   }
   if (request.method === 'POST' && !tripId) {
     if (Number(request.headers.get('Content-Length')) > 8192) return json(request, { error: 'Trip is too large.' }, 413);
-    const trip = prepareTrip(await request.json(), now);
+    const trip = prepareTrip(await request.json(), now, await operationsSnapshot(env, now.getTime()));
     const encoded = JSON.stringify(trip);
     const journeyKey = JSON.stringify([trip.origin, trip.destination, ...trip.legs.map(leg =>
       [leg.runId, leg.boardStation, leg.alightStation])]);
@@ -264,8 +265,9 @@ async function insertEvent(env, event, now) {
   await eventStatement(env, event, now).run();
 }
 
-async function evaluateLineTransitions(env, now) {
-  const signals = STATUS.computeStatusDelaySignals(now);
+async function evaluateLineTransitions(env, now, operations) {
+  const runs = operations && SCHEDULE.buildScheduledRuns(now, true, { operations, statusMinute: CLOCK.clockMinutes(now) });
+  const signals = STATUS.computeStatusDelaySignals(now, runs);
   const overrideRows = await env.DB.prepare(`SELECT * FROM service_overrides
     WHERE expires_at IS NULL OR expires_at > ?`).bind(now.toISOString()).all();
   const overrides = new Map((overrideRows.results || []).map(row => [row.service_id, row]));
@@ -283,6 +285,8 @@ async function evaluateLineTransitions(env, now) {
     }
     const key = `line:${service.id}`;
     const previous = previousStates.get(key);
+    const adminState = operations && describeService(service.id, now, operations);
+    if (['system-closed', 'admin-noservice', 'closure-noservice'].includes(adminState?.type)) continue;
     const transition = decideLineTransition(service.id, previous, current, signal, now);
     const { lastDisruption, event } = transition;
 
@@ -297,15 +301,16 @@ async function evaluateLineTransitions(env, now) {
   if (writes.length) await env.DB.batch(writes);
 }
 
-async function evaluateTrips(env, now) {
+async function evaluateTrips(env, now, operations) {
   const nowMs = now.getTime();
   const current = SERVICE.context(now);
   const previousDate = CLOCK.dateKey(CLOCK.startOfDay(now).getTime() - 1);
   await env.DB.prepare('DELETE FROM saved_trips WHERE expires_at <= ?').bind(nowMs).run();
   const { results } = await env.DB.prepare(`SELECT * FROM saved_trips
-    WHERE date_key BETWEEN ? AND ? AND (starts_at <= ? OR (? = 1 AND date_key = ?))
+    WHERE date_key BETWEEN ? AND ? AND (starts_at <= ? OR (? = 1 AND date_key = ?) OR ? = 1)
     AND flags_json NOT LIKE '%"replan"%' ORDER BY starts_at`)
-    .bind(previousDate, current.dateKey, nowMs + 20 * 60_000, Number(current.winterEmergency), current.dateKey).all();
+    .bind(previousDate, operations?.changes.length ? CLOCK.dateKey(nowMs + 181 * 86400_000) : current.dateKey,
+      nowMs + 20 * 60_000, Number(current.winterEmergency), current.dateKey, Number(Boolean(operations?.changes.length))).all();
   const indexedTrips = results.map(row => ({ row, trip: JSON.parse(row.trip_json) }));
   const wanted = new Map();
   for (const { row, trip } of indexedTrips) {
@@ -317,9 +322,10 @@ async function evaluateTrips(env, now) {
   for (const { row, trip } of indexedTrips) {
     if (!indexes.has(row.date_key)) {
       const date = CLOCK.fromWallTime(row.date_key, '12:00');
+      const options = SCHEDULE.planningOptions(date, now);
       indexes.set(row.date_key, {
-        runs: new Map(SCHEDULE.buildScheduledRuns(date, true, { runIds: wanted.get(row.date_key) }).map(run => [run.id, run])),
-        winterEmergency: SERVICE.context(date).winterEmergency
+        runs: new Map(SCHEDULE.buildScheduledRuns(date, true, { ...options, operations, runIds: wanted.get(row.date_key) }).map(run => [run.id, run])),
+        winterEmergency: SERVICE.context(date, options).winterEmergency
       });
     }
     const { runs, winterEmergency } = indexes.get(row.date_key);
@@ -329,10 +335,11 @@ async function evaluateTrips(env, now) {
       if (writes.length >= 6) break;
       continue;
     }
-    const candidates = tripCandidates(trip, runs, now, { winterEmergency, flags })
+    const candidates = tripCandidates({ ...trip, id: row.id }, runs, now, { winterEmergency, flags, operations })
       .slice(0, Math.max(1, 5 - writes.length));
     if (!candidates.length) continue;
-    for (const { key, deadline, ...payload } of candidates) {
+    for (const { key, deadline, changedLegs, ...payload } of candidates) {
+      if (changedLegs) trip.updatedLegs = changedLegs;
       flags.push(key);
       writes.push(eventStatement(env, {
         id: `trip:${row.id}:${key}`,
@@ -341,8 +348,8 @@ async function evaluateTrips(env, now) {
         payload: { ...payload, tag: `borail-trip-${row.id}-${key}`, deadline }
       }, now));
     }
-    writes.push(env.DB.prepare('UPDATE saved_trips SET flags_json = ? WHERE id = ?')
-      .bind(JSON.stringify(flags), row.id));
+    writes.push(env.DB.prepare('UPDATE saved_trips SET flags_json = ?, trip_json = ? WHERE id = ?')
+      .bind(JSON.stringify(flags), JSON.stringify(trip), row.id));
     if (writes.length >= 6) break;
   }
   if (writes.length) await env.DB.batch(writes);
@@ -403,6 +410,7 @@ async function evaluateElevators(env, now) {
 }
 
 function wantsEvent(subscription, event) {
+  if (event.event_type === 'operations') return true;
   let preferences;
   try { preferences = normalizePreferences(JSON.parse(subscription.preferences_json)); }
   catch { return false; }
@@ -489,10 +497,17 @@ async function processPendingEvents(env) {
 }
 
 async function runNotificationCycle(env, date = new Date()) {
-  await evaluateLineTransitions(env, date);
+  const operations = await operationsSnapshot(env, date.getTime());
+  const events = operationalEvents(operations, date.getTime());
+  if (events.length) await env.DB.batch(events.map(event => eventStatement(env, event, date)));
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM operations_sessions WHERE expires_at <= ?').bind(date.getTime()),
+    env.DB.prepare('DELETE FROM operations_login_limits WHERE window_start < ?').bind(Math.floor(date.getTime() / 900000) - 2)
+  ]);
+  await evaluateLineTransitions(env, date, operations);
   await evaluateWinterEmergency(env, date);
   await evaluateElevators(env, date);
-  await evaluateTrips(env, date);
+  await evaluateTrips(env, date, operations);
   await processPendingEvents(env);
 }
 
@@ -502,6 +517,8 @@ export default {
     if (!isAllowedBrowserRequest(request)) return json(request, { error: 'Origin is not allowed.' }, 403);
     const url = new URL(request.url);
     try {
+      const operations = await operationsRequest(request, env, url, { json, hashToken, randomToken, timingSafeEqual, parseBearer });
+      if (operations) return operations;
       if (request.method === 'GET' && url.pathname === '/health') return json(request, { ok: true, service: 'BORail notifications' });
       if (request.method === 'GET' && url.pathname === '/config') {
         if (!env.VAPID_SERVER_PUBLIC_KEY) return json(request, { error: 'Notification service is not configured.' }, 503);
@@ -531,4 +548,4 @@ export default {
   }
 };
 
-export { decideLineTransition, elevatorCandidate, evaluateTrips, lineEvent, normalizePreferences, runNotificationCycle, serviceLabel };
+export { decideLineTransition, elevatorCandidate, evaluateTrips, lineEvent, normalizePreferences, runNotificationCycle, serviceLabel, wantsEvent };

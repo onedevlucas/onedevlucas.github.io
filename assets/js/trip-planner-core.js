@@ -9,11 +9,11 @@
     return legs.map(leg => `${leg.runId}:${leg.boardStation}>${leg.alightStation}`).join('|');
   }
 
-  function buildBoardIndex(runs) {
+  function buildBoardIndex(runs, stationOpen) {
     const index = new Map();
     runs.forEach(run => {
       run.stops.forEach((stop, stopIndex) => {
-        if (stopIndex >= run.stops.length - 1) return;
+        if (stopIndex >= run.stops.length - 1 || !stationOpen(stop.name, stop.actualDepartureSec)) return;
         if (!index.has(stop.name)) index.set(stop.name, []);
         index.get(stop.name).push({ run, stopIndex, departureSec: stop.actualDepartureSec });
       });
@@ -42,7 +42,8 @@
     const maxTransfers = Number.isFinite(options.maxTransfers) ? options.maxTransfers : 5;
     const maxResults = Number.isFinite(options.maxResults) ? options.maxResults : 12;
     const searchHorizonSec = Number(options.searchHorizonSec) || 8 * 3600;
-    const boardIndex = buildBoardIndex(runs);
+    const stationOpen = options.stationOpen || (() => true);
+    const boardIndex = buildBoardIndex(runs, stationOpen);
 
     if (!origin || !destination || origin === destination) return [];
 
@@ -87,6 +88,7 @@
         const boardStop = run.stops[event.stopIndex];
         for (let alightIndex = event.stopIndex + 1; alightIndex < run.stops.length; alightIndex += 1) {
           const alightStop = run.stops[alightIndex];
+          if (!stationOpen(alightStop.name, alightStop.actualArrivalSec)) continue;
           if (state.visitedStations.has(alightStop.name) && alightStop.name !== destination) continue;
 
           const waitSec = Math.max(0, boardStop.actualDepartureSec - state.timeSec);

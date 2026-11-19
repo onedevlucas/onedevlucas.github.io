@@ -105,8 +105,8 @@
     'Doverville': [630, 599],
     'Orchard Ridge': [630, 533],
     'Groveton': [561, 475],
-    'Madisonboro': [429, 475],
-    'Hutchinson Point': [495, 475],
+    'Madisonboro': [495, 475],
+    'Hutchinson Point': [429, 475],
     'Vanwood': [361, 415],
     'South Harrington': [361, 349],
     'Harrington City': [361, 283],
@@ -226,7 +226,7 @@
       ['East Heights', 'Alpherst']
     ],
     B: [
-      ['Leighton Castle', 'Oakville Plaza', 'Oakville City Center', 'Oakville Exchange', 'Perry Road', 'Mount Hindsboro', 'Greens Corner', 'Doverville', 'Orchard Ridge', 'Groveton', 'Hutchinson Point', 'Madisonboro', 'Vanwood', 'South Harrington', 'Harrington City'],
+      ['Leighton Castle', 'Oakville Plaza', 'Oakville City Center', 'Oakville Exchange', 'Perry Road', 'Mount Hindsboro', 'Greens Corner', 'Doverville', 'Orchard Ridge', 'Groveton', 'Madisonboro', 'Hutchinson Point', 'Vanwood', 'South Harrington', 'Harrington City'],
       ['Harrington City', 'Carrollton', 'Hadleigh']
     ]
   });
@@ -257,18 +257,6 @@
     edgeKey('Oakville City Center', 'Oakville Plaza'),
     edgeKey('Oakville Plaza', 'Leighton Castle')
   ]);
-
-  // These aliases correct the B route's physical station order without
-  // inventing any geometry. Each replacement is sliced directly from the
-  // corresponding BLocal/BExpress engineering guide polyline.
-  const ENGINEERING_EDGE_ALIASES = Object.freeze({
-    'Groveton|Hutchinson Point': ['Groveton', 'Madisonboro'],
-    'Hutchinson Point|Madisonboro': ['Groveton', 'Madisonboro'],
-    'Madisonboro|Vanwood': ['Hutchinson Point', 'Vanwood'],
-    'Vanwood|Madisonboro': ['Vanwood', 'Hutchinson Point'],
-    'Madisonboro|Hutchinson Point': ['Madisonboro', 'Groveton'],
-    'Hutchinson Point|Groveton': ['Madisonboro', 'Groveton']
-  });
 
   const serviceGraphs = buildServiceGraphs();
   const physicalEdges = buildPhysicalEdges();
@@ -460,15 +448,9 @@
       ? 'local'
       : isExpress ? 'express' : 'local';
     const prefix = `${geometryService}-${geometryType}|`;
-    let sourceLeft = leftStation;
-    let sourceRight = rightStation;
-    const alias = geometryService === 'B' ? ENGINEERING_EDGE_ALIASES[`${leftStation}|${rightStation}`] : null;
-    if (alias) [sourceLeft, sourceRight] = alias;
-
-    const rawPoints = window.BORAIL_ROUTE_GEOMETRY?.[`${prefix}${sourceLeft}|${sourceRight}`];
+    const rawPoints = window.BORAIL_ROUTE_GEOMETRY?.[`${prefix}${leftStation}|${rightStation}`];
     if (!rawPoints?.length) return null;
-    const railPoints = engineeringRailPoints(rawPoints, sourceLeft, sourceRight);
-    return alias ? sliceEngineeringRail(railPoints, leftStation, rightStation) : railPoints;
+    return engineeringRailPoints(rawPoints, leftStation, rightStation);
   }
 
   function edgePoints(leftStation, rightStation, routeContext) {
@@ -638,7 +620,7 @@
 
   function stationAriaLabel(stationName) {
     const lines = new Set();
-    routesForDate().forEach(route => {
+    passengerRoutesForDate().forEach(route => {
       if (route.stops.includes(stationName)) lines.add(`${route.serviceId} ${route.isExpress ? 'express' : 'local'}`);
     });
     return `${stationName} station. ${[...lines].join(', ') || 'No active line information'}. Select for next trains.`;
@@ -687,12 +669,23 @@
   }
 
   function getRunsForDate(date) {
-    const dateKey = BORAIL_CLOCK.dateKey(date);
+    const dateKey = `${BORAIL_CLOCK.dateKey(date)}|${globalThis.BORailOperationsClient?.snapshot.revision || 0}`;
     if (dateKey !== cachedRunDateKey) {
       cachedRunDateKey = dateKey;
       cachedRuns = buildScheduledRuns(date, true);
     }
     return cachedRuns;
+  }
+
+  function pointsForRunLeg(run, index, direction) {
+    const keys = run.legs?.[index];
+    if (!keys?.length) return pointsForPath([run.stops[index].name, run.stops[index + 1].name], {
+      serviceId: run.serviceId, isExpress: run.isExpress, direction
+    });
+    return keys.flatMap(key => {
+      const [service, from, to] = key.split('|');
+      return edgePoints(from, to, { serviceId: service[0], isExpress: service.endsWith('express'), direction });
+    });
   }
 
   function consistForRun(run) {
@@ -711,7 +704,7 @@
     const first = stops[0];
     const last = stops[stops.length - 1];
     if (nowSeconds < first.actualArrivalSec || nowSeconds >= last.actualDepartureSec) return null;
-    const direction = getTrainDirection(run.serviceId, run.destination);
+    const direction = getTrainDirection(run.serviceId, run.originalDestination || run.destination);
     const consist = consistForRun(run);
     let position;
     let status = 'At station';
@@ -729,16 +722,7 @@
       const stop = stops[index];
       if (nowSeconds >= stop.actualArrivalSec && nowSeconds < stop.actualDepartureSec) {
         const nextStop = stops[index + 1];
-        const previousStop = stops[index - 1];
-        const adjacent = nextStop || previousStop || stop;
-        const path = pointsForPath([
-          nextStop ? stop.name : adjacent.name,
-          nextStop ? adjacent.name : stop.name
-        ], {
-          serviceId: run.serviceId,
-          direction,
-          isExpress: run.isExpress
-        });
+        const path = pointsForRunLeg(run, nextStop ? index : index - 1, direction);
         if (!path.length) return null;
         const endpoint = pointAlongPolyline(path, nextStop ? 0 : 1);
         position = offsetPosition(endpoint, { direction, isExpress: run.isExpress, serviceId: run.serviceId });
@@ -759,11 +743,7 @@
         if (nowSeconds >= stop.actualDepartureSec && nowSeconds < next.actualArrivalSec) {
           const segmentDuration = Math.max(1, next.actualArrivalSec - stop.actualDepartureSec);
           const segmentProgress = (nowSeconds - stop.actualDepartureSec) / segmentDuration;
-          const path = pointsForPath([stop.name, next.name], {
-            serviceId: run.serviceId,
-            direction,
-            isExpress: run.isExpress
-          });
+          const path = pointsForRunLeg(run, index, direction);
           if (!path.length) return null;
           position = offsetPosition(pointAlongPolyline(path, segmentProgress), {
             direction,
@@ -1050,23 +1030,17 @@
   }
 
   function liveMapStationLabel(stationName) {
-    return stationName === 'Oakville City Airport'
-      ? 'Wychwood Oakville City Airport'
-      : stationName;
+    return stationName;
   }
 
   function routePointsForRun(run) {
-    const direction = getTrainDirection(run.serviceId, run.destination);
+    const direction = getTrainDirection(run.serviceId, run.originalDestination || run.destination);
     const result = [];
     const stopPoints = new Map();
     for (let index = 0; index < run.stops.length - 1; index += 1) {
       const left = run.stops[index].name;
       const right = run.stops[index + 1].name;
-      const points = pointsForPath([left, right], {
-        serviceId: run.serviceId,
-        direction,
-        isExpress: run.isExpress
-      });
+      const points = pointsForRunLeg(run, index, direction);
       if (points.length < 2) continue;
       if (!index) stopPoints.set(left, points[0]);
       stopPoints.set(right, points.at(-1));
@@ -1172,7 +1146,7 @@
 
   function stationLines(stationId) {
     const lines = new Map();
-    routesForDate().forEach(route => {
+    passengerRoutesForDate().forEach(route => {
       if (!route.stops.includes(stationId)) return;
       if (!lines.has(route.serviceId)) lines.set(route.serviceId, { local: false, express: false });
       lines.get(route.serviceId)[route.isExpress ? 'express' : 'local'] = true;
@@ -1183,6 +1157,7 @@
   function arrivalRowsForStation(stationId, date = BORAIL_CLOCK.now()) {
     const nowSeconds = BORAIL_CLOCK.clockSeconds(date);
     const horizonSeconds = 6 * 60 * 60;
+    if (globalThis.BORailOperationsClient?.state(date).stations.has(stationId)) return [];
     return getRunsForDate(date).map(run => {
       const stationIndex = run.stops.findIndex(stop => stop.name === stationId);
       if (stationIndex < 0 || stationIndex === run.stops.length - 1) return null;
@@ -1217,7 +1192,9 @@
       const express = types.express ? lineBadgeHtml(serviceId, true) : '';
       return local + express;
     }).join('');
-    const arrivalsHtml = rows.length ? rows.map(row => {
+    const operations = globalThis.BORailOperationsClient;
+    const closure = operations?.state(date).stations.get(stationId);
+    const arrivalsHtml = closure ? `<div class="subtle"><strong>No Upcoming Trains</strong><br>Reason Provided: ${escapeHtml(operations.text(closure))}</div>` : rows.length ? rows.map(row => {
       const scheduled = formatMapTime(row.scheduledArrivalSec);
       const actual = formatMapTime(row.actualArrivalSec);
       const minutes = row.actualMinsAway <= .5 ? 'Now' : `${Math.max(1, Math.round(row.actualMinsAway))} min`;
@@ -1271,6 +1248,15 @@
     renderStationDetails(stationId, BORAIL_CLOCK.now());
     if (focus) centerOn(STATION_COORDS[stationId][0], STATION_COORDS[stationId][1], Math.max(2.1, currentZoom()));
   }
+
+  window.addEventListener('borail:operations', () => {
+    const state = globalThis.BORailOperationsClient?.state();
+    stationElements.forEach((element, station) => {
+      element.classList.toggle('station-closed', state.stations.has(station));
+      element.setAttribute('aria-label', `${stationAriaLabel(station)}${state.stations.has(station) ? ', closed' : ''}`);
+    });
+    if (selected?.type === 'station') renderStationDetails(selected.id);
+  });
 
   function selectTrain(trainId, focus = false) {
     const snapshot = activeSnapshots.get(trainId);

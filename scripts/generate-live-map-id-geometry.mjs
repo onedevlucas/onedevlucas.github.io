@@ -367,8 +367,8 @@ if (response.exceptionDetails) {
 }
 const result = response.result.value;
 const source = `// Generated from ID-tagged engineering SVGs. Run scripts/generate-live-map-id-geometry.mjs after registry updates.\n` +
-  `window.BORAIL_ID_ROUTE_GEOMETRY=Object.freeze(${JSON.stringify(result.geometry)});\n` +
-  `window.BORAIL_ID_GEOMETRY_META=Object.freeze(${JSON.stringify({ generatedFrom: registry.map(entry => entry.file), diagnostics: result.diagnostics })});\n`;
+  `globalThis.BORAIL_ID_ROUTE_GEOMETRY=Object.freeze(${JSON.stringify(result.geometry)});\n` +
+  `globalThis.BORAIL_ID_GEOMETRY_META=Object.freeze(${JSON.stringify({ generatedFrom: registry.map(entry => entry.file), diagnostics: result.diagnostics })});\n`;
 fs.writeFileSync(outputPath, source);
 console.log(JSON.stringify(result.diagnostics, null, 2));
 console.log(`Wrote ${Object.keys(result.geometry).length} exact route edges to ${outputPath}.`);

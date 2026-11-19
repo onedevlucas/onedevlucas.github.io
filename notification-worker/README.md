@@ -26,4 +26,17 @@ To upgrade an existing database, run `wrangler d1 migrations apply borail-notifi
 6. Set an `ADMIN_TOKEN` Worker secret for protected service-status overrides.
 7. Deploy, then place the resulting Worker URL in `assets/js/notification-config.js`.
 
+## V81 Operations Control
+
+Apply the D1 migration before deploying the V81 Worker. Configure
+`OPERATIONS_PASSWORD_HASH` as a Worker secret containing the unpadded
+base64url SHA-256 digest of a password generated from at least 24 random bytes.
+Keep the password in the owner's password manager. The dashboard in Settings
+holds its 45-minute session in memory and verifies each publish on the Worker.
+Use **Preview Draft** to review changes and **Push Now** to publish. Replace the
+verifier and clear `operations_sessions` when rotating the password.
+
+Push notifications for administrative operations follow the minute-based
+notification queue. Previewing an action does not publish or queue it.
+
 The API accepts browser requests only from `https://rideborailmc.net` and local development origins. Each device receives its own random management token. There is no public arbitrary-message endpoint.

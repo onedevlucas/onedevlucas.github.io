@@ -1374,3 +1374,7 @@ body.live-map-focus-mode #liveMapSvg { min-height: calc(100vh - 120px); aspect-r
   .live-map-station-dot,
   .live-map-train { transition: none !important; animation: none !important; }
 }
+.live-map-station.station-closed .live-map-station-dot {
+  fill: #891d2b;
+  stroke: #ff8a93;
+}

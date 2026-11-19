@@ -31,10 +31,10 @@
     "prefix": "BLocal",
     "routes": {
       "Northbound": [
-        ["Leighton Castle", "Oakville Plaza", "Oakville City Center", "Oakville Exchange", "Perry Road", "Mount Hindsboro", "Greens Corner", "Doverville", "Orchard Ridge", "Groveton", "Hutchinson Point", "Madisonboro", "Vanwood", "South Harrington", "Harrington City"]
+        ["Leighton Castle", "Oakville Plaza", "Oakville City Center", "Oakville Exchange", "Perry Road", "Mount Hindsboro", "Greens Corner", "Doverville", "Orchard Ridge", "Groveton", "Madisonboro", "Hutchinson Point", "Vanwood", "South Harrington", "Harrington City"]
       ],
       "Eastbound": [
-        ["Harrington City", "South Harrington", "Vanwood", "Madisonboro", "Hutchinson Point", "Groveton", "Orchard Ridge", "Doverville", "Greens Corner", "Mount Hindsboro", "Perry Road", "Oakville Exchange", "Oakville City Center", "Oakville Plaza", "Leighton Castle"]
+        ["Harrington City", "South Harrington", "Vanwood", "Hutchinson Point", "Madisonboro", "Groveton", "Orchard Ridge", "Doverville", "Greens Corner", "Mount Hindsboro", "Perry Road", "Oakville Exchange", "Oakville City Center", "Oakville Plaza", "Leighton Castle"]
       ]
     }
   },

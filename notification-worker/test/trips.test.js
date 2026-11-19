@@ -107,7 +107,7 @@ test('known run delays and missed transfers alert only after the train starts an
 
 function testDb() {
   const sqlite = new DatabaseSync(':memory:');
-  for (const file of ['../schema.sql', '../migrations/0001_saved_trips.sql']) {
+  for (const file of ['../schema.sql', '../migrations/0001_saved_trips.sql', '../migrations/0002_operations.sql']) {
     sqlite.exec(readFileSync(new URL(file, import.meta.url), 'utf8'));
   }
   const db = {

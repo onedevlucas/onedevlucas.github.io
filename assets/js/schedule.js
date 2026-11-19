@@ -220,9 +220,9 @@ const ROUTES = [
     stops:['East Heights','Alpherst','New Halifax','Scottsbury','Ameryville','Scottsdale','Grant Park','Cherrywood','Brandywine','Santa Mora'] },
 
   { serviceId:'B', isExpress:false, tag:'LCL', dir:'NB', origin:'Leighton Castle', destination:'Harrington City',
-    stops:['Leighton Castle','Oakville Plaza','Oakville City Center','Oakville Exchange','Perry Road','Mount Hindsboro','Greens Corner','Doverville','Orchard Ridge','Groveton','Hutchinson Point','Madisonboro','Vanwood','South Harrington','Harrington City'] },
+    stops:['Leighton Castle','Oakville Plaza','Oakville City Center','Oakville Exchange','Perry Road','Mount Hindsboro','Greens Corner','Doverville','Orchard Ridge','Groveton','Madisonboro','Hutchinson Point','Vanwood','South Harrington','Harrington City'] },
   { serviceId:'B', isExpress:false, tag:'LCL', dir:'SB', origin:'Harrington City', destination:'Leighton Castle',
-    stops:['Harrington City','South Harrington','Vanwood','Madisonboro','Hutchinson Point','Groveton','Orchard Ridge','Doverville','Greens Corner','Mount Hindsboro','Perry Road','Oakville Exchange','Oakville City Center','Oakville Plaza', 'Leighton Castle'] },
+    stops:['Harrington City','South Harrington','Vanwood','Hutchinson Point','Madisonboro','Groveton','Orchard Ridge','Doverville','Greens Corner','Mount Hindsboro','Perry Road','Oakville Exchange','Oakville City Center','Oakville Plaza', 'Leighton Castle'] },
   { serviceId:'B', isExpress:true, tag:'EXP', dir:'NB', origin:'Leighton Castle', destination:'Hadleigh',
     stops:['Leighton Castle','Oakville Plaza','Oakville City Center','Oakville Exchange','Greens Corner','Madisonboro','Harrington City','Carrollton','Hadleigh'] },
   { serviceId:'B', isExpress:true, tag:'EXP', dir:'SB', origin:'Hadleigh', destination:'Leighton Castle',
@@ -237,6 +237,19 @@ const WINTER_ROUTES = BORAIL_SERVICE.WINTER_ROUTES.map(route => ({
 
 function routesForDate(date = BORAIL_CLOCK.now(), options) {
   return BORAIL_SERVICE.context(date, options).winterEmergency ? WINTER_ROUTES : ROUTES;
+}
+
+function passengerRoutesForDate(date = BORAIL_CLOCK.now()) {
+  const routes = routesForDate(date);
+  const operations = globalThis.BORailOperations;
+  const state = globalThis.BORailOperationsClient?.state(date);
+  if (!operations || !state || (!state.stations.size && !state.shutdowns.length)) return routes;
+  const effective = route => getEffectiveRoutePattern(route, timeMode(date));
+  return routes.flatMap(route => {
+    if (state.shutdowns.some(change => operations.affectsService(change, operations.serviceKey(route)))) return [];
+    const pattern = operations.closurePattern(route, effective(route), state, routes, effective);
+    return pattern ? [{ ...route, ...pattern }] : [];
+  });
 }
 
 const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
@@ -606,6 +619,10 @@ function buildScheduledRuns(planningDate, includeExpress = true, options = {}) {
   const dayContext = BORAIL_SERVICE.context(planningDate, options);
   const activeRoutes = dayContext.winterEmergency ? WINTER_ROUTES : ROUTES;
   const { runIds, statusMinute } = options;
+  const operations = globalThis.BORailOperations;
+  const snapshot = options.operations ?? globalThis.BORailOperationsClient?.snapshot;
+  const hasChanges = operations && snapshot?.changes?.length;
+  const dayStart = hasChanges ? operations.serviceDayStart(planningDate) : 0;
   const nextByService = new Map();
   const neededServices = runIds && new Set([...runIds].map(id => id.split('-', 2).join('-')));
   const routeNeeded = route => !neededServices || neededServices.has(`${route.serviceId}-${route.tag}`);
@@ -621,6 +638,68 @@ function buildScheduledRuns(planningDate, includeExpress = true, options = {}) {
     return departureMin + maxDuration >= statusMinute;
   }
 
+  function addRun(run, timing, route, pattern, maxDuration) {
+    const departure = dayStart + timing.stops[0].actualDepartureSec * 1000;
+    if (hasChanges) {
+      const state = operations.atTime(snapshot, departure);
+      const key = operations.serviceKey(run);
+      // The original departure is the dispatch slot. Once it has departed,
+      // later closures do not alter this run, even after a page reload.
+      if (state.shutdowns.some(change => operations.affectsService(change, key))) return;
+      const changed = operations.closurePattern(route, pattern, state, activeRoutes,
+        candidate => getEffectiveRoutePattern(candidate, run.mode));
+      if (!changed) return;
+      if (changed !== pattern) {
+        run.originalDestination = run.destination;
+        run.origin = changed.stops[0];
+        run.destination = changed.stops.at(-1);
+        run.legs = changed.legs;
+        run.segmentTimes = changed.segmentTimes;
+        run.customDwellSeconds = changed.customDwellSeconds || null;
+        timing = calculateStopTimes(run.trainSeed, changed.stops, run.departureMin, run.segmentTimes,
+          run.mode, run.customDwellSeconds);
+        run.rerouted = changed.rerouted;
+      }
+      const recovery = operations.recoverySeconds(run.id, departure, snapshot);
+      if (recovery) {
+        timing.delayStartSec = timing.stops[0].actualDepartureSec;
+        timing.delayStartStop = 1;
+        timing.hasDelay = true;
+        timing.delaySeconds += recovery;
+        timing.stops.slice(1).forEach(stop => {
+          stop.actualArrivalSec += recovery;
+          stop.actualDepartureSec += recovery;
+          stop.isDelayed = true;
+          stop.delaySeconds += recovery;
+        });
+      }
+    }
+    const baseline = { ...run, ...timing };
+    let result = baseline;
+    if (hasChanges) {
+      for (const change of snapshot.changes) {
+        if (change.kind !== 'train' || change.target !== run.id) continue;
+        if (change.stops?.some(name => operations.atTime(snapshot, Math.max(departure, change.startsAt)).stations.has(name))) continue;
+        if (!result && !change.restore) continue;
+        try {
+          result ||= baseline;
+          result.originalDestination ||= result.destination;
+          result = operations.applyTrainEdit(result, change, dayStart);
+        } catch (error) {
+          // A subsequently published closure can invalidate an old detour.
+          console.warn('BORail train edit could not be applied:', change.id, error.message);
+        }
+      }
+      if (!result && options.includeCanceled && snapshot.changes.some(change =>
+        change.kind === 'train' && change.target === run.id && change.cancel)) {
+        result = { ...baseline, canceled: true };
+      }
+      if (!result) return;
+      maxDuration = Math.max(maxDuration, result.stops.at(-1).actualDepartureSec / 60 - result.departureMin);
+    }
+    if (needsTiming(run.serviceId, run.isExpress, run.departureMin, maxDuration)) runs.push(result);
+  }
+
   activeRoutes.forEach(route => {
     if (isSingleTrainShuttleRoute(route) || !routeNeeded(route)) return;
     if (!includeExpress && route.isExpress) return;
@@ -632,14 +711,14 @@ function buildScheduledRuns(planningDate, includeExpress = true, options = {}) {
     getRouteDepartureMinutes(route, planningDate, options, dayContext).forEach(departureMin => {
       const mode = dayContext.winterEmergency ? 'winterEmergency' : timeModeForMinutes(departureMin);
       if (!isServiceAllowed(route, mode)) return;
-      if (!needsTiming(route.serviceId, route.isExpress, departureMin, maxDuration)) return;
+      if (!hasChanges && !needsTiming(route.serviceId, route.isExpress, departureMin, maxDuration)) return;
       const trainSeed = `${route.serviceId}-${route.tag}-${departureMin}-${route.origin}-${route.destination}`;
       const id = `${trainSeed}-${dayContext.dateKey}`;
       if (runIds && !runIds.has(id)) return;
       if (!patterns.has(mode)) patterns.set(mode, getEffectiveRoutePattern(route, mode));
       const effectiveRoute = patterns.get(mode);
       const stopTimes = calculateStopTimes(trainSeed, effectiveRoute.stops, departureMin, effectiveRoute.segmentTimes, mode, route.customDwellSeconds);
-      runs.push({
+      addRun({
         id,
         serviceId: route.serviceId,
         isExpress: route.isExpress,
@@ -652,13 +731,8 @@ function buildScheduledRuns(planningDate, includeExpress = true, options = {}) {
         segmentTimes: effectiveRoute.segmentTimes,
         customDwellSeconds: route.customDwellSeconds || null,
         isSingleShuttle: false,
-        trainSeed,
-        hasDelay: stopTimes.hasDelay,
-        delaySeconds: stopTimes.delaySeconds,
-        delayStartStop: stopTimes.delayStartStop,
-        delayStartSec: stopTimes.delayStartSec,
-        stops: stopTimes.stops
-      });
+        trainSeed
+      }, stopTimes, route, effectiveRoute, maxDuration);
     });
   });
 
@@ -673,9 +747,11 @@ function buildScheduledRuns(planningDate, includeExpress = true, options = {}) {
       if (runIds && !runIds.has(id)) return;
       const maxDuration = event.segmentTimes.reduce((sum, min) => sum + min, 0)
         + (event.customDwellSeconds || []).reduce((sum, seconds) => sum + seconds / 60, 0) + 17;
-      if (!needsTiming(event.serviceId, false, event.departureMin, maxDuration)) return;
+      if (!hasChanges && !needsTiming(event.serviceId, false, event.departureMin, maxDuration)) return;
       const stopTimes = calculateStopTimes(trainSeed, event.stops, event.departureMin, event.segmentTimes, mode, event.customDwellSeconds);
-      runs.push({
+      const route = activeRoutes.find(candidate => candidate.origin === event.origin &&
+        candidate.destination === event.destination && shuttleKeyForRoute(candidate) === shuttleKey);
+      addRun({
         id,
         serviceId: event.serviceId,
         isExpress: false,
@@ -689,13 +765,8 @@ function buildScheduledRuns(planningDate, includeExpress = true, options = {}) {
         customDwellSeconds: event.customDwellSeconds || null,
         isSingleShuttle: true,
         shuttleKey,
-        trainSeed,
-        hasDelay: stopTimes.hasDelay,
-        delaySeconds: stopTimes.delaySeconds,
-        delayStartStop: stopTimes.delayStartStop,
-        delayStartSec: stopTimes.delayStartSec,
-        stops: stopTimes.stops
-      });
+        trainSeed
+      }, stopTimes, route, event, maxDuration);
     });
   });
 
@@ -757,12 +828,28 @@ function planBORailTrip(originName, destinationName, planningDate, now = BORAIL_
   const mode = context.mode;
   const origin = resolvePlanningStation(originName, mode, planningDate, options);
   const destination = resolvePlanningStation(destinationName, mode, planningDate, options);
+  const operations = globalThis.BORailOperations;
+  const snapshot = globalThis.BORailOperationsClient?.snapshot;
+  const closed = operations?.atTime(snapshot, planningDate.getTime()).stations;
+  const closure = closed?.get(originName) || closed?.get(destinationName);
+  if (closure) return { journeys: [], mode, origin, destination, planningDate, closure };
+  const shutdown = operations?.atTime(snapshot, planningDate.getTime()).shutdowns.find(change => change.kind === 'system');
+  if (shutdown) return { journeys: [], mode, origin, destination, planningDate, shutdown };
 
   if (origin.effective === destination.effective) {
     return { journeys: [], mode, origin, destination, sameEffectiveStation: true, planningDate };
   }
 
+  const dayStart = operations?.serviceDayStart(planningDate);
+  const stationOpen = (name, seconds) => !operations?.atTime(snapshot, dayStart + seconds * 1000).stations.has(name);
   const allRuns = runsWithCurrentlyVisibleDelays(buildScheduledRuns(planningDate, true, options), planningDate, now);
+  // A temporary terminus or added express stop can serve a station absent
+  // from the base passenger pattern.
+  for (const station of [origin, destination]) {
+    if (snapshot?.changes.length && allRuns.some(run => run.stops.some(stop => stop.name === station.requested))) {
+      Object.assign(station, { effective: station.requested, fallback: false, unavailable: false });
+    }
+  }
   const localRuns = allRuns.filter(run => !run.isExpress);
   const departureOffsets = [0, 5, 10, 15, 20, 30].map(minutes => minutes * 60);
   const collectJourneys = runs => {
@@ -777,7 +864,8 @@ function planBORailTrip(originName, destinationName, planningDate, now = BORAIL_
         minTransferSec: 120,
         maxTransfers: 5,
         maxResults: 12,
-        searchHorizonSec: 8 * 3600
+        searchHorizonSec: 8 * 3600,
+        stationOpen
       });
       variants.forEach(journey => {
         if (signatures.has(journey.signature)) return;
@@ -837,6 +925,7 @@ function plannerModeLabel(mode) {
 
 
 globalThis.BORailSchedule = Object.freeze({
-  buildScheduledRuns, runsWithCurrentlyVisibleDelays, planningOptions, planBORailTrip, STATIONS, formatTripClock
+  buildScheduledRuns, runsWithCurrentlyVisibleDelays, planningOptions, planBORailTrip, STATIONS, formatTripClock,
+  routesForDate, getEffectiveRoutePattern
 });
 

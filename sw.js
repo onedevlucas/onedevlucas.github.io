@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v80-trip-notifications';
+const CACHE_NAME = 'borail-v81-operations';
 const PUSH_META_CACHE = 'borail-push-meta-v1';
 const PUSH_META_URL = '/__borail_push_config__';
 
@@ -26,6 +26,9 @@ const CORE_ASSETS = [
   'assets/js/status.js',
   'assets/js/settings.js',
   'assets/js/saved-trips.js',
+  'assets/js/operations.js',
+  'assets/js/operations-client.js',
+  'assets/js/admin-operations.js',
   'assets/js/schedule.js',
   'assets/js/borail-data.js',
   'assets/js/notification-config.js',

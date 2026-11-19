@@ -22,7 +22,11 @@ function stationPair(run, leg) {
   return board && alight && board.stopIndex < alight.stopIndex ? { board, alight } : null;
 }
 
-export function prepareTrip(input, now = new Date()) {
+const fingerprint = run => JSON.stringify(run.stops.map(stop => [stop.name, stop.scheduledArrivalSec]));
+const stationClosed = (operations, dateKey, name, time) =>
+  globalThis.BORailOperations?.atTime(operations, timestamp(dateKey, time)).stations.has(name);
+
+export function prepareTrip(input, now = new Date(), operations) {
   const { dateKey, origin, destination, legs } = input ?? {};
   const date = typeof dateKey === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateKey)
     ? CLOCK.fromWallTime(dateKey, '12:00') : null;
@@ -34,7 +38,7 @@ export function prepareTrip(input, now = new Date()) {
   }
   const options = SCHEDULE.planningOptions(date, now);
   const service = SERVICE.context(date, options);
-  const rawRuns = SCHEDULE.buildScheduledRuns(date, true, { ...options, runIds: new Set(legs.map(leg => leg?.runId)) });
+  const rawRuns = SCHEDULE.buildScheduledRuns(date, true, { ...options, operations, runIds: new Set(legs.map(leg => leg?.runId)) });
   const runs = new Map(rawRuns.map(run => [run.id, run]));
   const currentSeconds = (now.getTime() - timestamp(dateKey, 0)) / 1000;
   const actual = (run, stop, type) => knowsDelay(run, currentSeconds)
@@ -49,6 +53,10 @@ export function prepareTrip(input, now = new Date()) {
     }
     const { board, alight } = pair;
     const departure = actual(run, board, 'Departure');
+    if (stationClosed(operations, dateKey, board.name, departure) ||
+        stationClosed(operations, dateKey, alight.name, actual(run, alight, 'Arrival'))) {
+      throw new Error('This itinerary uses a closed station. Find your trip again.');
+    }
     if (previousArrival !== undefined && departure - previousArrival < 120) {
       throw new Error('This connection has changed. Find your trip again.');
     }
@@ -63,7 +71,8 @@ export function prepareTrip(input, now = new Date()) {
       departureSec: board.scheduledDepartureSec,
       arrivalSec: alight.scheduledArrivalSec,
       expectedDepartureSec: departure,
-      expectedArrivalSec: previousArrival
+      expectedArrivalSec: previousArrival,
+      schedule: fingerprint(run)
     };
   });
   const first = savedLegs[0];
@@ -96,7 +105,7 @@ export function tripIsComplete(trip, runIndex, now) {
   return Boolean(pair && now.getTime() >= timestamp(trip.dateKey, pair.alight.actualArrivalSec));
 }
 
-export function tripCandidates(trip, runIndex, now, { winterEmergency, flags = [] }) {
+export function tripCandidates(trip, runIndex, now, { winterEmergency, flags = [], operations }) {
   const due = [];
   const previous = new Set(flags);
   const sec = (now.getTime() - timestamp(trip.dateKey, 0)) / 1000;
@@ -117,12 +126,43 @@ export function tripCandidates(trip, runIndex, now, { winterEmergency, flags = [
       arrival: known ? alight.actualArrivalSec : alight.scheduledArrivalSec
     };
   });
-  if (legs.some((item, index) => !item || item.board.scheduledDepartureSec !== trip.legs[index].departureSec
-      || item.alight.scheduledArrivalSec !== trip.legs[index].arrivalSec)) {
+  const winterChanged = winterEmergency && !trip.winterEmergency;
+  const baseline = trip.updatedLegs || trip.legs;
+  const changed = legs.map((item, index) => {
+    const previousLeg = baseline[index];
+    return item && (item.board.scheduledDepartureSec !== previousLeg.departureSec ||
+      item.alight.scheduledArrivalSec !== previousLeg.arrivalSec ||
+      (previousLeg.schedule ? fingerprint(item.run) !== previousLeg.schedule : item.run.editId != null));
+  });
+  const invalid = legs.some((item, index) => !item ||
+    (item.departure >= sec && stationClosed(operations, trip.dateKey, item.board.name, item.departure)) ||
+    (item.arrival >= sec && stationClosed(operations, trip.dateKey, item.alight.name, item.arrival)) ||
+    (index > 0 && item.departure >= sec && changed.some(Boolean) && legs[index - 1] &&
+      item.board.scheduledDepartureSec - legs[index - 1].alight.scheduledArrivalSec < 120));
+  if (invalid || winterChanged && changed.some(Boolean)) {
     push('replan', `Replan your trip to ${trip.destination}`, winterEmergency && !trip.winterEmergency
       ? 'Winter Emergency Service is in effect today and has changed your itinerary. Open Plan a Trip for an updated route.'
-      : 'The timetable for your saved trip has changed. Open Plan a Trip for an updated route.', trip.expiresAt);
+      : 'A train in your saved trip has changed and your original itinerary is no longer available. Open Plan a Trip for an updated route.', trip.expiresAt);
     return due;
+  }
+
+  if (changed.some(Boolean)) {
+    const changedIndex = changed.findIndex(Boolean);
+    const { run, leg } = legs[changedIndex];
+    const revision = run.editId || operations?.revision || 'schedule';
+    const changedLegs = legs.map((item, index) => ({
+      ...item.leg, changed: Boolean(changed[index]), schedule: fingerprint(item.run),
+      departureSec: item.board.scheduledDepartureSec, arrivalSec: item.alight.scheduledArrivalSec,
+      expectedDepartureSec: item.departure, expectedArrivalSec: item.arrival,
+      stops: item.run.stops.slice(item.board.stopIndex, item.alight.stopIndex + 1).map(stop => stop.name)
+    }));
+    const journeyId = trip.id ? `?trip=${encodeURIComponent(trip.id)}` : '';
+    const key = `schedule-${revision}`;
+    if (!previous.has(key) && trip.expiresAt > now.getTime()) {
+      due.push({ key, title: `Your ${lineName(leg)} schedule has changed`,
+        body: `A train in your trip to ${trip.destination} has an updated schedule. Review your stops, departure times and connections before traveling.`,
+        deadline: trip.expiresAt, url: `settings.html${journeyId}#savedTrips`, changedLegs });
+    }
   }
 
   const first = legs[0];

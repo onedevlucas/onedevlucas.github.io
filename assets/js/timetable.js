@@ -49,7 +49,7 @@ let tripDestinationDropdown;
 
 function getBadgesForStation(stationId, { serviceOrder = null, expressFirst = false } = {}) {
   const linesMap = {};
-  routesForDate().forEach(route => {
+  passengerRoutesForDate().forEach(route => {
     if (route.stops.includes(stationId)) {
       if (!linesMap[route.serviceId]) {
         linesMap[route.serviceId] = { local: false, express: false };
@@ -493,6 +493,12 @@ function findAndRenderTrips() {
     findTripsButton.disabled = false;
     findTripsButton.textContent = 'Find Trips';
 
+    if (result.closure || result.shutdown) {
+      renderTripPlannerMessage(result.closure ? `${result.closure.target} is closed` : 'System Closed',
+        globalThis.BORailOperationsClient.text(result.closure || result.shutdown));
+      return;
+    }
+
     if (result.origin.unavailable || result.destination.unavailable) {
       renderTripPlannerMessage('No active service found.', 'BORail could not find an active station or approved fallback for this trip.');
       return;
@@ -514,6 +520,15 @@ function renderArrivals() {
   const now = BORAIL_CLOCK.now();
   const station = activeStationId;
   const limit = Number(limitSelect.value || 8);
+  const operations = globalThis.BORailOperationsClient;
+  const state = operations?.state(now);
+  const closure = state?.stations.get(station);
+  const shutdown = state?.shutdowns.find(change => change.kind === 'system');
+  if (closure || shutdown) {
+    const heading = closure ? 'No Upcoming Trains' : 'System Closed';
+    arrivalsEl.innerHTML = `<div class="subtle"><strong>${heading}</strong><br>Reason Provided: ${tripEscape(operations.text(closure || shutdown))}</div>`;
+    return;
+  }
 
   const allRawRows = arrivalsForStation(station, now);
   const nowSeconds = BORAIL_CLOCK.clockSeconds(now);
@@ -784,6 +799,11 @@ limitSelect.addEventListener('change', renderArrivals);
 dirFilterSelect.addEventListener('change', renderArrivals);
 serviceTypeFilterSelect.addEventListener('change', renderArrivals);
 refreshBtn.addEventListener('click', () => { renderClock(); renderArrivals(); });
+window.addEventListener('borail:operations', () => {
+  renderArrivals();
+  renderCustomStationsDropdown();
+  if (tripPlannerResults.childElementCount && !tripPlannerView.hidden) findAndRenderTrips();
+});
 upcomingTab.addEventListener('click', () => setTimetableView('upcoming'));
 tripPlannerTab.addEventListener('click', () => setTimetableView('planner'));
 liveMapTab.addEventListener('click', () => setTimetableView('map'));

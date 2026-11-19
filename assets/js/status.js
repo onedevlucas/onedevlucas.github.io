@@ -424,8 +424,29 @@ if (!BORAIL_CLOCK || !BORAIL_SERVICE) throw new Error('BORail time and service h
 
     function renderStatus(state, delaySignals = computeStatusDelaySignals()){
       const host = document.getElementById('statusList');
+      const client = globalThis.BORailOperationsClient;
+      const ops = globalThis.BORailOperations;
+      const schedule = globalThis.BORailSchedule;
+      const now = BORAIL_CLOCK.now();
+      const operationState = client?.state(now);
+      const system = operationState?.shutdowns.find(item => item.kind === 'system');
+      const noticeHost = document.getElementById('operationsNotices');
+      if (noticeHost && client) {
+        const stationNotices = client.snapshot.changes.filter(item => item.kind === 'station' &&
+          (ops.active(item, +now) || item.startsAt > +now || (item.endsAt <= +now && item.endsAt > +now - 86400000)) &&
+          (item.endsAt == null || item.startsAt < item.endsAt));
+        noticeHost.innerHTML = (system ? `<div class="row" id="systemOperationsNotice"><strong>System Closed</strong><span>${escapeHtml(client.text(system))}</span></div>` : '') +
+          stationNotices.map(item => {
+            const caption = item.startsAt > +now ? `Scheduled closure · ${client.timeLabel(item.startsAt)}`
+              : ops.active(item, +now) ? 'Station Closed' : 'Station Reopened';
+            return `<div class="row" data-closed-station="${escapeHtml(item.target)}"><strong>${escapeHtml(item.target)} · ${escapeHtml(caption)}</strong><span>${escapeHtml(client.text(item))}</span></div>`;
+          }).join('');
+      }
       host.innerHTML = state.statuses.map((stObj) => {
-        const signal = delaySignals[stObj.id] || { type: 'noservice', reason: 'No service information is available.' };
+        const base = delaySignals[stObj.id] || { type: 'noservice', reason: 'No service information is available.' };
+        const override = client && schedule && ops.describeService(stObj.id, schedule.routesForDate(now),
+          +now, client.snapshot, route => schedule.getEffectiveRoutePattern(route, BORAIL_SERVICE.context(now).mode));
+        const signal = override || base;
         const svcName = stObj.nameHtml;
         const st = signal.type;
 
@@ -443,13 +464,15 @@ if (!BORAIL_CLOCK || !BORAIL_SERVICE) throw new Error('BORail time and service h
         const cls = st === 'minor' ? 'warn'
           : st === 'major' ? 'bad'
           : st === 'noactive' ? 'idle'
-          : st === 'winter' ? 'winter'
+          : st === 'winter' || st === 'rerouted' || st === 'bypassed' ? 'winter'
           : 'nosvc';
         const label = st === 'minor' ? 'Minor Disruptions'
           : st === 'major' ? 'Major Disruptions'
           : st === 'noactive' ? 'No Active Trains'
           : st === 'winter' ? 'Winter Emergency Service'
-          : 'NO SERVICE';
+          : st === 'system-closed' ? 'System Closed'
+          : st === 'rerouted' ? 'Rerouted Service'
+          : st === 'bypassed' ? 'Station Bypassed' : 'NO SERVICE';
         return `
           <details class="srow" data-service-id="${stObj.id}" data-status-type="${st}">
             <summary>
@@ -457,7 +480,7 @@ if (!BORAIL_CLOCK || !BORAIL_SERVICE) throw new Error('BORail time and service h
               ${left}
               <span class="pill ${cls}">${label}<span class="arrow">▸</span></span>
             </summary>
-            <div class="reason">${signal.reason}</div>
+            <div class="reason">${escapeHtml(signal.reason)}${signal.endsAt ? ` · Expected end: ${escapeHtml(client.timeLabel(signal.endsAt))}` : ''}</div>
           </details>`;
       }).join('');
     }
@@ -798,11 +821,13 @@ if (!BORAIL_CLOCK || !BORAIL_SERVICE) throw new Error('BORail time and service h
       const params = new URLSearchParams(location.search);
       const service = params.get('service');
       const station = params.get('station');
+      const closedStation = params.get('closedStation');
       const target = service
         ? document.querySelector(`[data-service-id="${CSS.escape(service)}"]`)
         : station
           ? Array.from(document.querySelectorAll('.elevator-row[data-station]')).find(row => row.dataset.station === station)
-          : null;
+          : closedStation ? Array.from(document.querySelectorAll('[data-closed-station]')).find(row => row.dataset.closedStation === closedStation)
+            : params.has('operations') ? document.getElementById('systemOperationsNotice') || document.getElementById('statusList') : null;
       if (!target) return;
       if (target.tagName === 'DETAILS') target.open = true;
       target.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -825,6 +850,10 @@ if (!BORAIL_CLOCK || !BORAIL_SERVICE) throw new Error('BORail time and service h
       ELEVATOR_STATE = getOrCreateElevatorState();
       renderStatus(STATUS_STATE);
       renderElevatorStatus(ELEVATOR_STATE);
+      window.addEventListener('borail:operations', () => {
+        renderStatus(STATUS_STATE);
+        focusRequestedStatus();
+      });
       if (document.getElementById('splash-screen')) {
         document.addEventListener('borail:splashend', focusRequestedStatus, { once: true });
       } else {

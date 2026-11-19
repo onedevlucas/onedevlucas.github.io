@@ -11,7 +11,7 @@
     const splash = document.createElement('div');
     splash.id = 'splash-screen';
     splash.setAttribute('role', 'status');
-    splash.innerHTML = '<img id="splash-logo" src="assets/images/branding/borail-logo.png" alt="BORail"><div id="splash-version">V80 - 11/6/26</div>';
+    splash.innerHTML = '<img id="splash-logo" src="assets/images/branding/borail-logo.png" alt="BORail"><div id="splash-version">V81 - 11/18/26</div>';
     document.body.prepend(splash);
     const remove = () => {
       if (!splash.isConnected) return;

@@ -46,9 +46,11 @@
       const { trips } = await request();
       list.replaceChildren();
       if (!trips.length) list.textContent = 'No trips saved on this device.';
+      const focusTrip = new URLSearchParams(location.search).get('trip');
       trips.forEach(trip => {
         const row = document.createElement('article');
         row.className = 'saved-trip-row';
+        row.dataset.updated = String(Boolean(trip.updatedLegs));
         const title = document.createElement('strong');
         title.textContent = `${trip.origin} → ${trip.destination}`;
         const when = document.createElement('span');
@@ -57,12 +59,18 @@
         });
         const details = document.createElement('details');
         const summary = document.createElement('summary');
-        summary.textContent = trip.replan ? 'Itinerary changed · replan needed' : 'View trains';
+        summary.textContent = trip.replan ? 'Itinerary changed · replan needed' : trip.updatedLegs ? 'Schedule updated · Review changes' : 'View trains';
         details.append(summary);
+        details.open = focusTrip === trip.id;
         const legs = document.createElement('ol');
-        trip.legs.forEach(leg => {
+        (trip.updatedLegs || trip.legs).forEach(leg => {
           const item = document.createElement('li');
           item.textContent = `${leg.serviceId}${leg.isExpress ? ' Express' : ' Line'} · ${leg.boardStation} ${clockTime(trip.dateKey, leg.expectedDepartureSec)} → ${leg.alightStation} ${clockTime(trip.dateKey, leg.expectedArrivalSec)}`;
+          if (leg.changed) {
+            const updated = document.createElement('small');
+            updated.textContent = ` · Updated route: ${leg.stops.join(' → ')}`;
+            item.append(updated);
+          }
           legs.append(item);
         });
         details.append(legs);
@@ -92,6 +100,7 @@
         actions.append(cancel);
         row.append(title, when, details, actions, message);
         list.append(row);
+        if (focusTrip === trip.id) requestAnimationFrame(() => row.scrollIntoView({ block: 'center' }));
       });
     } catch (error) {
       list.textContent = error.message;

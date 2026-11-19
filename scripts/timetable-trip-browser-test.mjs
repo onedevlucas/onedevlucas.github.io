@@ -74,7 +74,7 @@ await send('Runtime.evaluate', { expression: `try {
 await send('Page.navigate', { url: 'http://127.0.0.1:8766/index.html' });
 await wait(750);
 
-assert.equal(await evaluate(`document.getElementById('splash-version').textContent`), 'V77 - 11/4/26');
+assert.equal(await evaluate(`document.getElementById('splash-version').textContent`), 'V81 - 11/18/26');
 assert.equal(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`), 0);
 await wait(2850);
 assert.ok(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`) > 0.9);
@@ -268,9 +268,9 @@ const guidedTrackGeometry = await evaluate(`(() => {
   const aAirport = path('A', 'Southbound', ['Radcliff Fields', 'Oakville City Airport', 'Oakville Exchange']);
   const sExpress = path('S', 'Southbound', ['Newkirk', 'Newkirk - Oak Street', 'Burlington - University of NCU'], true);
   const eRoxbury = path('E', 'Southbound', ['Alpherst', 'Roxbury Landing', 'East Heights']);
-  const bWestbound = path('B', 'Northbound', ['Groveton', 'Hutchinson Point', 'Madisonboro']);
-  const bEastbound = path('B', 'Southbound', ['Madisonboro', 'Hutchinson Point', 'Groveton']);
-  const bToVanwood = path('B', 'Northbound', ['Madisonboro', 'Vanwood']);
+  const bWestbound = path('B', 'Northbound', ['Groveton', 'Madisonboro', 'Hutchinson Point']);
+  const bEastbound = path('B', 'Southbound', ['Hutchinson Point', 'Madisonboro', 'Groveton']);
+  const bToVanwood = path('B', 'Northbound', ['Hutchinson Point', 'Vanwood']);
   return { count: Object.keys(BORAIL_ROUTE_GEOMETRY).length, fSouth, fNorth, fTransition, fExpressExact, gEastExact, bShared, cShared, aAirport, sExpress, eRoxbury, bWestbound, bEastbound, bToVanwood };
 })()`);
 assert.ok(guidedTrackGeometry.count >= 250);
@@ -315,7 +315,7 @@ assert.equal(guidedTrackGeometry.bEastbound.every(point => point.guidedTrack), t
 assert.ok(guidedTrackGeometry.bToVanwood.length >= 3);
 assert.ok(guidedTrackGeometry.bToVanwood[0].x > guidedTrackGeometry.bToVanwood.at(-1).x);
 assert.deepEqual(await evaluate(`BORailLiveMapDebug.findServicePath('B', 'Groveton', 'Vanwood')`), [
-  'Groveton', 'Hutchinson Point', 'Madisonboro', 'Vanwood'
+  'Groveton', 'Madisonboro', 'Hutchinson Point', 'Vanwood'
 ]);
 assert.deepEqual(await evaluate(`ROUTES.flatMap(route => route.stops.slice(0, -1).flatMap((station, index) => {
   const next = route.stops[index + 1];
