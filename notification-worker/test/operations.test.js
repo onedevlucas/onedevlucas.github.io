@@ -72,6 +72,29 @@ test('terminus rules compose and preserve rail paths and unaffected services', (
     !pathNames(run).includes('Harrington City') && pathNames(run).includes('Hadleigh')));
   assert.ok(routes(operations(closed('East Heights')), 'E-local').every(run =>
     !pathNames(run).includes('Roxbury Landing')));
+  assert.ok(routes(operations(closed('Mount River')), 'A-express').every(run =>
+    [run.origin, run.destination].sort().join('|') === 'Newkirk|Talmedge Hill'));
+});
+
+test('active edits preserve completed stops and express edits can use connected local tracks', () => {
+  const run = routes(ops.empty, 'B-local').find(candidate => candidate.destination === 'Harrington City');
+  const madisonboro = run.stops.find(stop => stop.name === 'Madisonboro');
+  const now = dayStart + madisonboro.actualArrivalSec * 1000;
+  const remaining = run.stops.slice(madisonboro.stopIndex + 1).map(stop => stop.name).filter(name => name !== 'Vanwood');
+  const action = { kind: 'train', target: run.id, stops: remaining };
+  const edited = prepareRevision(ops.empty, [action], now).summary[0].run;
+  assert.deepEqual(edited.stops.slice(0, madisonboro.stopIndex + 1), run.stops.slice(0, madisonboro.stopIndex + 1));
+  assert.ok(!pathNames(edited).includes('Vanwood'));
+  assert.throws(() => prepareRevision(ops.empty, [{ ...action, stops: ['Orchard Ridge'] }], now), /already passed/);
+  const express = routes(ops.empty, 'F-express').find(candidate => candidate.destination === 'Whitebranch');
+  const stops = pathNames(express);
+  stops.splice(stops.indexOf('Hoganville') + 1, 0, 'Bayview Park', 'Chelsea Bay');
+  const result = prepareRevision(ops.empty, [{ kind: 'train', target: express.id, stops }], +at('05:00'));
+  assert.deepEqual(pathNames(result.summary[0].run), stops);
+  const g = routes(ops.empty, 'G-local').find(candidate => candidate.origin === 'Bradford Bay');
+  assert.throws(() => prepareRevision(ops.empty, [
+    { kind: 'train', target: g.id, stops: ['Bradford Bay', 'New Halifax'] }
+  ], +at('05:00')), /No connected rail path/);
 });
 
 test('actual departure cutoff preserves running trips, with reopening and exact service controls', () => {

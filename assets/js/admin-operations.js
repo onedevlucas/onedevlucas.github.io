@@ -92,8 +92,7 @@
     const now = Date.now();
     line(host, state.changes.some(item => item.kind === 'system' && root.BORailOperations.active(item, now))
       ? 'System Closed' : 'System operating on its current schedule');
-    const today = clock.dateKey(now);
-    state.changes.filter(item => item.kind === 'train' ? item.target.slice(-10) >= today : item.endsAt == null || item.endsAt > now)
+    state.changes.filter(item => item.endsAt == null || item.endsAt > now)
       .forEach(item => line(host, `${present(item)} · ${item.startsAt > now ? `Starts ${client.timeLabel(item.startsAt)}` : 'Effective'}${item.reason ? ` · ${item.reason}` : ''}${item.endsAt && item.kind !== 'train' ? ` · Ends ${client.timeLabel(item.endsAt)}` : ''}`));
     const history = byId('adminHistory');
     history.replaceChildren();

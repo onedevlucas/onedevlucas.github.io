@@ -160,12 +160,13 @@ export function prepareRevision(snapshot, actions, now) {
       const closed = OPS.atTime(current, Math.max(now, dayStart + run.stops[0].actualDepartureSec * 1000)).stations;
       if (names.some(name => closed.has(name))) throw Error('A requested stop is closed.');
       const change = {
-        id, kind, target, startsAt: now, endsAt: dayStart + 2 * DAY,
+        id, kind, target, startsAt: now,
         stops: names, advanced: action.advanced === true, cancel: action.cancel === true,
         restore: action.restore === true
       };
       const revised = OPS.applyTrainEdit(run, change, dayStart);
       if (revised && revised.stops.at(-1).actualDepartureSec > 27 * 3600) throw Error('The updated run must finish by 3:00 AM Eastern.');
+      change.endsAt = dayStart + (revised || run).stops.at(-1).actualDepartureSec * 1000;
       changes.push(change);
       summary.push({ ...change, locked, run: revised });
       continue;

@@ -99,6 +99,18 @@
 
     let { stops, segmentTimes } = pattern;
     let changed = stops.some(name => closed.has(name));
+    let usesNewkirkBranch = false;
+    if (key === 'A-express' && closed.has('Mount River')) {
+      // The Mount River closure explicitly sends A Express onto the
+      // Newkirk branch. Retain the express stops on the common corridor.
+      const replacement = stops[0] === 'Port Williamson'
+        ? ['Newkirk', burlington] : [burlington, 'Newkirk'];
+      const atStart = stops[0] === 'Port Williamson';
+      stops = atStart ? [...replacement, ...stops.slice(1)] : [...stops.slice(0, -1), ...replacement];
+      segmentTimes = atStart ? [1.5, ...segmentTimes] : [...segmentTimes, 1.5];
+      usesNewkirkBranch = true;
+      changed = true;
+    }
     if (key === 'C-local' && closed.has(airport) && [stops[0], stops.at(-1)].includes(airport)) {
       const alternate = allRoutes.find(candidate => candidate.serviceId === 'C' && candidate.dir === route.dir &&
         [candidate.origin, candidate.destination].includes('Fernwood'));
@@ -110,7 +122,7 @@
 
     const trackStops = [...stops];
     const times = [...segmentTimes];
-    const nativeService = key === 'S-express' ? 'S-local' : key;
+    const nativeService = key === 'S-express' ? 'S-local' : usesNewkirkBranch ? 'A-local' : key;
     const start = trackStops[0];
     const end = trackStops.at(-1);
     for (const [terminal, atStart] of [[start, true], [end, false]]) {
@@ -141,8 +153,10 @@
       }
     }
 
-    const from = closed.has(start) ? rules[start]?.[key] : start;
-    const to = closed.has(end) ? rules[end]?.[key] : end;
+    const endpoint = terminal => usesNewkirkBranch && terminal === 'Newkirk' && closed.has(terminal)
+      ? burlington : closed.has(terminal) ? rules[terminal]?.[key] : terminal;
+    const from = endpoint(start);
+    const to = endpoint(end);
     let first = trackStops.indexOf(from);
     let last = trackStops.lastIndexOf(to);
     if (first < 0) first = 0;
@@ -160,7 +174,9 @@
       const right = keep[index];
       const keys = [];
       for (let step = left; step < right; step++) {
-        let path = basePath(trackStops[step], trackStops[step + 1], key);
+        const branch = usesNewkirkBranch && [trackStops[step], trackStops[step + 1]]
+          .some(name => name === burlington || name === 'Newkirk');
+        let path = basePath(trackStops[step], trackStops[step + 1], branch ? 'A-local' : key);
         if (!path.length) path = basePath(trackStops[step], trackStops[step + 1], nativeService);
         keys.push(...path);
       }
