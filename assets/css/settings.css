@@ -159,4 +159,54 @@ button:disabled { opacity: .48; cursor: not-allowed; }
 .operations-card p { overflow-wrap: anywhere; }
 .operations-card #adminMessage:empty { display: none; }
 .operations-card #adminDraft, .operations-card #opsPreviewResults { padding-block: .4rem; }
+.ops-stop-editor { min-width: 0; }
+.ops-stop-editor p { margin: .35rem 0; color: var(--muted); font-size: .8rem; }
+.ops-stop-list {
+  max-height: min(22rem, 48vh);
+  margin: 0;
+  padding: .3rem;
+  overflow: auto;
+  overscroll-behavior: contain;
+  overflow-anchor: none;
+  list-style: none;
+  border: 1px solid #575571;
+  border-radius: .6rem;
+  background: #171622;
+}
+.ops-stop-row {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .35rem;
+  padding: .25rem;
+  border-radius: .45rem;
+  background: var(--card-2);
+}
+.ops-stop-row + .ops-stop-row { margin-top: .25rem; }
+.ops-stop-handle {
+  display: grid;
+  width: 30px;
+  min-height: 42px;
+  place-items: center;
+  color: var(--muted);
+  font-size: 1.2rem;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.ops-stop-list.is-dragging { cursor: grabbing; user-select: none; }
+.ops-stop-row.is-dragging { opacity: .48; }
+.ops-stop-row.is-dragging .ops-stop-handle { cursor: grabbing; }
+.ops-stop-row[data-drop="before"] { box-shadow: inset 0 3px var(--accent); }
+.ops-stop-row[data-drop="after"] { box-shadow: inset 0 -3px var(--accent); }
+.ops-stop-number { color: var(--muted); font-variant-numeric: tabular-nums; font-size: .8rem; }
+.ops-stop-name { overflow-wrap: anywhere; font-size: .875rem; font-weight: 650; }
+.ops-stop-actions { display: flex; gap: .2rem; }
+.ops-stop-actions button { min-width: 34px; min-height: 42px; padding: 0 .25rem; }
+.ops-stop-actions [data-stop-action="remove"] { color: #ff9a94; }
+.ops-stop-insert { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .5rem; align-items: end; }
+.ops-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (max-width: 400px) {
+  .ops-stop-insert { grid-template-columns: minmax(0, 1fr); }
+}
 .saved-trip-row[data-updated=true] { border-inline-start: 3px solid #a6a2ff; padding-inline-start: .8rem; }

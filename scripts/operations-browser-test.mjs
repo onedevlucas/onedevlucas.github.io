@@ -18,7 +18,7 @@ const www = createServer(async (request, response) => {
 });
 await new Promise(resolve => www.listen(0, '127.0.0.1', resolve));
 const origin = `http://127.0.0.1:${www.address().port}`;
-const temp = await mkdtemp(path.join(tmpdir(), 'borail-v81-'));
+const temp = await mkdtemp(path.join(tmpdir(), 'borail-operations-'));
 const chrome = spawn(process.env.BORAIL_CHROME || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
   ['--headless=new', '--disable-gpu', '--remote-debugging-port=0', `--user-data-dir=${temp}`, 'about:blank'],
   { windowsHide: true, stdio: ['ignore', 'ignore', 'pipe'] });
@@ -67,11 +67,34 @@ try {
     }
     assert.fail(`Timed out waiting for ${expression}`);
   };
+  const stopNames = () => evaluate(`Array.from(document.querySelectorAll('#opsTrainStops > li'), row => row.dataset.station)`);
+  const handlePosition = index => evaluate(`(() => {
+    const rect = document.querySelectorAll('.ops-stop-handle')[${index}].getBoundingClientRect();
+    return { x: Math.round(rect.left + rect.width / 2), y: Math.round(rect.top + rect.height / 2) };
+  })()`);
+  const dragStop = async (from, to, mobile) => {
+    const start = await handlePosition(from);
+    const end = await handlePosition(to);
+    end.y += from < to ? 8 : -8;
+    assert.equal(await evaluate(`document.elementFromPoint(${start.x}, ${start.y})?.classList.contains('ops-stop-handle')`),
+      true, `Handle must be visible at ${JSON.stringify(start)} on ${mobile ? 'mobile' : 'desktop'}`);
+    if (mobile) {
+      await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [start] });
+      await until('!!document.querySelector(".ops-stop-row.is-dragging")');
+      await send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [end] });
+      await until('!!document.querySelector(".ops-stop-row[data-drop]")');
+      await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    } else {
+      await send('Input.dispatchMouseEvent', { type: 'mousePressed', button: 'left', buttons: 1, clickCount: 1, ...start });
+      await send('Input.dispatchMouseEvent', { type: 'mouseMoved', button: 'left', buttons: 1, ...end });
+      await send('Input.dispatchMouseEvent', { type: 'mouseReleased', button: 'left', buttons: 0, clickCount: 1, ...end });
+    }
+  };
   await send('Page.enable');
   await send('Runtime.enable');
   await send('Emulation.setTimezoneOverride', { timezoneId: 'Asia/Seoul' });
   await send('Page.addScriptToEvaluateOnNewDocument', { source: `
-    sessionStorage.setItem('borailAppSplashSeen', '1');
+    sessionStorage.setItem('borailSplashSeen', 'true');
     const realFetch = window.fetch;
     const closure = { id: 'newkirk', kind: 'station', target: 'Newkirk', reason: 'Closed for construction',
       startsAt: Date.now() - 30000, endsAt: null };
@@ -82,7 +105,16 @@ try {
       if (url.pathname === '/operations') return Promise.resolve(Response.json(snapshot));
       if (url.pathname.endsWith('/login')) return Promise.resolve(Response.json({ token: 'test', expiresAt: Date.now() + 60000 }));
       if (url.pathname.endsWith('/overview')) return Promise.resolve(Response.json({ ...snapshot, history: [] }));
-      if (url.pathname.endsWith('/preview')) return Promise.resolve(Response.json({ summary: [{ ...closure, restore: true }] }));
+      if (url.pathname.endsWith('/runs')) return Promise.resolve(Response.json({ total: 1, runs: [{
+        id: 'test-run-' + url.searchParams.get('date'), serviceId: 'F', isExpress: true,
+        origin: 'Newkirk', destination: 'Whitebranch', locked: 2, departureMin: 500,
+        stops: ['Newkirk', 'Newkirk - Oak Street', 'Hoganville', 'Berwick Hall', 'Atkinson Junction', 'La Vista',
+          'Brookfield Lawn', 'Foxton', 'New Cottage', 'Whitebranch'].map(name => ({ name }))
+      }] }));
+      if (url.pathname.endsWith('/preview')) {
+        window.previewActions = JSON.parse(init.body).actions;
+        return Promise.resolve(Response.json({ summary: [{ ...closure, restore: true }] }));
+      }
       if (url.pathname.endsWith('/publish')) return Promise.resolve(Response.json({ revision: 2 }));
       return Promise.resolve(Response.json({}));
     };
@@ -97,6 +129,55 @@ try {
       document.getElementById('adminLogin').requestSubmit(); true`);
     await until('!document.getElementById("operationsDashboard").hidden');
     assert.equal(await evaluate('document.documentElement.scrollWidth <= window.innerWidth'), true);
+    await evaluate(`document.querySelector('#trainSearch').closest('details').open = true;
+      document.querySelector('#trainSearch').requestSubmit(); true`);
+    await until('!!document.querySelector("#opsTrainResults button")');
+    await evaluate(`document.querySelector('#opsTrainResults button').click();
+      document.querySelector('#opsTrainStops').scrollIntoView({ block: 'center' }); true`);
+    assert.deepEqual((await stopNames()).slice(0, 3), ['Hoganville', 'Berwick Hall', 'Atkinson Junction']);
+    assert.match(await evaluate('document.querySelector("#opsTrainLocked").textContent'), /Newkirk - Oak Street/);
+    await dragStop(0, 2, width < 700);
+    assert.deepEqual((await stopNames()).slice(0, 3), ['Berwick Hall', 'Atkinson Junction', 'Hoganville']);
+    await dragStop(2, 0, width < 700);
+    assert.deepEqual((await stopNames()).slice(0, 3), ['Hoganville', 'Berwick Hall', 'Atkinson Junction']);
+    if (width >= 700) {
+      const start = await handlePosition(0);
+      const end = await evaluate(`(() => {
+        const rect = document.querySelector('#opsTrainStops').getBoundingClientRect();
+        return { x: ${start.x}, y: Math.floor(rect.bottom - 4) };
+      })()`);
+      await send('Input.dispatchMouseEvent', { type: 'mousePressed', button: 'left', buttons: 1, clickCount: 1, ...start });
+      await send('Input.dispatchMouseEvent', { type: 'mouseMoved', button: 'left', buttons: 1, ...end });
+      await until('document.querySelector("#opsTrainStops").scrollTop > 0');
+      await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape' });
+      await send('Input.dispatchMouseEvent', { type: 'mouseReleased', button: 'left', buttons: 0, clickCount: 1, ...end });
+      assert.equal((await stopNames())[0], 'Hoganville');
+    }
+    await evaluate(`document.querySelector('[data-station="Berwick Hall"] [data-stop-action="up"]').focus(); true`);
+    await send('Input.dispatchKeyEvent', { type: 'keyDown', key: ' ', code: 'Space', text: ' ', windowsVirtualKeyCode: 32 });
+    await send('Input.dispatchKeyEvent', { type: 'keyUp', key: ' ', code: 'Space', windowsVirtualKeyCode: 32 });
+    assert.equal((await stopNames())[0], 'Berwick Hall');
+    await evaluate(`document.querySelector('[data-station="Hoganville"] [data-stop-action="remove"]').click();
+      const station = document.querySelector('#opsTrainStation');
+      station.value = 'Hoganville';
+      document.querySelector('#opsAppendStation').click();
+      station.value = 'Cannon View';
+      const after = document.querySelector('#opsInsertAfter');
+      after.value = document.querySelector('[data-station="Berwick Hall"]').id;
+      after.dispatchEvent(new Event('change'));
+      document.querySelector('#opsInsertStation').click(); true`);
+    const editedStops = ['Berwick Hall', 'Cannon View', 'Atkinson Junction', 'La Vista', 'Brookfield Lawn', 'Foxton',
+      'New Cottage', 'Whitebranch', 'Hoganville'];
+    assert.deepEqual(await stopNames(), editedStops);
+    assert.equal(await evaluate('document.documentElement.scrollWidth <= window.innerWidth'), true);
+    await evaluate(`document.querySelector('#opsAdvanced').checked = true;
+      document.querySelector('#trainEdit button[value="edit"]').click();
+      document.querySelector('#opsPreview').click(); true`);
+    await until('!document.querySelector("#opsPublish").disabled');
+    assert.deepEqual(await evaluate('window.previewActions[0].stops'), editedStops);
+    assert.equal(await evaluate('window.previewActions[0].anchor'), 2);
+    assert.equal(await evaluate('window.previewActions[0].advanced'), true);
+    await evaluate('document.querySelector("#opsDiscard").click(); true');
     await evaluate(`const action = document.getElementById('opsAction'); action.value = 'restore';
       action.dispatchEvent(new Event('change')); document.getElementById('operationsAction').requestSubmit();
       document.getElementById('opsPreview').click(); true`);
@@ -111,7 +192,7 @@ try {
   await until('window.BORailLiveMapDebug && window.BORailOperationsClient?.synced === true');
   assert.equal(await evaluate(`BORailLiveMapDebug.getPathPoints('B', 'Northbound', ['Groveton','Madisonboro','Hutchinson Point','Vanwood']).length > 4`), true);
   assert.deepEqual(exceptions, []);
-  console.log('Checked admin sign-in, preview and publish flows at mobile and desktop widths, Status and B Live Map geometry.');
+  console.log('Checked mouse and touch reordering, drag scrolling and cancellation, keyboard controls, insert/remove/append, draft order, and existing operations flows.');
 } finally {
   socket?.close();
   chrome.kill();

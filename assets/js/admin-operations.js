@@ -12,6 +12,11 @@
   const kind = byId('opsKind');
   const actionSelect = byId('opsAction');
   const publish = byId('opsPublish');
+  const trainEditor = byId('trainEdit');
+  const stopList = byId('opsTrainStops');
+  const stationSelect = byId('opsTrainStation');
+  const insertAfter = byId('opsInsertAfter');
+  const insertStation = byId('opsInsertStation');
   const base = root.BORailNotificationConfig.apiBase;
   const families = [...new Set(data.services.filter(item => item.id.endsWith('express')).map(item => item.id[0]))]
     .map(id => ({ id, label: `All ${id} services` }));
@@ -21,6 +26,8 @@
   let draft = [];
   let selectedRun = null;
   let sessionTimer;
+  let nextStopId = 0;
+  let drag = null;
 
   function choices(select, options, placeholder) {
     select.replaceChildren(...(placeholder ? [new Option(placeholder, '')] : []),
@@ -35,6 +42,8 @@
     byId('adminSignIn').setAttribute('aria-expanded', 'false');
     login.hidden = true;
     draft = [];
+    closeTrainEditor();
+    byId('opsTrainResults').replaceChildren();
   }
 
   async function api(path, body) {
@@ -137,6 +146,165 @@
     updateActionFields();
   }
 
+  function renderStopControls() {
+    const rows = Array.from(stopList.children);
+    const previous = insertAfter.value;
+    rows.forEach((row, index) => {
+      row.querySelector('.ops-stop-number').textContent = index + 1;
+      row.querySelector('[data-stop-action="up"]').disabled = index === 0;
+      row.querySelector('[data-stop-action="down"]').disabled = index === rows.length - 1;
+    });
+    choices(insertAfter, rows.map((row, index) => ({ id: row.id, label: `${index + 1}. ${row.dataset.station}` })), 'Choose a stop');
+    insertAfter.value = rows.some(row => row.id === previous) ? previous : '';
+    insertAfter.disabled = !rows.length;
+    insertStation.disabled = !insertAfter.value;
+    stopList.hidden = !rows.length;
+    byId('opsStopEmpty').hidden = !!rows.length;
+  }
+
+  function makeStop(station) {
+    const row = document.createElement('li');
+    row.className = 'ops-stop-row';
+    row.id = `ops-stop-${++nextStopId}`;
+    row.dataset.station = station;
+    const handle = line(row, '⠿', 'span');
+    handle.className = 'ops-stop-handle';
+    handle.setAttribute('aria-hidden', 'true');
+    const number = line(row, '', 'span');
+    number.className = 'ops-stop-number';
+    number.setAttribute('aria-hidden', 'true');
+    line(row, station, 'span').className = 'ops-stop-name';
+    const actions = line(row, '', 'div');
+    actions.className = 'ops-stop-actions';
+    for (const [action, symbol, label] of [['up', '↑', 'Move up'], ['down', '↓', 'Move down'], ['remove', '×', 'Remove']]) {
+      const button = line(actions, symbol, 'button');
+      button.type = 'button';
+      button.dataset.stopAction = action;
+      button.title = `${label} ${station}`;
+      button.setAttribute('aria-label', button.title);
+    }
+    return row;
+  }
+
+  function revealStop(row) {
+    const bounds = stopList.getBoundingClientRect();
+    const rect = row.getBoundingClientRect();
+    if (rect.top < bounds.top + 4) stopList.scrollTop += rect.top - bounds.top - 4;
+    else if (rect.bottom > bounds.bottom - 4) stopList.scrollTop += rect.bottom - bounds.bottom + 4;
+  }
+
+  function announceStop(row, verb) {
+    const position = Array.from(stopList.children).indexOf(row) + 1;
+    byId('opsStopStatus').textContent = `${row.dataset.station} ${verb} at stop ${position} of ${stopList.children.length}.`;
+  }
+
+  function addStop(after) {
+    if (!stationSelect.value) return;
+    const row = makeStop(stationSelect.value);
+    stopList.insertBefore(row, after?.nextElementSibling ?? null);
+    renderStopControls();
+    revealStop(row);
+    announceStop(row, 'added');
+  }
+
+  stopList.addEventListener('click', event => {
+    const button = event.target.closest('[data-stop-action]');
+    if (!button) return;
+    const row = button.closest('.ops-stop-row');
+    const { stopAction } = button.dataset;
+    if (stopAction === 'remove') {
+      const sibling = row.nextElementSibling || row.previousElementSibling;
+      row.remove();
+      renderStopControls();
+      (sibling?.querySelector('[data-stop-action="remove"]') || stationSelect).focus();
+      byId('opsStopStatus').textContent = `${row.dataset.station} removed.`;
+    } else {
+      const before = stopAction === 'up' ? row.previousElementSibling : row.nextElementSibling?.nextElementSibling;
+      stopList.insertBefore(row, before ?? null);
+      renderStopControls();
+      (button.disabled ? row.querySelector('button:not(:disabled)') : button).focus({ preventScroll: true });
+      revealStop(row);
+      announceStop(row, 'now');
+    }
+  });
+
+  function updateDropTarget() {
+    const bounds = stopList.getBoundingClientRect();
+    const inside = drag.x >= bounds.left && drag.x <= bounds.right && drag.y >= bounds.top && drag.y <= bounds.bottom;
+    const before = inside ? Array.from(stopList.children).find(row => {
+      const rect = row.getBoundingClientRect();
+      return drag.y < rect.top + rect.height / 2;
+    }) || null : null;
+    const canDrop = inside && before !== drag.row && before !== drag.row.nextElementSibling;
+    const marker = canDrop ? before || stopList.lastElementChild : null;
+    if (marker !== drag.marker) drag.marker?.removeAttribute('data-drop');
+    if (marker) marker.dataset.drop = before ? 'before' : 'after';
+    Object.assign(drag, { before, canDrop, marker });
+  }
+
+  function scrollWhileDragging() {
+    const bounds = stopList.getBoundingClientRect();
+    if (drag.x >= bounds.left && drag.x <= bounds.right && drag.y >= bounds.top && drag.y <= bounds.bottom) {
+      const edge = Math.min(40, bounds.height / 3);
+      const speed = (Math.max(0, drag.y - bounds.bottom + edge) - Math.max(0, bounds.top + edge - drag.y)) / 3;
+      const previous = stopList.scrollTop;
+      if (speed) stopList.scrollTop += speed;
+      if (stopList.scrollTop !== previous) updateDropTarget();
+    }
+    drag.frame = root.requestAnimationFrame(scrollWhileDragging);
+  }
+
+  function finishStopDrag(commit = false) {
+    if (!drag) return;
+    const { row, handle, pointerId, before, canDrop, marker, frame } = drag;
+    drag = null;
+    root.cancelAnimationFrame(frame);
+    if (handle.hasPointerCapture(pointerId)) handle.releasePointerCapture(pointerId);
+    marker?.removeAttribute('data-drop');
+    row.classList.remove('is-dragging');
+    stopList.classList.remove('is-dragging');
+    if (commit && canDrop) {
+      stopList.insertBefore(row, before);
+      renderStopControls();
+      announceStop(row, 'now');
+    }
+  }
+
+  stopList.addEventListener('pointerdown', event => {
+    const handle = event.target.closest('.ops-stop-handle');
+    if (!handle || drag || !event.isPrimary || event.button !== 0) return;
+    event.preventDefault();
+    const row = handle.closest('.ops-stop-row');
+    handle.setPointerCapture(event.pointerId);
+    drag = { row, handle, pointerId: event.pointerId, x: event.clientX, y: event.clientY };
+    row.classList.add('is-dragging');
+    stopList.classList.add('is-dragging');
+    updateDropTarget();
+    drag.frame = root.requestAnimationFrame(scrollWhileDragging);
+  });
+
+  for (const type of ['pointermove', 'pointerup', 'pointercancel', 'lostpointercapture']) {
+    stopList.addEventListener(type, event => {
+      if (drag?.pointerId !== event.pointerId) return;
+      if (type === 'pointermove' || type === 'pointerup') {
+        drag.x = event.clientX;
+        drag.y = event.clientY;
+        updateDropTarget();
+      }
+      if (type !== 'pointermove') finishStopDrag(type === 'pointerup');
+    });
+  }
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') finishStopDrag();
+  });
+
+  function closeTrainEditor() {
+    finishStopDrag();
+    trainEditor.hidden = true;
+    selectedRun = null;
+  }
+
   byId('adminSignIn').addEventListener('click', event => {
     login.hidden = !login.hidden;
     event.currentTarget.setAttribute('aria-expanded', String(!login.hidden));
@@ -186,7 +354,7 @@
   choices(byId('opsTrainService'), data.services, 'All services');
   choices(byId('opsTrainOrigin'), stationOptions, 'Any origin');
   choices(byId('opsTrainDestination'), stationOptions, 'Any destination');
-  choices(byId('opsTrainStation'), stationOptions);
+  choices(stationSelect, stationOptions);
   byId('opsTrainDate').value = clock.dateKey();
   const search = byId('trainSearch');
   search.addEventListener('submit', runAction(search.querySelector('button'), async () => {
@@ -197,7 +365,7 @@
     const { runs, total } = await api(`runs?${query}`);
     const results = byId('opsTrainResults');
     results.replaceChildren();
-    byId('trainEdit').hidden = true;
+    closeTrainEditor();
     if (!runs.length) line(results, 'No matching active or upcoming trains.');
     if (total > runs.length) line(results, `Showing ${runs.length} of ${total}. Narrow the search for later results.`);
     runs.forEach(run => {
@@ -205,20 +373,26 @@
         root.BORailOperations.serviceDayStart(clock.fromWallTime(query.get('date'), '12:00')) + run.departureMin * 60000)}`, 'button');
       button.type = 'button';
       button.addEventListener('click', () => {
+        finishStopDrag();
         selectedRun = run;
         const locked = run.stops.slice(0, run.locked).map(stop => stop.name);
         byId('opsTrainLocked').textContent = locked.length ? `Route locked through ${locked.at(-1)}.` : 'This train has yet to depart.';
-        byId('opsTrainStops').value = run.stops.slice(run.locked).map(stop => stop.name).join('\n');
-        byId('trainEdit').hidden = false;
-        byId('opsTrainStops').focus();
+        stopList.replaceChildren(...run.stops.slice(run.locked).map(stop => makeStop(stop.name)));
+        byId('opsStopStatus').textContent = '';
+        renderStopControls();
+        trainEditor.hidden = false;
+        stopList.scrollTop = 0;
+        (stopList.hidden ? stationSelect : stopList).focus();
       });
     });
   }));
-  byId('opsAppendStation').addEventListener('click', () => {
-    const field = byId('opsTrainStops');
-    field.value = [field.value.trim(), byId('opsTrainStation').value].filter(Boolean).join('\n');
+  byId('opsAppendStation').addEventListener('click', () => addStop());
+  insertAfter.addEventListener('change', () => { insertStation.disabled = !insertAfter.value; });
+  insertStation.addEventListener('click', () => {
+    const after = byId(insertAfter.value);
+    if (after) addStop(after);
   });
-  byId('trainEdit').addEventListener('submit', event => {
+  trainEditor.addEventListener('submit', event => {
     event.preventDefault();
     if (!selectedRun) return;
     const advanced = byId('opsAdvanced').checked;
@@ -226,7 +400,7 @@
     draft.push({
       kind: 'train', target: selectedRun.id, anchor: selectedRun.locked, advanced,
       restore: event.submitter?.value === 'restore', cancel: event.submitter?.value === 'cancel',
-      stops: byId('opsTrainStops').value.split('\n').map(name => name.trim()).filter(Boolean)
+      stops: Array.from(stopList.children, row => row.dataset.station)
     });
     redrawDraft();
     message.textContent = 'Added train to draft.';

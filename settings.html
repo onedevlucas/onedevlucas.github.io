@@ -167,9 +167,19 @@
           <div id="opsTrainResults"></div>
           <form id="trainEdit" class="operations-form" hidden>
             <p id="opsTrainLocked"></p>
-            <label>Stops in travel order (one station per line) <textarea id="opsTrainStops" rows="8"></textarea></label>
+            <div class="ops-stop-editor">
+              <h3 id="opsStopHeading">Stops in travel order</h3>
+              <p id="opsStopHelp">Drag the handle or use the arrows to reorder. Use × to remove a stop.</p>
+              <ol id="opsTrainStops" class="ops-stop-list" role="list" tabindex="0" aria-labelledby="opsStopHeading" aria-describedby="opsStopHelp"></ol>
+              <p id="opsStopEmpty" hidden>No editable stops. Add a station below.</p>
+              <p id="opsStopStatus" class="ops-visually-hidden" role="status"></p>
+            </div>
             <label>Add station <select id="opsTrainStation"></select></label>
             <button type="button" id="opsAppendStation">Append Station</button>
+            <div class="ops-stop-insert">
+              <label>Insert after <select id="opsInsertAfter"></select></label>
+              <button type="button" id="opsInsertStation" disabled>Insert Station</button>
+            </div>
             <label class="ops-checkbox"><input type="checkbox" id="opsAdvanced" /> Allow advanced detours and reversals</label>
             <div class="button-row">
               <button name="trainAction" value="edit">Add Edit to Draft</button>
