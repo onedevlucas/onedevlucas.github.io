@@ -20,7 +20,7 @@ for (const day of dates) {
     assert.ok(trips.length > 1);
     for (let index = 0; index < trips.length; index += 1) {
       const trip = trips[index];
-      assert.ok(trip.departureMin >= 360 && trip.departureMin < 1380, 'No origin departure outside operating hours');
+      assert.ok(trip.departureMin >= clock.serviceDay(context.testDate).firstMinute && trip.departureMin < 1440, 'No origin departure outside operating hours');
       if (!index) continue;
       const previous = trips[index - 1];
       const terminal = previous.stops.at(-1);

@@ -38,16 +38,6 @@ if (!BORAIL_CLOCK || !BORAIL_SERVICE) throw new Error('BORail time and service h
     const STATUS_DELAY_MAJOR_MIN_TRAINS = 4;
     const STATUS_SERVICE_LOOKAHEAD_MIN = 6 * 60;
 
-    const STATUS_LINE_SERVICE = {
-      A: [{ start: '06:00', end: '09:29', every: 7 }, { start: '09:30', end: '16:59', every: 15 }, { start: '17:00', end: '19:29', every: 7 }, { start: '19:30', end: '22:59', every: 20 }],
-      F: [{ start: '06:00', end: '09:29', every: 7 }, { start: '09:30', end: '16:59', every: 15 }, { start: '17:00', end: '19:29', every: 7 }, { start: '19:30', end: '22:59', every: 20 }],
-      B: [{ start: '06:00', end: '09:29', every: 5 }, { start: '09:30', end: '16:59', every: 15 }, { start: '17:00', end: '19:29', every: 5 }, { start: '19:30', end: '22:59', every: 25 }],
-      C: [{ start: '06:00', end: '09:29', every: 7 }, { start: '09:30', end: '16:59', every: 15 }, { start: '17:00', end: '19:29', every: 7 }, { start: '19:30', end: '22:59', every: 20 }],
-      E: [{ start: '06:00', end: '09:29', every: 5 }, { start: '09:30', end: '16:59', every: 15 }, { start: '17:00', end: '19:29', every: 5 }, { start: '19:30', end: '22:59', every: 25 }],
-      S: [{ start: '06:00', end: '09:29', every: 7 }, { start: '09:30', end: '16:59', every: 15 }, { start: '17:00', end: '19:29', every: 7 }, { start: '19:30', end: '22:59', every: 20 }],
-      D: [{ start: '06:00', end: '22:59', every: 12 }],
-      G: [{ start: '06:00', end: '22:59', every: 12 }]
-    };
 
     const STATUS_DELAY_ROUTES = [
       { serviceId:'F', isExpress:false, tag:'LCL', origin:'Kenilworth', destination:'Newkirk', stopCount:10 },
@@ -204,11 +194,6 @@ if (!BORAIL_CLOCK || !BORAIL_SERVICE) throw new Error('BORail time and service h
       };
     }
 
-    const toMin = t => {
-      const [h, m] = t.split(':').map(Number);
-      return h * 60 + m;
-    };
-
     function statusTimeModeForMinutes(nowMin) {
       return BORAIL_SERVICE.timeModeForMinutes(nowMin);
     }
@@ -233,18 +218,6 @@ if (!BORAIL_CLOCK || !BORAIL_SERVICE) throw new Error('BORail time and service h
       return shouldSkipRadcliff ? route.stopCount - 1 : route.stopCount;
     }
 
-    function statusExpandDepartures(periods) {
-      const out = [];
-      periods.forEach(period => {
-        let cur = toMin(period.start);
-        const end = toMin(period.end);
-        while (cur <= end) {
-          out.push(cur);
-          cur += period.every;
-        }
-      });
-      return out;
-    }
 
     function statusRoutesForDate(date) {
       if (BORAIL_SERVICE.context(date).winterEmergency) {
@@ -261,14 +234,10 @@ if (!BORAIL_CLOCK || !BORAIL_SERVICE) throw new Error('BORail time and service h
       }));
     }
 
-    function statusPeriodsFor(route, mode) {
-      return mode === 'winterEmergency'
-        ? BORAIL_SERVICE.WINTER_LINE_SERVICE[route.serviceId] || []
-        : STATUS_LINE_SERVICE[route.serviceId] || [];
-    }
 
-    function statusRouteDepartureMinutes(route, mode) {
-      const dep = statusExpandDepartures(statusPeriodsFor(route, mode));
+    function statusRouteDepartureMinutes(route, mode, date) {
+      const dep = BORAIL_SERVICE.departureSlots(route.serviceId, mode === 'winterEmergency', date);
+      const firstMinute = BORAIL_CLOCK.serviceDay(date).firstMinute;
       const branchSeed = `${route.serviceId}-${route.tag}-${route.origin}-${route.destination}`;
       const rng = seededRandom(branchSeed);
       const baseOffset = Math.floor(rng() * 3);
@@ -282,7 +251,7 @@ if (!BORAIL_CLOCK || !BORAIL_SERVICE) throw new Error('BORail time and service h
           else if (route.serviceId === 'S' && route.isExpress) slotted += 3;
         }
         return slotted;
-      }).filter(BORAIL_SERVICE.isOriginDepartureAllowed);
+      }).filter(minute => minute >= firstMinute && minute < 1440);
     }
 
     function statusRouteDurationMin(route, mode) {
@@ -327,7 +296,7 @@ if (!BORAIL_CLOCK || !BORAIL_SERVICE) throw new Error('BORail time and service h
       const routes = statusRoutesForDate(now);
       const descriptors = statusShuttleDescriptors(routes, now, dayMode);
       routes.filter(route => !route.singleTrainShuttle).forEach(route => {
-        statusRouteDepartureMinutes(route, dayMode).forEach(departureMin => {
+        statusRouteDepartureMinutes(route, dayMode, now).forEach(departureMin => {
           const mode = serviceContext.winterEmergency ? 'winterEmergency' : statusTimeModeForMinutes(departureMin);
           if (!statusServiceAllowed(route, mode)) return;
           descriptors.push({ route, departureMin, durationMin: statusRouteDurationMin(route, mode), mode });
@@ -373,8 +342,8 @@ if (!BORAIL_CLOCK || !BORAIL_SERVICE) throw new Error('BORail time and service h
 
     function computeStatusDelaySignals(now = BORAIL_CLOCK.now(), scheduledRuns) {
       const serviceContext = BORAIL_SERVICE.context(now);
-      const nowMin = serviceContext.minutes;
-      const runs = scheduledRuns ?? globalThis.BORailSchedule?.buildScheduledRuns(now, true, { statusMinute: nowMin });
+      const nowMin = BORAIL_CLOCK.scheduleSeconds(now) / 60;
+      const runs = scheduledRuns ?? globalThis.BORailSchedule?.buildRunWindow(now, { statusMinute: nowMin });
       const descriptors = runs ? runs.map(run => ({
         serviceKey: `${run.serviceId}-${run.isExpress ? 'express' : 'local'}`,
         departureMin: run.departureMin,

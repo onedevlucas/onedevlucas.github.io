@@ -13,7 +13,7 @@ const ops = globalThis.BORailOperations;
 const day = '2026-11-19';
 const at = time => clock.fromWallTime(day, time);
 const dayStart = ops.serviceDayStart(at('12:00'));
-const closed = (target, startsAt = +at('06:00'), endsAt = null) => ({
+const closed = (target, startsAt = +at('00:00'), endsAt = null) => ({
   id: target, kind: 'station', target, startsAt, endsAt, reason: 'Construction'
 });
 const operations = (...changes) => ({ revision: 1, changes });
@@ -91,7 +91,7 @@ test('active edits preserve completed stops and express edits can use connected 
   stops.splice(stops.indexOf('Hoganville') + 1, 0, 'Bayview Park', 'Chelsea Bay');
   const result = prepareRevision(ops.empty, [{ kind: 'train', target: express.id, stops }], +at('05:00'));
   assert.deepEqual(pathNames(result.summary[0].run), stops);
-  const g = routes(ops.empty, 'G-local').find(candidate => candidate.origin === 'Bradford Bay');
+  const g = routes(ops.empty, 'G-local').find(candidate => candidate.origin === 'Bradford Bay' && candidate.departureMin >= 360);
   assert.throws(() => prepareRevision(ops.empty, [
     { kind: 'train', target: g.id, stops: ['Bradford Bay', 'New Halifax'] }
   ], +at('05:00')), /No connected rail path/);
@@ -113,7 +113,7 @@ test('actual departure cutoff preserves running trips, with reopening and exact 
 });
 
 test('a one-time G edit updates a valid saved trip; removing its boarding stop requires a replan', () => {
-  const run = routes(ops.empty, 'G-local').find(run => run.origin === 'Bradford Bay');
+  const run = routes(ops.empty, 'G-local').find(run => run.origin === 'Bradford Bay' && run.departureMin >= 360);
   const now = at('05:45');
   const trip = prepareTrip({
     dateKey: day, origin: 'Bradford Bay', destination: 'Berwick Hall',

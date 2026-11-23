@@ -4,8 +4,6 @@
   const CLOCK = global.BORailTime;
   if (!CLOCK) throw new Error('BORailTime must load before BORailService.');
 
-  const OPEN_MINUTE = 6 * 60;
-  const LAST_ORIGIN_DEPARTURE_MINUTE = 23 * 60;
   const WINTER_START = { month: 12, day: 10 };
   const WINTER_END = { month: 3, day: 10 };
   const WINTER_EMERGENCY_DAY_COUNT = 10;
@@ -81,16 +79,26 @@
     Object.freeze({ ...reverseRoute(route), stops: Object.freeze([...route.stops].reverse()), segmentTimes: route.segmentTimes ? Object.freeze([...route.segmentTimes].reverse()) : undefined })
   ]));
 
-  const WINTER_LINE_SERVICE = Object.freeze({
-    A: Object.freeze([{ start: '06:00', end: '22:59', every: 15 }]),
-    F: Object.freeze([{ start: '06:00', end: '22:59', every: 15 }]),
-    B: Object.freeze([{ start: '06:00', end: '22:59', every: 15 }]),
-    C: Object.freeze([{ start: '06:00', end: '22:59', every: 15 }]),
-    E: Object.freeze([{ start: '06:00', end: '22:59', every: 15 }]),
-    S: Object.freeze([{ start: '06:00', end: '22:59', every: 15 }]),
-    D: Object.freeze([{ start: '06:00', end: '22:59', every: 12 }]),
-    G: Object.freeze([{ start: '06:00', end: '22:59', every: 12 }])
-  });
+  function departureSlots(serviceId, winter, date) {
+    const { firstMinute } = CLOCK.serviceDay(date);
+    const frequentRush = serviceId === 'B' || serviceId === 'E';
+    const evening = frequentRush ? 25 : 20;
+    const slots = [];
+    function period(start, end, every) {
+      for (let minute = start; minute < end; minute += every) slots.push(minute);
+    }
+    if (winter) {
+      period(firstMinute, 1440, 15);
+    } else {
+      // Continue the 19:30 sequence across midnight, including both DST transitions.
+      period(firstMinute + (evening - 270 % evening) % evening, 360, evening);
+      period(360, 570, frequentRush ? 5 : 7);
+      period(570, 1020, 15);
+      period(1020, 1170, frequentRush ? 5 : 7);
+      period(1170, 1440, evening);
+    }
+    return slots;
+  }
 
   function seededRandom(seed) {
     let hash = 2166136261 >>> 0;
@@ -143,20 +151,13 @@
     const seasonStartYear = seasonStartYearForParts(parts);
     const winterEmergency = allowWinter && seasonStartYear !== null
       && winterEmergencyDatesForSeason(seasonStartYear).includes(dateKey);
-    const operatingWindowOpen = minutes >= OPEN_MINUTE && minutes < LAST_ORIGIN_DEPARTURE_MINUTE;
-    let mode = 'closed';
-    if (operatingWindowOpen) {
-      if (winterEmergency) mode = 'winterEmergency';
-      else if (minutes >= 6 * 60 && minutes < 9 * 60 + 30) mode = 'rushAM';
-      else if (minutes >= 17 * 60 && minutes < 19 * 60 + 30) mode = 'rushPM';
-      else mode = 'local';
-    }
+    const mode = winterEmergency ? 'winterEmergency' : timeModeForMinutes(minutes);
     return {
       dateKey,
       parts,
       minutes,
       mode,
-      operatingWindowOpen,
+      operatingWindowOpen: true,
       winterEmergency,
       winterSeason: seasonStartYear !== null,
       seasonStartYear,
@@ -166,8 +167,7 @@
 
   function timeModeForMinutes(minutes) {
     const normalized = ((Number(minutes) % 1440) + 1440) % 1440;
-    if (normalized < OPEN_MINUTE || normalized >= LAST_ORIGIN_DEPARTURE_MINUTE) return 'closed';
-    if (normalized < 9 * 60 + 30) return 'rushAM';
+    if (normalized >= 6 * 60 && normalized < 9 * 60 + 30) return 'rushAM';
     if (normalized >= 17 * 60 && normalized < 19 * 60 + 30) return 'rushPM';
     return 'local';
   }
@@ -242,25 +242,33 @@
     const preferredOrigin = shuttleKey === 'G' ? 'Bradford Bay'
       : shuttleKey === 'D' ? 'Oakville City Airport'
       : shuttleKey === 'F-winter-shuttle' ? 'Atkinson Junction' : routes[0].origin;
-    let route = routes.find(item => item.origin === preferredOrigin) || routes[0];
-    let opposite = routes.find(item => item !== route);
-    let departureMin = OPEN_MINUTE + (shuttleKey === 'F-winter-shuttle' ? 0 : Math.floor(random() * 3));
+    const route = routes.find(item => item.origin === preferredOrigin) || routes[0];
+    const opposite = routes.find(item => item !== route);
     const runs = [];
-    while (departureMin < LAST_ORIGIN_DEPARTURE_MINUTE) {
-      const stops = route.stops || Array.from({ length: route.stopCount }, (_, index) => `stop-${index}`);
-      const customDwellSeconds = route.intermediateDwellMinutes
-        ? stops.map((_, index) => index > 0 && index < stops.length - 1 ? route.intermediateDwellMinutes * 60 : 0)
-        : null;
-      const mode = currentContext.winterEmergency ? 'winterEmergency' : timeModeForMinutes(departureMin);
-      const trainSeed = `${route.serviceId}-${route.tag}-${departureMin}-${route.origin}-${route.destination}`;
-      const timing = calculateStopTimes(trainSeed, stops, departureMin, {
-        mode, segmentTimes: route.segmentTimes || null, customDwellSeconds
-      });
-      runs.push({ route, departureMin, trainSeed, customDwellSeconds, timing, mode });
-      const layover = route.terminalLayoverMinutes ?? (1 + random() * 2);
-      departureMin = timing.stops.at(-1).actualDepartureSec / 60 + layover;
-      [route, opposite] = [opposite, route];
+    function roundTrips(start, end, random) {
+      let departureMin = start + (shuttleKey === 'F-winter-shuttle' ? 0 : Math.floor(random() * 3));
+      // Finish a round trip and its layover before starting the next block at the same terminal.
+      while (departureMin < end) {
+        const pair = [];
+        for (const leg of [route, opposite]) {
+          const stops = leg.stops || Array.from({ length: leg.stopCount }, (_, index) => `stop-${index}`);
+          const customDwellSeconds = leg.intermediateDwellMinutes
+            ? stops.map((_, index) => index > 0 && index < stops.length - 1 ? leg.intermediateDwellMinutes * 60 : 0)
+            : null;
+          const mode = currentContext.winterEmergency ? 'winterEmergency' : timeModeForMinutes(departureMin);
+          const trainSeed = `${leg.serviceId}-${leg.tag}-${departureMin}-${leg.origin}-${leg.destination}`;
+          const timing = calculateStopTimes(trainSeed, stops, departureMin, {
+            mode, segmentTimes: leg.segmentTimes || null, customDwellSeconds
+          });
+          pair.push({ route: leg, departureMin, trainSeed, customDwellSeconds, timing, mode });
+          const layover = leg.terminalLayoverMinutes ?? (1 + random() * 2);
+          departureMin = timing.stops.at(-1).actualDepartureSec / 60 + layover;
+        }
+        if (departureMin <= end) runs.push(...pair);
+      }
     }
+    roundTrips(CLOCK.serviceDay(date).firstMinute, 360, seededRandom(`${shuttleKey}-${currentContext.dateKey}-overnight`));
+    roundTrips(360, 1440, random);
     return runs;
   }
 
@@ -321,13 +329,11 @@
   }
 
   global.BORailService = Object.freeze({
-    OPEN_MINUTE,
-    LAST_ORIGIN_DEPARTURE_MINUTE,
+    departureSlots,
     WINTER_EMERGENCY_DAY_COUNT,
     WINTER_DELAY_RATE,
     WINTER_DELAY_MINUTES,
     WINTER_ROUTES,
-    WINTER_LINE_SERVICE,
     seededRandom,
     context,
     timeModeForMinutes,
@@ -335,7 +341,7 @@
     calculateStopTimes,
     singleShuttleRuns,
     winterEmergencyDatesForSeason,
-    isOriginDepartureAllowed: minutes => Number(minutes) >= OPEN_MINUTE && Number(minutes) < LAST_ORIGIN_DEPARTURE_MINUTE,
+    isOriginDepartureAllowed: (minutes, date = CLOCK.now()) => minutes >= CLOCK.serviceDay(date).firstMinute && minutes < 1440,
     initializeEmergencyNotice
   });
 

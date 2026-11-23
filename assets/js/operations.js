@@ -31,9 +31,7 @@
   const publicReason = value => value.replace(/\bWychwood(?:\s*[-–]?\s*Oakville City Airport)?\b/gi, airport);
   const affectsService = (change, key) => change.kind === 'system' ||
     (change.kind === 'service' && (change.target === key || change.target === key[0]));
-  // Departures run after the Eastern DST transition hour.
-  const serviceDayStart = date =>
-    root.BORailTime.fromWallTime(root.BORailTime.dateKey(date), '12:00').getTime() - 12 * 3600000;
+  const serviceDayStart = date => root.BORailTime.serviceDay(date).anchor;
 
   function atTime(snapshot, at) {
     const changes = (snapshot?.changes || []).filter(change => active(change, at));

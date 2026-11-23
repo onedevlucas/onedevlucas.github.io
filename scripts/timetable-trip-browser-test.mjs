@@ -99,7 +99,7 @@ const winterServiceChecks = await evaluate(`(() => {
     dates,
     mode: BORailService.context(date).mode,
     hasExpress: runs.some(run => run.isExpress),
-    allOriginsInWindow: runs.every(run => run.departureMin >= 360 && run.departureMin < 1380),
+    allOriginsInWindow: runs.every(run => run.departureMin >= BORailTime.serviceDay(date).firstMinute && run.departureMin < 1440),
     delayedRate: delayedRuns.length / runs.length,
     delayRangeOk: delayedRuns.every(run => run.delaySeconds >= 300 && run.delaySeconds <= 900),
     cSkipsAirport: cRuns.length > 0 && cRuns.every(run => !run.stops.some(stop => stop.name === 'Oakville City Airport')),
@@ -885,9 +885,9 @@ const activeStatusChecks = await evaluate(`(() => {
   };
 })()`);
 assert.equal(activeStatusChecks.expressSuspended, true);
-assert.equal(activeStatusChecks.allClosed, true);
+assert.equal(activeStatusChecks.allClosed, false);
 assert.equal(activeStatusChecks.finalTripsMayFinish, true);
-assert.equal(activeStatusChecks.allStoppedLater, true);
+assert.equal(activeStatusChecks.allStoppedLater, false);
 assert.equal(activeStatusChecks.noActiveFound, true);
 assert.match(activeStatusChecks.activeDelayReason, /active .* trains are delayed/);
 assert.match(activeStatusChecks.activeDelayReason, /Future trains are not included/);

@@ -6,12 +6,12 @@ await import('../assets/js/service-calendar.js');
 const clock = globalThis.BORailTime;
 const service = globalThis.BORailService;
 
-assert.equal(service.context(clock.fromWallTime('2026-11-04', '05:59')).mode, 'closed');
+assert.equal(service.context(clock.fromWallTime('2026-11-04', '05:59')).mode, 'local');
 assert.equal(service.context(clock.fromWallTime('2026-11-04', '06:00')).mode, 'rushAM');
 assert.equal(service.context(clock.fromWallTime('2026-11-04', '22:59')).mode, 'local');
-assert.equal(service.context(clock.fromWallTime('2026-11-04', '23:00')).mode, 'closed');
+assert.equal(service.context(clock.fromWallTime('2026-11-04', '23:00')).mode, 'local');
 assert.equal(service.isOriginDepartureAllowed(22 * 60 + 59), true);
-assert.equal(service.isOriginDepartureAllowed(23 * 60), false);
+assert.equal(service.isOriginDepartureAllowed(23 * 60), true);
 
 const dates2026 = service.winterEmergencyDatesForSeason(2026);
 assert.equal(dates2026.length, 10);

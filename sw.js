@@ -1,4 +1,4 @@
-const CACHE_NAME = 'borail-v82-stop-editor';
+const CACHE_NAME = 'borail-v82-24h-service';
 const PUSH_META_CACHE = 'borail-push-meta-v1';
 const PUSH_META_URL = '/__borail_push_config__';
 

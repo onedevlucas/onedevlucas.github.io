@@ -191,6 +191,14 @@ try {
   await send('Page.navigate', { url: `${origin}/index.html` });
   await until('window.BORailLiveMapDebug && window.BORailOperationsClient?.synced === true');
   assert.equal(await evaluate(`BORailLiveMapDebug.getPathPoints('B', 'Northbound', ['Groveton','Madisonboro','Hutchinson Point','Vanwood']).length > 4`), true);
+  assert.equal(await evaluate(`(() => {
+    const date = BORailTime.fromWallTime('2026-11-23', '01:00');
+    const trains = BORailLiveMapDebug.getActiveTrainSnapshots(date);
+    return trains.length > 0 && trains.every(train => !train.isExpress) &&
+      BORailTripDebug.arrivalsForStation('Alpherst', date).length > 0;
+  })()`), true);
+  await send('Page.navigate', { url: `${origin}/map.html` });
+  await until('document.querySelector(\'a[href="map-viewer.html?map=regular"] + .map-caption\')?.textContent === "7:30PM - 6:00AM & 9:30AM - 5:00PM Service Hours"');
   assert.deepEqual(exceptions, []);
   console.log('Checked mouse and touch reordering, drag scrolling and cancellation, keyboard controls, insert/remove/append, draft order, and existing operations flows.');
 } finally {

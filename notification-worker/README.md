@@ -12,7 +12,7 @@ Line-wide delays require exactly three delayed active trains for minor, or four 
 
 On a device with notifications enabled, a rider can save up to five planner itineraries. The Worker sends a reminder about 20 minutes before boarding and can alert about known delays, at-risk transfers, or a timetable change that requires replanning. Future searches use the usual service patterns; Winter Emergency service first affects saved trips on the actual day in Eastern Time. Saved trips are removed when canceled, completed, expired, or their subscription is deleted.
 
-Scheduled overnight closure, ordinary gaps with no active train, unobserved future delays, advertisements, and game messages do not create push alerts.
+Scheduled gaps with no active train, unobserved future delays, advertisements, and game messages do not create push alerts.
 
 To upgrade an existing database, run `wrangler d1 migrations apply borail-notifications --remote` before deploying the Worker.
 

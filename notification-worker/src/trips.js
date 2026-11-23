@@ -10,8 +10,6 @@ const MINUTE = 60_000;
 export const TRIP_LIMIT = 5;
 
 function timestamp(dateKey, seconds) {
-  // Scheduled service runs after the DST changeover hour. Anchor to a wall
-  // time on that service date so 08:00 stays 08:00 on clock-change days.
   const noon = CLOCK.fromWallTime(dateKey, '12:00');
   return noon.getTime() + (seconds - 43200) * 1000;
 }
@@ -38,7 +36,7 @@ export function prepareTrip(input, now = new Date(), operations) {
   }
   const options = SCHEDULE.planningOptions(date, now);
   const service = SERVICE.context(date, options);
-  const rawRuns = SCHEDULE.buildScheduledRuns(date, true, { ...options, operations, runIds: new Set(legs.map(leg => leg?.runId)) });
+  const rawRuns = SCHEDULE.buildRunWindow(date, { knownAt: now, operations, runIds: new Set(legs.map(leg => leg?.runId)) });
   const runs = new Map(rawRuns.map(run => [run.id, run]));
   const currentSeconds = (now.getTime() - timestamp(dateKey, 0)) / 1000;
   const actual = (run, stop, type) => knowsDelay(run, currentSeconds)
@@ -180,7 +178,7 @@ export function tripCandidates(trip, runIndex, now, { winterEmergency, flags = [
       const delay = beforeBoarding && board.delaySeconds ? board.delaySeconds : alight.delaySeconds;
       const minutes = Math.round(delay / 60);
       const body = beforeBoarding && board.delaySeconds
-        ? `Your ${lineName(leg)} scheduled to leave ${leg.boardStation} at ${SCHEDULE.formatTripClock(leg.departureSec)} is delayed by ${minutes} min.`
+        ? `Your ${lineName(leg)} scheduled to leave ${leg.boardStation} at ${SCHEDULE.formatTripClock(leg.departureSec, CLOCK.fromWallTime(trip.dateKey, '12:00'))} is delayed by ${minutes} min.`
         : `Your ${lineName(leg)} is expected to arrive at ${leg.alightStation} ${minutes} min late.`;
       push(`delay-${index}-${delay}`, `${lineName(leg)} delayed`, body, timestamp(trip.dateKey, arrival));
     }

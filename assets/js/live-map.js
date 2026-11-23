@@ -672,7 +672,7 @@
     const dateKey = `${BORAIL_CLOCK.dateKey(date)}|${globalThis.BORailOperationsClient?.snapshot.revision || 0}`;
     if (dateKey !== cachedRunDateKey) {
       cachedRunDateKey = dateKey;
-      cachedRuns = buildScheduledRuns(date, true);
+      cachedRuns = buildRunWindow(date, { wholeDay: true });
     }
     return cachedRuns;
   }
@@ -789,7 +789,7 @@
   }
 
   function getActiveTrainSnapshots(date = BORAIL_CLOCK.now()) {
-    const nowSeconds = BORAIL_CLOCK.clockSeconds(date);
+    const nowSeconds = BORAIL_CLOCK.scheduleSeconds(date);
     return getRunsForDate(date).map(run => snapshotForRun(run, nowSeconds)).filter(Boolean);
   }
 
@@ -903,7 +903,7 @@
         centerOn(snapshot.x, snapshot.y, Math.max(2.2, currentZoom()));
       } else {
         renderRouteFocus(snapshot);
-        renderTrainDetails(snapshot);
+        renderTrainDetails(snapshot, date);
       }
     } else if (selected?.type === 'station') {
       renderStationDetails(selected.id, date);
@@ -929,8 +929,8 @@
     filterCount.textContent = checkedInputs === totalInputs ? 'All trains' : `${checkedInputs}/${totalInputs} options`;
   }
 
-  function formatMapTime(totalSeconds) {
-    return formatTime24Full(totalSeconds).slice(0, 5);
+  function formatMapTime(totalSeconds, date = BORAIL_CLOCK.now()) {
+    return formatTime24Full(totalSeconds, date).slice(0, 5);
   }
 
   function trainStatusBanner(snapshot) {
@@ -940,10 +940,10 @@
     return '<div class="live-map-status-banner">On time · schedule-based live position</div>';
   }
 
-  function renderTrainDetails(snapshot) {
+  function renderTrainDetails(snapshot, date = BORAIL_CLOCK.now()) {
     const run = snapshot.run;
-    const nextScheduled = formatMapTime(snapshot.scheduledNextArrivalSec);
-    const nextActual = formatMapTime(snapshot.nextArrivalSec);
+    const nextScheduled = formatMapTime(snapshot.scheduledNextArrivalSec, date);
+    const nextActual = formatMapTime(snapshot.nextArrivalSec, date);
     const serviceColor = SERVICE_META[run.serviceId]?.color || '#ffffff';
     const detailsKey = `train:${snapshot.id}`;
     const previousScrollTop = detailsContent.dataset.detailsKey === detailsKey
@@ -955,8 +955,8 @@
       const isPast = snapshot.currentStation
         ? index < snapshot.currentStopIndex
         : index <= snapshot.currentStopIndex;
-      const scheduled = formatTime24Full(stop.scheduledArrivalSec);
-      const actual = formatTime24Full(stop.actualArrivalSec);
+      const scheduled = formatTime24Full(stop.scheduledArrivalSec, date);
+      const actual = formatTime24Full(stop.actualArrivalSec, date);
       const delayed = stop.isDelayed && scheduled !== actual;
       const classes = [
         'live-map-stop-item',
@@ -1155,7 +1155,7 @@
   }
 
   function arrivalRowsForStation(stationId, date = BORAIL_CLOCK.now()) {
-    const nowSeconds = BORAIL_CLOCK.clockSeconds(date);
+    const nowSeconds = BORAIL_CLOCK.scheduleSeconds(date);
     const horizonSeconds = 6 * 60 * 60;
     if (globalThis.BORailOperationsClient?.state(date).stations.has(stationId)) return [];
     return getRunsForDate(date).map(run => {
@@ -1195,8 +1195,8 @@
     const operations = globalThis.BORailOperationsClient;
     const closure = operations?.state(date).stations.get(stationId);
     const arrivalsHtml = closure ? `<div class="subtle"><strong>No Upcoming Trains</strong><br>Reason Provided: ${escapeHtml(operations.text(closure))}</div>` : rows.length ? rows.map(row => {
-      const scheduled = formatMapTime(row.scheduledArrivalSec);
-      const actual = formatMapTime(row.actualArrivalSec);
+      const scheduled = formatMapTime(row.scheduledArrivalSec, date);
+      const actual = formatMapTime(row.actualArrivalSec, date);
       const minutes = row.actualMinsAway <= .5 ? 'Now' : `${Math.max(1, Math.round(row.actualMinsAway))} min`;
       return `<button type="button" class="live-map-arrival" data-train-id="${escapeHtml(row.runId)}">
         ${lineBadgeHtml(row.serviceId, row.isExpress)}

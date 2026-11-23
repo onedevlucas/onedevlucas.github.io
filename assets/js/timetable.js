@@ -379,7 +379,7 @@ function transferSummaryHtml(journey) {
   return `Transfer at ${stations.map(tripEscape).join(', then ')}`;
 }
 
-function renderTripLeg(leg, nextLeg) {
+function renderTripLeg(leg, nextLeg, date) {
   const meta = SERVICE_META[leg.serviceId];
   const consist = getTrainConsist(leg.trainSeed, leg.serviceId, leg.isExpress);
   if (leg.isSingleShuttle || SINGLE_TRAIN_SHUTTLES.has(leg.serviceId)) {
@@ -396,7 +396,7 @@ function renderTripLeg(leg, nextLeg) {
       ? `<img class="accessible-icon-tiny trip-accessible-icon" src="${ACCESSIBLE_ICON_URL}" alt="Accessible station" />`
       : '';
     return `<div class="trip-stop ${endpoint ? 'endpoint' : ''}">
-      <span class="trip-stop-time">${formatTripClock(index === 0 ? stop.actualDepartureSec : stop.actualArrivalSec)}</span>
+      <span class="trip-stop-time">${formatTripClock(index === 0 ? stop.actualDepartureSec : stop.actualArrivalSec, date)}</span>
       <span class="trip-stop-name">${tripEscape(stop.name)}${accessIconHtml}${delayed ? ` <small style="color:var(--warning)">+${Math.round(stop.delaySeconds / 60)}m</small>` : ''}</span>
     </div>`;
   }).join('');
@@ -408,7 +408,7 @@ function renderTripLeg(leg, nextLeg) {
     transferHtml = `<div class="transfer-block ${tight ? 'tight' : ''}">
       <span class="transfer-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h4.2c3.8 0 3.8 10 7.6 10H20m-3-3 3 3-3 3M4 17h4.2c3.8 0 3.8-10 7.6-10H20m-3-3 3 3-3 3"/></svg></span>
       <div class="transfer-block-copy"><strong>Transfer at ${tripEscape(leg.alightStation)} • ${formatTripDuration(waitSeconds)}</strong>
-      <span>${tight ? 'Train may not wait' : `Next train departs at ${formatTripClock(nextLeg.actualDepartureSec)}`}</span></div>
+      <span>${tight ? 'Train may not wait' : `Next train departs at ${formatTripClock(nextLeg.actualDepartureSec, date)}`}</span></div>
     </div>`;
   }
 
@@ -416,7 +416,7 @@ function renderTripLeg(leg, nextLeg) {
     <div class="trip-leg-card">
       <img src="${iconFor(leg.serviceId, leg.isExpress)}" alt="${tripEscape(serviceLabel(leg.serviceId, leg.isExpress))}">
       <div><strong>Train toward ${tripEscape(leg.destination)}</strong><span>${tripEscape(consist.model)} • ${consist.cars} cars • Lead car ${consist.leadCar}</span></div>
-      <div class="trip-leg-time"><strong>${formatTripClock(leg.actualDepartureSec)}</strong><span>${tripEscape(leg.boardStation)}</span></div>
+      <div class="trip-leg-time"><strong>${formatTripClock(leg.actualDepartureSec, date)}</strong><span>${tripEscape(leg.boardStation)}</span></div>
     </div>
     <div class="trip-stop-timeline" style="--leg-color:${meta.color}">${stopsHtml}</div>
     ${transferHtml}
@@ -428,7 +428,7 @@ function renderJourneyCard(journey, index, result) {
   const waitSeconds = journey.departureSec - journey.requestedDepartureSec;
   const tightTransfer = journey.legs.slice(1).some(leg => leg.transferWaitSec <= 4 * 60);
   const pills = journey.legs.map((leg, legIndex) => `${legIndex ? '<span class="route-pill-arrow">›</span>' : ''}${routePillHtml(leg)}`).join('');
-  const details = journey.legs.map((leg, legIndex) => renderTripLeg(leg, journey.legs[legIndex + 1])).join('');
+  const details = journey.legs.map((leg, legIndex) => renderTripLeg(leg, journey.legs[legIndex + 1], result.planningDate)).join('');
   const rush = result.mode === 'rushAM' || result.mode === 'rushPM';
 
   const isFastest = index === 0;
@@ -437,7 +437,7 @@ function renderJourneyCard(journey, index, result) {
     <summary>
       <div class="trip-option-top">
         <div>
-          <div class="trip-time-range">${formatTripClock(journey.departureSec)} <span>–</span> ${formatTripClock(journey.arrivalSec)}</div>
+          <div class="trip-time-range">${formatTripClock(journey.departureSec, result.planningDate)} <span>–</span> ${formatTripClock(journey.arrivalSec, result.planningDate)}</div>
           <div class="trip-badges">
             ${isFastest ? '<span class="trip-badge fastest">Fastest</span>' : ''}
             ${journey.hasDelay ? '<span class="trip-badge delay">Delay included</span>' : ''}
@@ -531,7 +531,7 @@ function renderArrivals() {
   }
 
   const allRawRows = arrivalsForStation(station, now);
-  const nowSeconds = BORAIL_CLOCK.clockSeconds(now);
+  const nowSeconds = BORAIL_CLOCK.scheduleSeconds(now);
 
   if (allRawRows.length === 0) {
     dirFilterSelect.innerHTML = '<option value="ALL">All</option>';
@@ -599,7 +599,7 @@ function renderArrivals() {
     if (arrivalsList.length === 0) continue;
 
     let directionCardsHtml = arrivalsList.map(({ r, idx }) => {
-      const trainSeed = `${r.serviceId}-${r.tag}-${r.departureMin}-${r.origin}-${r.destination}`;
+      const trainSeed = r.trainSeed;
       const consist = getTrainConsist(trainSeed, r.serviceId, r.isExpress);
 
       if (r.isSingleShuttle || SINGLE_TRAIN_SHUTTLES.has(r.serviceId)) {
@@ -633,8 +633,8 @@ function renderArrivals() {
           icon = ICONS.pinDim;
         }
 
-        const sched = formatTime24Full(st.scheduledArrivalSec);
-        const actual = formatTime24Full(st.actualArrivalSec);
+        const sched = formatTime24Full(st.scheduledArrivalSec, now);
+        const actual = formatTime24Full(st.actualArrivalSec, now);
         const delayed = st.isDelayed && (actual !== sched);
         const timeHtml = delayed
           ? `<span class="scheduled">${sched}</span><span class="new-time">${actual}</span>`
@@ -695,13 +695,13 @@ function renderArrivals() {
           ${statusBanner}
           <div class="compact-view" id="compact-${trainId}" style="${isExpanded ? 'display:none;' : ''}">
             <div class="compact-stop ${pos.status==='not-started'?'at-station':''}">
-              <div class="compact-time"><span class="scheduled">${formatTime24Full(originStop.actualArrivalSec)}</span></div>
+              <div class="compact-time"><span class="scheduled">${formatTime24Full(originStop.actualArrivalSec, now)}</span></div>
               <div class="compact-icon">${ICONS.pinDim}</div>
               <div class="compact-name">${originStop.name}</div>
             </div>
             <button class="mid-stops-btn" data-action="expand" data-train-id="${trainId}">Show all stops</button>
             <div class="compact-stop">
-              <div class="compact-time"><span class="scheduled">${formatTime24Full(destStop.actualArrivalSec)}</span></div>
+              <div class="compact-time"><span class="scheduled">${formatTime24Full(destStop.actualArrivalSec, now)}</span></div>
               <div class="compact-icon">${ICONS.pinDim}</div>
               <div class="compact-name">${destStop.name}</div>
             </div>

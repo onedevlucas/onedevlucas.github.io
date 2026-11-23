@@ -266,7 +266,7 @@ async function insertEvent(env, event, now) {
 }
 
 async function evaluateLineTransitions(env, now, operations) {
-  const runs = operations && SCHEDULE.buildScheduledRuns(now, true, { operations, statusMinute: CLOCK.clockMinutes(now) });
+  const runs = operations && SCHEDULE.buildRunWindow(now, { operations, statusMinute: CLOCK.scheduleSeconds(now) / 60 });
   const signals = STATUS.computeStatusDelaySignals(now, runs);
   const overrideRows = await env.DB.prepare(`SELECT * FROM service_overrides
     WHERE expires_at IS NULL OR expires_at > ?`).bind(now.toISOString()).all();
@@ -324,7 +324,7 @@ async function evaluateTrips(env, now, operations) {
       const date = CLOCK.fromWallTime(row.date_key, '12:00');
       const options = SCHEDULE.planningOptions(date, now);
       indexes.set(row.date_key, {
-        runs: new Map(SCHEDULE.buildScheduledRuns(date, true, { ...options, operations, runIds: wanted.get(row.date_key) }).map(run => [run.id, run])),
+        runs: new Map(SCHEDULE.buildRunWindow(date, { knownAt: now, operations, runIds: wanted.get(row.date_key) }).map(run => [run.id, run])),
         winterEmergency: SERVICE.context(date, options).winterEmergency
       });
     }

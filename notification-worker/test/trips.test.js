@@ -13,6 +13,46 @@ const regularNow = clock.fromWallTime('2026-11-06', '12:00');
 const at = (day, seconds) => new Date(clock.fromWallTime(day, '12:00').getTime() + (seconds - 43200) * 1000);
 const selectLeg = ({ runId, boardStation, alightStation }) => ({ runId, boardStation, alightStation });
 
+test('24-hour departures use the evening intervals, Eastern rush boundaries and one shuttle per line', () => {
+  for (const [time, mode] of [['01:00','local'], ['02:00','local'], ['05:59','local'], ['06:00','rushAM'],
+    ['09:29','rushAM'], ['09:30','local'], ['16:59','local'], ['17:00','rushPM'], ['19:29','rushPM'], ['19:30','local']]) {
+    assert.equal(service.context(clock.fromWallTime(regularDate, time)).mode, mode);
+  }
+  for (const date of [clock.fromWallTime(regularDate, '01:00'), new Date('2026-03-08T06:30Z'),
+    new Date('2026-03-08T07:30Z'), new Date('2026-11-01T05:30Z'), new Date('2026-11-01T06:30Z')]) {
+    const seconds = clock.scheduleSeconds(date);
+    assert.equal(clock.wallSecondsAt(date, seconds), clock.clockSeconds(date));
+    const runs = schedule.buildRunWindow(date);
+    const active = runs.filter(r => r.stops[0].actualArrivalSec <= seconds && seconds < r.stops.at(-1).actualDepartureSec);
+    assert.ok(active.length && active.every(r => !r.isExpress));
+    for (const line of ['D', 'G']) assert.ok(active.filter(r => r.serviceId === line).length <= 1);
+    for (const [line, interval] of [['A',20], ['B',25], ['C',20], ['E',25], ['F',20], ['S',20]]) {
+      const first = runs.find(r => r.serviceId === line && r.departureMin * 60 >= seconds && !r.isExpress);
+      const next = runs.find(r => r.origin === first.origin && r.destination === first.destination &&
+        r.serviceId === line && !r.isExpress && r.departureMin > first.departureMin);
+      assert.equal(next.departureMin - first.departureMin, interval);
+    }
+  }
+});
+
+test('a midnight carryover keeps its ID and timing, and a late trip can save a next-day connection', () => {
+  const before = clock.fromWallTime('2026-11-22', '23:50');
+  const midnight = clock.fromWallTime('2026-11-23', '00:00');
+  const late = schedule.buildScheduledRuns(before).find(run => run.stops.at(-1).actualDepartureSec > 86400);
+  const carry = schedule.buildRunWindow(midnight).find(run => run.id === late.id);
+  assert.equal(carry.stops.at(-1).actualDepartureSec + 86400, late.stops.at(-1).actualDepartureSec);
+  const result = schedule.planBORailTrip('Bradford Bay', 'Mount River', before, before);
+  const journey = result.journeys[0];
+  assert.ok(journey.legs.some(leg => leg.runId.endsWith('2026-11-23')));
+  const trip = prepareTrip({ dateKey: '2026-11-22', origin: 'Bradford Bay', destination: 'Mount River',
+    legs: journey.legs.map(selectLeg) }, before);
+  assert.equal(trip.startsAt, at(trip.dateKey, journey.departureSec).getTime());
+  const index = new Map(schedule.buildRunWindow(before, {
+    knownAt: midnight, runIds: new Set(trip.legs.map(leg => leg.runId))
+  }).map(run => [run.id, run]));
+  assert.ok(tripCandidates(trip, index, before, {}).every(event => event.key !== 'replan'));
+});
+
 test('future emergency date uses the usual rush schedule, stations and shuttles until Eastern midnight', () => {
   const date = clock.fromWallTime(emergencyDate, '08:00');
   const midnight = clock.startOfDay(date);
@@ -51,9 +91,9 @@ test('line thresholds count only active delayed trains and keep express separate
 
 test('the Status schedule shortcut agrees with the full timetable at service boundaries', () => {
   for (const day of [regularDate, emergencyDate]) {
-    const allRuns = schedule.buildScheduledRuns(clock.fromWallTime(day, '12:00'));
     for (const time of ['00:00', '05:59', '06:03', '08:12', '09:30', '12:10', '17:01', '19:30', '22:59', '23:05', '23:59']) {
       const date = clock.fromWallTime(day, time);
+      const allRuns = schedule.buildRunWindow(date);
       assert.deepEqual(status.computeStatusDelaySignals(date), status.computeStatusDelaySignals(date, allRuns), `${day} ${time}`);
     }
   }

@@ -265,7 +265,7 @@ export async function operationsRequest(request, env, url, helpers) {
     if (!date) throw Error('Choose a valid service date.');
     const start = OPS.serviceDayStart(date);
     const seconds = (now - start) / 1000;
-    const after = url.searchParams.get('after') || '06:00';
+    const after = url.searchParams.get('after') || '00:00';
     if (!/^\d{2}:\d{2}$/.test(after)) throw Error('Choose a valid departure time.');
     const [hour, minute] = after.split(':').map(Number);
     const service = url.searchParams.get('service');
@@ -277,7 +277,7 @@ export async function operationsRequest(request, env, url, helpers) {
     }).filter(run => (!service || OPS.serviceKey(run) === service) &&
       (!direction || run.dir === direction) && (!origin || run.origin === origin) &&
       (!destination || run.destination === destination) &&
-      run.departureMin >= hour * 60 + minute && run.stops.at(-1).actualDepartureSec > seconds);
+      clock().wallSecondsAt(date, run.departureMin * 60) >= (hour * 60 + minute) * 60 && run.stops.at(-1).actualDepartureSec > seconds);
     runs.sort((left, right) => left.departureMin - right.departureMin);
     const requested = url.searchParams.get('run');
     return reply({ runs: (requested ? runs.filter(run => run.id === requested) : runs.slice(0, 120))

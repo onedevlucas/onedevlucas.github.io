@@ -109,6 +109,34 @@
     return fromWallTime(dateKey(value), '00:00');
   }
 
+  // Noon anchors existing daytime run IDs and times on both clock-change days.
+  const serviceDays = new Map();
+  let lastDay;
+  function serviceDay(value = Date.now()) {
+    const instant = +value;
+    if (lastDay && instant >= lastDay.midnight && instant < lastDay.end) return lastDay;
+    const key = dateKey(value);
+    if (!serviceDays.has(key)) {
+      const noon = +fromWallTime(key, '12:00');
+      const anchor = noon - 12 * 3600000;
+      const midnight = +fromWallTime(key, '00:00');
+      if (serviceDays.size > 32) serviceDays.clear();
+      serviceDays.set(key, { key, anchor, midnight, firstMinute: (midnight - anchor) / 60000, end: noon + 12 * 3600000 });
+    }
+    lastDay = serviceDays.get(key);
+    return lastDay;
+  }
+
+  function scheduleSeconds(value) {
+    return (+value - serviceDay(value).anchor) / 1000;
+  }
+
+  function wallSecondsAt(value, seconds) {
+    const day = serviceDay(value);
+    if (!day.firstMinute && seconds >= 0 && seconds < 86400) return seconds;
+    return clockSeconds(day.anchor + Math.floor(seconds) * 1000);
+  }
+
   function formatDateTime(value, options = {}) {
     return new Intl.DateTimeFormat(undefined, {
       ...options,
@@ -126,6 +154,9 @@
     clockSeconds,
     fromWallTime,
     startOfDay,
+    serviceDay,
+    scheduleSeconds,
+    wallSecondsAt,
     formatDateTime
   });
 })(typeof globalThis !== 'undefined' ? globalThis : this);

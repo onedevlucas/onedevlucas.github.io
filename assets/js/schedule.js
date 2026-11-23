@@ -62,8 +62,8 @@ function formatTime24(totalMinutes) {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
-function formatTime24Full(totalSeconds) {
-  let secs = totalSeconds;
+function formatTime24Full(totalSeconds, scheduleDate) {
+  let secs = scheduleDate ? BORAIL_CLOCK.wallSecondsAt(scheduleDate, totalSeconds) : totalSeconds;
   if (secs < 0) secs += 24 * 3600;
   secs = secs % (24 * 3600);
   const h = Math.floor(secs / 3600);
@@ -252,7 +252,6 @@ function passengerRoutesForDate(date = BORAIL_CLOCK.now()) {
   });
 }
 
-const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
 function timeModeForMinutes(nowMin) {
   return BORAIL_SERVICE.timeModeForMinutes(nowMin);
 }
@@ -296,56 +295,6 @@ function getEffectiveRoutePattern(route, mode) {
 
   return { stops, segmentTimes };
 }
-
-const LINE_SERVICE = {
-  A: { all: [
-    { start: '06:00', end: '09:29', every: 7 },
-    { start: '09:30', end: '16:59', every: 15 },
-    { start: '17:00', end: '19:29', every: 7 },
-    { start: '19:30', end: '22:59', every: 20 },
-  ]},
-  F: { all: [
-    { start: '06:00', end: '09:29', every: 7 },
-    { start: '09:30', end: '16:59', every: 15 },
-    { start: '17:00', end: '19:29', every: 7 },
-    { start: '19:30', end: '22:59', every: 20 },
-  ]},
-  B: { all: [
-    { start: '06:00', end: '09:29', every: 5 },
-    { start: '09:30', end: '16:59', every: 15 },
-    { start: '17:00', end: '19:29', every: 5 },
-    { start: '19:30', end: '22:59', every: 25 },
-  ]},
-  C: { all: [
-    { start: '06:00', end: '09:29', every: 7 },
-    { start: '09:30', end: '16:59', every: 15 },
-    { start: '17:00', end: '19:29', every: 7 },
-    { start: '19:30', end: '22:59', every: 20 },
-  ]},
-  E: { all: [
-    { start: '06:00', end: '09:29', every: 5 },
-    { start: '09:30', end: '16:59', every: 15 },
-    { start: '17:00', end: '19:29', every: 5 },
-    { start: '19:30', end: '22:59', every: 25 },
-  ]},
-  S: { all: [
-    { start: '06:00', end: '09:29', every: 7 },
-    { start: '09:30', end: '16:59', every: 15 },
-    { start: '17:00', end: '19:29', every: 7 },
-    { start: '19:30', end: '22:59', every: 20 },
-  ]},
-  D: { all: [ { start: '06:00', end: '22:59', every: 12 } ] },
-  G: { all: [ { start: '06:00', end: '22:59', every: 12 } ] }
-};
-
-const expandDepartures = periods => {
-  const out = [];
-  periods.forEach(p => {
-    let cur = toMin(p.start), end = toMin(p.end);
-    while (cur <= end) { out.push(cur); cur += p.every; }
-  });
-  return out;
-};
 
 function getTrainDelayInfo(trainSeed, mode = 'local', stopCount = 2) {
   return BORAIL_SERVICE.delayInfo(trainSeed, mode, stopCount);
@@ -395,11 +344,6 @@ function isSingleTrainShuttleRoute(route) {
 
 function shuttleKeyForRoute(route) {
   return route.shuttleKey || (SINGLE_TRAIN_SHUTTLES.has(route.serviceId) ? route.serviceId : null);
-}
-
-function servicePeriodsFor(serviceId, date, mode = timeMode(date)) {
-  if (mode === 'winterEmergency') return BORAIL_SERVICE.WINTER_LINE_SERVICE[serviceId] || [];
-  return LINE_SERVICE[serviceId]?.all || [];
 }
 
 const SHUTTLE_EVENTS_CACHE = new Map();
@@ -455,8 +399,8 @@ function getShuttleEventsForToday(shuttleKey, date = BORAIL_CLOCK.now(), options
 
 function getRouteDepartureMinutes(routeDef, date = BORAIL_CLOCK.now(), options, context = BORAIL_SERVICE.context(date, options)) {
   const mode = context.winterEmergency ? 'winterEmergency' : 'local';
-  const periods = servicePeriodsFor(routeDef.serviceId, date, mode);
-  const dep = expandDepartures(periods);
+  const dep = BORAIL_SERVICE.departureSlots(routeDef.serviceId, context.winterEmergency, date);
+  const firstMinute = BORAIL_CLOCK.serviceDay(date).firstMinute;
 
   const branchSeed = `${routeDef.serviceId}-${routeDef.tag}-${routeDef.origin}-${routeDef.destination}`;
   const rng = seededRandom(branchSeed);
@@ -480,7 +424,7 @@ function getRouteDepartureMinutes(routeDef, date = BORAIL_CLOCK.now(), options, 
       }
     }
     return slottedDepartureTime;
-  }).filter(BORAIL_SERVICE.isOriginDepartureAllowed);
+  }).filter(minute => minute >= firstMinute && minute < 1440);
 }
 
 function tripsForRoute(routeDef, mode = 'local', date = BORAIL_CLOCK.now()) {
@@ -554,11 +498,11 @@ function getTrainDirection(serviceId, destination) {
 }
 
 function arrivalsForStation(stationId, now = BORAIL_CLOCK.now()) {
-  const nowSeconds = BORAIL_CLOCK.clockSeconds(now);
+  const nowSeconds = BORAIL_CLOCK.scheduleSeconds(now);
   const horizon = 6 * 60;
   const out = [];
 
-  buildScheduledRuns(now, true).forEach(run => {
+  buildRunWindow(now, { horizonMinutes: horizon }).forEach(run => {
     const stationIndex = run.stops.findIndex(stop => stop.name === stationId);
     if (stationIndex < 0 || stationIndex === run.stops.length - 1) return;
     const first = run.stops[0];
@@ -595,6 +539,7 @@ function arrivalsForStation(stationId, now = BORAIL_CLOCK.now()) {
       dir: run.dir,
       isSingleShuttle: run.isSingleShuttle,
       mode: run.mode,
+      trainSeed: run.trainSeed,
       precomputedStopTimes: { ...run, stops: visibleStops, hasDelay: delayVisible },
       delayVisible
     });
@@ -627,6 +572,7 @@ function buildScheduledRuns(planningDate, includeExpress = true, options = {}) {
   const neededServices = runIds && new Set([...runIds].map(id => id.split('-', 2).join('-')));
   const routeNeeded = route => !neededServices || neededServices.has(`${route.serviceId}-${route.tag}`);
   function needsTiming(serviceId, isExpress, departureMin, maxDuration) {
+    if (departureMin > (options.untilMinute ?? Infinity) || departureMin + maxDuration < (options.fromMinute ?? -Infinity)) return false;
     if (!Number.isFinite(statusMinute)) return true;
     if (departureMin > statusMinute) {
       const key = `${serviceId}-${isExpress ? 'express' : 'local'}`;
@@ -773,14 +719,50 @@ function buildScheduledRuns(planningDate, includeExpress = true, options = {}) {
   return [...runs, ...nextByService.values()];
 }
 
+// Keep each run's original date and ID while expressing adjacent-day stop times
+// on one continuous timeline for a rider or a saved trip.
+function buildRunWindow(date, options = {}) {
+  const { knownAt = date, horizonMinutes = 360, wholeDay = false, ...query } = options;
+  const day = BORAIL_CLOCK.serviceDay(date);
+  const minute = BORAIL_CLOCK.scheduleSeconds(date) / 60;
+  const start = wholeDay ? day.firstMinute : minute;
+  const end = (wholeDay ? 1440 : minute) + horizonMinutes;
+  const runs = [];
+  for (const instant of [day.midnight - 1, +date, day.end]) {
+    const source = new Date(instant);
+    const owner = BORAIL_CLOCK.serviceDay(source);
+    const offset = (owner.anchor - day.anchor) / 60000;
+    if (query.runIds) {
+      if (![...query.runIds].some(id => id.endsWith(owner.key))) continue;
+    } else if (offset && (offset + 27 * 60 < start || offset + owner.firstMinute > end)) continue;
+    const bounds = !query.runIds && owner.key !== day.key ? { fromMinute: start - offset, untilMinute: end - offset } : {};
+    const selected = buildScheduledRuns(source, true, {
+      ...planningOptions(source, knownAt), ...query, ...bounds,
+      statusMinute: query.statusMinute == null ? undefined : query.statusMinute - offset
+    });
+    for (const run of selected) {
+      if (!offset) { runs.push(run); continue; }
+      const shift = offset * 60;
+      if (!query.runIds && run.stops && run.stops.at(-1).actualDepartureSec + shift < start * 60) continue;
+      runs.push({
+        ...run, departureMin: run.departureMin + offset,
+        delayStartSec: run.delayStartSec == null ? null : run.delayStartSec + shift,
+        stops: run.stops?.map(stop => ({ ...stop,
+          actualArrivalSec: stop.actualArrivalSec + shift, actualDepartureSec: stop.actualDepartureSec + shift,
+          scheduledArrivalSec: stop.scheduledArrivalSec + shift, scheduledDepartureSec: stop.scheduledDepartureSec + shift
+        }))
+      });
+    }
+  }
+  return runs;
+}
+
 function runsWithCurrentlyVisibleDelays(runs, planningDate, now = BORAIL_CLOCK.now()) {
-  const sameServiceDate = BORAIL_CLOCK.dateKey(planningDate) === BORAIL_CLOCK.dateKey(now);
-  const nowSeconds = BORAIL_CLOCK.clockSeconds(now);
+  const nowSeconds = (+now - BORAIL_CLOCK.serviceDay(planningDate).anchor) / 1000;
   return runs.map(run => {
     const firstStop = run.stops[0];
     const lastStop = run.stops[run.stops.length - 1];
-    const isActive = sameServiceDate
-      && nowSeconds >= firstStop.actualArrivalSec
+    const isActive = nowSeconds >= firstStop.actualArrivalSec
       && nowSeconds < lastStop.actualDepartureSec;
     const delayVisible = isActive
       && run.hasDelay
@@ -822,7 +804,7 @@ function resolvePlanningStation(stationName, mode, date = BORAIL_CLOCK.now(), op
 }
 
 function planBORailTrip(originName, destinationName, planningDate, now = BORAIL_CLOCK.now()) {
-  const startTimeSec = BORAIL_CLOCK.clockSeconds(planningDate);
+  const startTimeSec = BORAIL_CLOCK.scheduleSeconds(planningDate);
   const options = planningOptions(planningDate, now);
   const context = BORAIL_SERVICE.context(planningDate, options);
   const mode = context.mode;
@@ -842,7 +824,7 @@ function planBORailTrip(originName, destinationName, planningDate, now = BORAIL_
 
   const dayStart = operations?.serviceDayStart(planningDate);
   const stationOpen = (name, seconds) => !operations?.atTime(snapshot, dayStart + seconds * 1000).stations.has(name);
-  const allRuns = runsWithCurrentlyVisibleDelays(buildScheduledRuns(planningDate, true, options), planningDate, now);
+  const allRuns = runsWithCurrentlyVisibleDelays(buildRunWindow(planningDate, { knownAt: now, horizonMinutes: 510 }), planningDate, now);
   // A temporary terminus or added express stop can serve a station absent
   // from the base passenger pattern.
   for (const station of [origin, destination]) {
@@ -899,7 +881,8 @@ function tripEscape(value) {
   })[char]);
 }
 
-function formatTripClock(totalSeconds) {
+function formatTripClock(totalSeconds, scheduleDate) {
+  if (scheduleDate) totalSeconds = BORAIL_CLOCK.wallSecondsAt(scheduleDate, totalSeconds);
   const normalized = ((Math.round(totalSeconds) % 86400) + 86400) % 86400;
   const hour24 = Math.floor(normalized / 3600);
   const minute = Math.floor((normalized % 3600) / 60);
@@ -925,7 +908,7 @@ function plannerModeLabel(mode) {
 
 
 globalThis.BORailSchedule = Object.freeze({
-  buildScheduledRuns, runsWithCurrentlyVisibleDelays, planningOptions, planBORailTrip, STATIONS, formatTripClock,
+  buildScheduledRuns, buildRunWindow, runsWithCurrentlyVisibleDelays, planningOptions, planBORailTrip, STATIONS, formatTripClock,
   routesForDate, getEffectiveRoutePattern
 });
 
