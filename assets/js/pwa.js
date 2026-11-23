@@ -11,7 +11,7 @@
     const splash = document.createElement('div');
     splash.id = 'splash-screen';
     splash.setAttribute('role', 'status');
-    splash.innerHTML = '<img id="splash-logo" src="assets/images/branding/borail-logo.png" alt="BORail"><div id="splash-version">V82 - 11/19/26</div>';
+    splash.innerHTML = '<img id="splash-logo" src="assets/images/branding/borail-logo.png" alt="BORail"><div id="splash-version">V83 - 11/22/26</div>';
     document.body.prepend(splash);
     const remove = () => {
       if (!splash.isConnected) return;
@@ -25,7 +25,7 @@
   }
   if (!('serviceWorker' in navigator)) return;
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(error => {
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(error => {
       console.warn('BORail offline service could not start.', error);
     });
   }, { once: true });

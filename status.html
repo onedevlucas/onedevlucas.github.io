@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" sizes="180x180" href="assets/images/branding/apple-touch-icon-v79.png" />
   <link rel="icon" type="image/png" href="assets/images/branding/favicon.png">
-  <link rel="stylesheet" href="assets/css/status.css">
+  <link rel="stylesheet" href="assets/css/status.css?v=83">
   <link rel="stylesheet" href="assets/css/winter-emergency.css">
   <link rel="stylesheet" href="assets/css/app-shell.css">
 </head>
@@ -30,6 +30,13 @@
         <div id="operationsNotices" class="status-list" aria-live="polite"></div>
         <div id="statusList" class="status-list"></div>
       </div>
+
+      <section class="card station-status-card" aria-labelledby="stationStatusTitle">
+        <h2 id="stationStatusTitle" class="name">Station Status</h2>
+        <div id="stationStatusList" class="status-list" aria-live="polite">
+          <p class="station-status-empty">Checking station status…</p>
+        </div>
+      </section>
 
       <div class="card elevator-card">
         <div class="elevator-card-top">
@@ -82,14 +89,14 @@
       </div>
     </a>
   </nav>
-  <script src="assets/js/time.js"></script>
-  <script src="assets/js/service-calendar.js"></script>
+  <script src="assets/js/time.js?v=83"></script>
+  <script src="assets/js/service-calendar.js?v=83"></script>
   <script src="assets/js/notification-config.js"></script>
   <script src="assets/js/live-map-id-geometry.js"></script>
-  <script src="assets/js/operations.js"></script>
+  <script src="assets/js/operations.js?v=83"></script>
   <script src="assets/js/operations-client.js"></script>
-  <script type="module" src="assets/js/schedule.js"></script>
-  <script type="module" src="assets/js/status.js"></script>
-  <script src="assets/js/pwa.js"></script>
+  <script type="module" src="assets/js/schedule.js?v=83"></script>
+  <script type="module" src="assets/js/status.js?v=83"></script>
+  <script src="assets/js/pwa.js?v=83"></script>
 </body>
 </html>

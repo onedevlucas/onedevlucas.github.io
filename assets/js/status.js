@@ -400,17 +400,10 @@ if (!BORAIL_CLOCK || !BORAIL_SERVICE) throw new Error('BORail time and service h
       const operationState = client?.state(now);
       const system = operationState?.shutdowns.find(item => item.kind === 'system');
       const noticeHost = document.getElementById('operationsNotices');
-      if (noticeHost && client) {
-        const stationNotices = client.snapshot.changes.filter(item => item.kind === 'station' &&
-          (ops.active(item, +now) || item.startsAt > +now || (item.endsAt <= +now && item.endsAt > +now - 86400000)) &&
-          (item.endsAt == null || item.startsAt < item.endsAt));
-        noticeHost.innerHTML = (system ? `<div class="row" id="systemOperationsNotice"><strong>System Closed</strong><span>${escapeHtml(client.text(system))}</span></div>` : '') +
-          stationNotices.map(item => {
-            const caption = item.startsAt > +now ? `Scheduled closure · ${client.timeLabel(item.startsAt)}`
-              : ops.active(item, +now) ? 'Station Closed' : 'Station Reopened';
-            return `<div class="row" data-closed-station="${escapeHtml(item.target)}"><strong>${escapeHtml(item.target)} · ${escapeHtml(caption)}</strong><span>${escapeHtml(client.text(item))}</span></div>`;
-          }).join('');
-      }
+      if (noticeHost) noticeHost.innerHTML = system
+        ? `<div class="row" id="systemOperationsNotice"><strong>System Closed</strong><span>${escapeHtml(client.text(system))}</span></div>`
+        : '';
+      if (client && ops && schedule) renderStationStatus(now, client, ops, schedule, operationState);
       host.innerHTML = state.statuses.map((stObj) => {
         const base = delaySignals[stObj.id] || { type: 'noservice', reason: 'No service information is available.' };
         const override = client && schedule && ops.describeService(stObj.id, schedule.routesForDate(now),
@@ -494,8 +487,7 @@ if (!BORAIL_CLOCK || !BORAIL_SERVICE) throw new Error('BORail time and service h
       return express ? item.express : item.local;
     }
 
-    function renderStationBadges(station) {
-      const badges = STATUS_STATION_SERVICES[station] || [];
+    function renderStationBadges(station, badges = STATUS_STATION_SERVICES[station] || []) {
       if (!badges.length) return '';
       return `<span class="station-badges">${badges.map(badge => {
         const src = lineBadgePath(badge.s, Boolean(badge.e));
@@ -503,6 +495,61 @@ if (!BORAIL_CLOCK || !BORAIL_SERVICE) throw new Error('BORail time and service h
         const alt = badge.e ? `<${badge.s}>` : `(${badge.s})`;
         return `<img src="${src}" alt="${escapeHtml(alt)}" loading="lazy">`;
       }).join('')}</span>`;
+    }
+
+    let stationStatusMarkup;
+
+    function renderStationStatus(now, client, ops, schedule, operationState) {
+      const host = document.getElementById('stationStatusList');
+      const routes = schedule.routesForDate(now, { allowWinter: false });
+      const active = [...operationState.stations.values()];
+      const scheduled = [];
+      const reopened = [];
+      for (const item of client.snapshot.changes) {
+        if (item.kind !== 'station' || (item.endsAt != null && item.endsAt <= item.startsAt)) continue;
+        if (item.startsAt > +now) scheduled.push(item);
+        else if (item.endsAt != null && item.endsAt <= +now && item.endsAt > +now - 86400000 &&
+          !ops.atTime(client.snapshot, item.endsAt).stations.has(item.target)) reopened.push(item);
+      }
+      active.sort((a, b) => a.target.localeCompare(b.target));
+      scheduled.sort((a, b) => a.startsAt - b.startsAt);
+      reopened.sort((a, b) => b.endsAt - a.endsAt);
+
+      function renderNotice(item, type) {
+        const services = new Set(routes.filter(route => route.stops.includes(item.target)).map(ops.serviceKey));
+        const badges = SERVICES.filter(service => services.has(service.id))
+          .map(service => ({ s: service.letter, e: service.mode === 'express' }));
+        const label = { closed: 'Station Closed', scheduled: 'Scheduled Closure', reopened: 'Station Reopened' }[type];
+        const endLabel = type === 'reopened' ? 'Reopened' : 'Expected reopening';
+        const end = item.endsAt == null ? 'Until further notice' : client.timeLabel(item.endsAt);
+        return `<details class="station-notice" data-closed-station="${escapeHtml(item.target)}" data-notice-id="${escapeHtml(item.id)}">
+          <summary>
+            <span class="station-notice-name"><strong>${escapeHtml(item.target)}</strong>${renderStationBadges(item.target, badges)}</span>
+            <span class="station-notice-chevron" aria-hidden="true"></span>
+          </summary>
+          <div class="station-notice-details">
+            <strong>${label}</strong>
+            <p>${type === 'reopened' ? 'Original closure reason' : 'Reason'}: ${escapeHtml(item.reason)}</p>
+            <p>Closure start: ${escapeHtml(client.timeLabel(item.startsAt))}</p>
+            <p>${endLabel}: ${escapeHtml(end)}</p>
+          </div>
+        </details>`;
+      }
+
+      // List current closures first so existing station notification links find them before older notices.
+      const markup = (active.length ? active.map(item => renderNotice(item, 'closed')).join('')
+        : '<p class="station-status-empty">No stations are currently closed.</p>') +
+        (scheduled.length ? '<h3>Scheduled Closures</h3>' + scheduled.map(item => renderNotice(item, 'scheduled')).join('') : '') +
+        (reopened.length ? '<h3>Recently Reopened</h3>' + reopened.map(item => renderNotice(item, 'reopened')).join('') : '');
+      if (markup === stationStatusMarkup) return;
+      stationStatusMarkup = markup;
+      const openNotices = new Set(Array.from(host.querySelectorAll('details[open]'), row => row.dataset.noticeId));
+      const focusedNotice = document.activeElement?.closest('.station-notice')?.dataset.noticeId;
+      host.innerHTML = markup;
+      for (const row of host.querySelectorAll('details')) {
+        row.open = openNotices.has(row.dataset.noticeId);
+        if (row.dataset.noticeId === focusedNotice) row.querySelector('summary').focus({ preventScroll: true });
+      }
     }
 
     function formatElevatorTime(timestamp) {
@@ -784,9 +831,10 @@ if (!BORAIL_CLOCK || !BORAIL_SERVICE) throw new Error('BORail time and service h
 
     const STATUS_STATE = { statuses: SERVICES };
     let ELEVATOR_STATE = null;
+    let requestedStatusShown = false;
 
     function focusRequestedStatus() {
-      if (typeof location === 'undefined') return;
+      if (requestedStatusShown || document.getElementById('splash-screen')) return;
       const params = new URLSearchParams(location.search);
       const service = params.get('service');
       const station = params.get('station');
@@ -795,16 +843,18 @@ if (!BORAIL_CLOCK || !BORAIL_SERVICE) throw new Error('BORail time and service h
         ? document.querySelector(`[data-service-id="${CSS.escape(service)}"]`)
         : station
           ? Array.from(document.querySelectorAll('.elevator-row[data-station]')).find(row => row.dataset.station === station)
-          : closedStation ? Array.from(document.querySelectorAll('[data-closed-station]')).find(row => row.dataset.closedStation === closedStation)
+          : closedStation ? Array.from(document.querySelectorAll('#stationStatusList [data-closed-station]')).find(row => row.dataset.closedStation === closedStation)
             : params.has('operations') ? document.getElementById('systemOperationsNotice') || document.getElementById('statusList') : null;
       if (!target) return;
+      requestedStatusShown = true;
       if (target.tagName === 'DETAILS') target.open = true;
-      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      target.scrollIntoView({ behavior: reduceMotion ? 'instant' : 'smooth', block: 'center' });
       target.animate?.([
         { boxShadow: '0 0 0 0 rgba(138,143,255,0)' },
         { boxShadow: '0 0 0 4px rgba(138,143,255,.45)' },
         { boxShadow: '0 0 0 0 rgba(138,143,255,0)' }
-      ], { duration: 1500, easing: 'ease-out' });
+      ], { duration: reduceMotion ? 0 : 1500, easing: 'ease-out' });
     }
 
     globalThis.BORailStatusEngine = Object.freeze({
@@ -848,5 +898,6 @@ if (!BORAIL_CLOCK || !BORAIL_SERVICE) throw new Error('BORail time and service h
         }
         renderStatus(STATUS_STATE);
         renderElevatorStatus(ELEVATOR_STATE);
+        focusRequestedStatus();
       }, 30 * 1000);
     }

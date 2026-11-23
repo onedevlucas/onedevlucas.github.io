@@ -1,6 +1,20 @@
-const CACHE_NAME = 'borail-v82-24h-service';
+const CACHE_NAME = 'borail-v83';
 const PUSH_META_CACHE = 'borail-push-meta-v1';
 const PUSH_META_URL = '/__borail_push_config__';
+
+// Match the release-specific URLs used by the timetable and status pages.
+const VERSIONED_ASSETS = [
+  'assets/css/status.css',
+  'assets/css/timetable.css',
+  'assets/js/time.js',
+  'assets/js/service-calendar.js',
+  'assets/js/schedule.js',
+  'assets/js/operations.js',
+  'assets/js/timetable.js',
+  'assets/js/live-map.js',
+  'assets/js/status.js',
+  'assets/js/pwa.js'
+].map(asset => `${asset}?v=83`);
 
 const CORE_ASSETS = [
   './',
@@ -97,11 +111,13 @@ const CORE_ASSETS = [
   'assets/images/line-icons/f-local.png',
   'assets/images/line-icons/g-local.png',
   'assets/images/line-icons/s-express.png',
-  'assets/images/line-icons/s-local.png'
+  'assets/images/line-icons/s-local.png',
+  ...VERSIONED_ASSETS
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS)));
+  const requests = CORE_ASSETS.map(asset => new Request(asset, { cache: 'reload' }));
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(requests)));
   self.skipWaiting();
 });
 
@@ -206,10 +222,12 @@ self.addEventListener('fetch', (event) => {
 
   if (networkFirst) {
     event.respondWith(
-      fetch(event.request)
+      fetch(event.request, { cache: 'no-cache' })
         .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+          }
           return response;
         })
         .catch(() => caches.match(event.request))

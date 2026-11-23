@@ -74,7 +74,7 @@ await send('Runtime.evaluate', { expression: `try {
 await send('Page.navigate', { url: 'http://127.0.0.1:8766/index.html' });
 await wait(750);
 
-assert.equal(await evaluate(`document.getElementById('splash-version').textContent`), 'V82 - 11/19/26');
+assert.equal(await evaluate(`document.getElementById('splash-version').textContent`), 'V83 - 11/22/26');
 assert.equal(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`), 0);
 await wait(2850);
 assert.ok(await evaluate(`Number(getComputedStyle(document.getElementById('splash-version')).opacity)`) > 0.9);
@@ -769,7 +769,7 @@ const upcomingTimelineStyle = await evaluate(`(() => {
     borderLeftWidth: getComputedStyle(list).borderLeftWidth,
     borderLeftColor: getComputedStyle(list).borderLeftColor,
     stopIconDisplay: getComputedStyle(firstIcon).display,
-    stopBeforeLeft: getComputedStyle(firstStop, '::before').left,
+    markerCenterOffset: parseFloat(getComputedStyle(firstStop, '::before').left),
     activeNavFilter: getComputedStyle(activeIcon).filter,
     stopCount: row.querySelectorAll('.stop-item').length
   };
@@ -777,7 +777,7 @@ const upcomingTimelineStyle = await evaluate(`(() => {
 assert.equal(upcomingTimelineStyle.borderLeftWidth, '3px');
 assert.notEqual(upcomingTimelineStyle.borderLeftColor, 'rgba(0, 0, 0, 0)');
 assert.equal(upcomingTimelineStyle.stopIconDisplay, 'none');
-assert.equal(upcomingTimelineStyle.stopBeforeLeft, '-22px');
+assert.equal(upcomingTimelineStyle.markerCenterOffset, -19.5);
 assert.notEqual(upcomingTimelineStyle.activeNavFilter, 'none');
 assert.ok(upcomingTimelineStyle.stopCount > 1);
 const delayedStopLayout = await evaluate(`(() => {
@@ -789,9 +789,7 @@ const delayedStopLayout = await evaluate(`(() => {
   const scheduled = host.querySelector('.scheduled').getBoundingClientRect();
   const newTime = host.querySelector('.new-time').getBoundingClientRect();
   const name = host.querySelector('.stop-name').getBoundingClientRect();
-  const beforeLeft = getComputedStyle(host.querySelector('.stop-item'), '::before').left;
   const result = {
-    beforeLeft,
     newTimeBelow: newTime.top > scheduled.bottom - 1,
     noOverlap: scheduled.right < name.left && newTime.right < name.left,
     gap: Math.min(name.left - scheduled.right, name.left - newTime.right)
@@ -799,7 +797,6 @@ const delayedStopLayout = await evaluate(`(() => {
   host.remove();
   return result;
 })()`);
-assert.equal(delayedStopLayout.beforeLeft, '-22px');
 assert.equal(delayedStopLayout.newTimeBelow, true);
 assert.equal(delayedStopLayout.noOverlap, true);
 assert.ok(delayedStopLayout.gap >= 8);

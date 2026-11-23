@@ -313,11 +313,28 @@
   }
 }
 
+    .stops-list, .trip-stop-timeline, .live-map-stop-timeline {
+      --timeline-indent: 18px;
+      --timeline-stroke: 3px;
+      --timeline-color: var(--stop-line-color, var(--accent));
+      padding-left: var(--timeline-indent);
+      border-left: var(--timeline-stroke) solid var(--timeline-color);
+    }
+    .stop-item::before, .trip-stop::before, .live-map-stop-item::before {
+      content: '';
+      position: absolute;
+      left: calc(-1 * (var(--timeline-indent) + var(--timeline-stroke) / 2));
+      transform: translate(-50%, -50%);
+      box-sizing: border-box;
+      width: 17px;
+      height: 17px;
+      border: var(--timeline-stroke) solid var(--timeline-color);
+      border-radius: 50%;
+      background: var(--card);
+    }
     .stops-list {
       list-style: none;
       margin: 8px 0 0 17px;
-      padding-left: 18px;
-      border-left: 3px solid var(--stop-line-color, var(--accent));
       line-height: 1.4;
     }
     .stop-item {
@@ -332,15 +349,7 @@
       color: var(--muted);
     }
     .stop-item::before {
-      content: '';
-      position: absolute;
-      left: -22px;
-      top: 11px;
-      width: 11px;
-      height: 11px;
-      border-radius: 50%;
-      background: var(--card);
-      border: 3px solid var(--stop-line-color, var(--accent));
+      top: 15.75px;
       z-index: 1;
     }
     .stop-item .stop-icon {
@@ -945,9 +954,9 @@
     .trip-leg-card strong, .trip-leg-card span { display: block; }
     .trip-leg-card span { color: var(--muted); font-size: 11px; margin-top: 2px; }
     .trip-leg-time { margin-left: auto; text-align: right; font-variant-numeric: tabular-nums; }
-    .trip-stop-timeline { margin: 10px 0 0 17px; padding-left: 18px; border-left: 3px solid var(--leg-color, var(--accent)); }
+    .trip-stop-timeline { --timeline-color: var(--leg-color, var(--accent)); margin: 10px 0 0 17px; }
     .trip-stop { position: relative; display: grid; grid-template-columns: 54px 1fr; gap: 8px; padding: 7px 0; color: var(--muted); font-size: 11px; }
-    .trip-stop::before { content: ''; position: absolute; left: -28px; top: 11px; width: 11px; height: 11px; border-radius: 50%; background: var(--card); border: 3px solid var(--leg-color, var(--accent)); }
+    .trip-stop::before { top: 15px; }
     .trip-stop.endpoint { color: var(--text); font-weight: 750; }
     .trip-stop-time { font-variant-numeric: tabular-nums; }
     .trip-stop-name { display: inline-flex; align-items: center; gap: 5px; min-width: 0; }
@@ -1254,10 +1263,10 @@
 .live-map-progress > i { display: block; height: 100%; border-radius: inherit; background: var(--accent); }
 .live-map-stops-title { margin: 16px 0 5px; color: var(--muted); font-size: 11px; font-weight: 600; }
 .live-map-stop-timeline {
+  --timeline-indent: 20px;
   list-style: none;
   margin: 7px 0 3px 18px;
-  padding: 0 0 0 20px;
-  border-left: 3px solid var(--stop-line-color, var(--accent));
+  padding-block: 0;
 }
 .live-map-stop-item {
   position: relative;
@@ -1269,15 +1278,7 @@
   color: var(--muted);
 }
 .live-map-stop-item::before {
-  content: '';
-  position: absolute;
-  top: 8px;
-  left: -27px;
-  width: 11px;
-  height: 11px;
-  border: 3px solid var(--stop-line-color, var(--accent));
-  border-radius: 50%;
-  background: var(--card);
+  top: 13px;
   box-shadow: 0 0 0 2px var(--card);
 }
 .live-map-stop-item.past { opacity: .48; }

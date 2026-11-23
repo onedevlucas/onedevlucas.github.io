@@ -101,6 +101,40 @@
     .elevator-station-line strong{font-weight:800}
     .station-badges{display:inline-flex;align-items:center;gap:3px;flex-wrap:wrap}
     .station-badges img{width:21px;height:21px;display:block;object-fit:contain}
+    .station-status-card{display:grid;gap:12px}
+    .station-status-card h2{margin:0;font-size:16px}
+    .station-status-card h3{margin:6px 0 0;color:var(--muted);font-size:13px}
+    .station-status-empty{margin:0;padding:14px;border:1px dashed rgba(255,255,255,.12);border-radius:14px;color:var(--muted);font-size:14px}
+    .station-notice{border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(255,255,255,.025)}
+    .station-notice summary{
+      display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;
+      min-height:50px;padding:12px 14px;border-radius:inherit;list-style:none;cursor:pointer;
+    }
+    .station-notice summary::-webkit-details-marker{display:none}
+    .station-notice summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+    .station-notice-name{display:flex;flex-wrap:wrap;align-items:center;gap:5px 8px;overflow-wrap:anywhere}
+    .station-notice-chevron{
+      width:8px;height:8px;margin-right:3px;border:solid var(--muted);border-width:0 2px 2px 0;
+      transform:rotate(45deg);transition:transform .2s ease;
+    }
+    .station-notice[open] .station-notice-chevron{transform:rotate(225deg)}
+    .station-notice-details{padding:0 14px 14px;color:var(--muted);font-size:14px;line-height:1.4;overflow-wrap:anywhere}
+    .station-notice-details strong{color:var(--text)}
+    .station-notice-details p{margin:5px 0 0}
+    @media (prefers-reduced-motion: no-preference){
+      .station-notice[open] .station-notice-details{animation:station-notice-reveal .22s ease-out}
+      @keyframes station-notice-reveal{
+        from{opacity:0;clip-path:inset(0 0 100% 0);transform:translateY(-4px)}
+        to{opacity:1;clip-path:inset(0);transform:translateY(0)}
+      }
+      @supports (height:calc-size(auto, size)) and selector(::details-content){
+        .station-notice::details-content{
+          height:0;overflow:clip;transition:height .22s ease, content-visibility .22s allow-discrete;
+        }
+        .station-notice[open]::details-content{height:calc-size(auto, size)}
+        .station-notice[open] .station-notice-details{animation:none}
+      }
+    }
     .elevator-hint{color:var(--muted);font-size:12px}
     .elevator-row-pill{
       display:inline-flex;align-items:center;gap:5px;min-width:44px;justify-content:center;

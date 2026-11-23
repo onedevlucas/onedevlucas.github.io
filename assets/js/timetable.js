@@ -43,9 +43,13 @@ let activeStationId = '';
 let activeTimetableView = 'upcoming';
 let tripDepartureMode = 'now';
 let renderedTripSearch = null;
-let plannerServiceDay = localDateKey(BORAIL_CLOCK.now());
+let plannerServiceDay;
 let tripOriginDropdown;
 let tripDestinationDropdown;
+
+upcomingTab.addEventListener('click', () => setTimetableView('upcoming'));
+tripPlannerTab.addEventListener('click', () => setTimetableView('planner'));
+liveMapTab.addEventListener('click', () => setTimetableView('map'));
 
 function getBadgesForStation(stationId, { serviceOrder = null, expressFirst = false } = {}) {
   const linesMap = {};
@@ -215,8 +219,8 @@ function renderCustomStationsDropdown() {
       dropdownContainer.classList.remove('open');
       openDetails.clear();
       expandedStops.clear();
-      renderCustomStationsDropdown();
-      renderArrivals();
+      refreshStationOptions();
+      refreshUpcomingTrains();
     });
   });
 }
@@ -282,9 +286,13 @@ function setTimetableView(view) {
   upcomingTab.setAttribute('aria-selected', String(upcomingActive));
   tripPlannerTab.setAttribute('aria-selected', String(plannerActive));
   liveMapTab.setAttribute('aria-selected', String(mapActive));
-  sessionStorage.setItem('borailTimetableView', view);
-  if (plannerActive) updatePlannerServiceState(getTripPlanningDate(false) || BORAIL_CLOCK.now());
+  try { sessionStorage.setItem('borailTimetableView', view); } catch { /* View storage is optional. */ }
   document.dispatchEvent(new CustomEvent('borail:viewchange', { detail: { view } }));
+  if (plannerActive && plannerServiceDay) updatePlannerServiceState(getTripPlanningDate(false) || BORAIL_CLOCK.now());
+}
+
+function savedTimetableView() {
+  try { return sessionStorage.getItem('borailTimetableView'); } catch { return null; }
 }
 
 function inputDateValue(date) {
@@ -318,6 +326,7 @@ function initializeTripPlanner() {
   tripDateInput.min = inputDateValue(now);
   tripTimeInput.value = inputTimeValue(new Date(now.getTime() + 15 * 60000));
   updatePlannerServiceState(now);
+  plannerServiceDay = localDateKey(now);
 }
 
 function setTripDepartureMode(mode) {
@@ -767,23 +776,46 @@ function wireUpEventListeners() {
   });
 }
 
-renderCustomStationsDropdown();
-initializeTripPlanner();
-renderClock();
-renderArrivals();
+function refreshStationOptions() {
+  try { renderCustomStationsDropdown(); }
+  catch (error) { console.error('Could not load the timetable stations.', error); }
+}
+
+function refreshUpcomingTrains() {
+  try { renderArrivals(); }
+  catch (error) {
+    console.error('Could not load upcoming trains.', error);
+    arrivalsEl.innerHTML = '<div class="subtle">Upcoming trains are temporarily unavailable. Use the refresh button to try again.</div>';
+  }
+}
+
+function refreshTimetable() {
+  try { renderClock(); }
+  catch (error) { console.error('Could not update the timetable clock.', error); }
+  refreshUpcomingTrains();
+}
+
+refreshStationOptions();
+try { initializeTripPlanner(); }
+catch (error) {
+  console.error('Could not initialize the trip planner.', error);
+  findTripsButton.disabled = true;
+  renderTripPlannerMessage('Trip planner unavailable.', 'Reload BORail to try again.');
+}
 const entryParams = new URLSearchParams(location.search);
 const plannerEntry = entryParams.get('view') === 'planner';
-setTimetableView(plannerEntry ? 'planner' : sessionStorage.getItem('borailTimetableView') || 'upcoming');
-if (plannerEntry && STATION_SET.has(entryParams.get('from')) && STATION_SET.has(entryParams.get('to'))) {
+setTimetableView(plannerEntry ? 'planner' : savedTimetableView() || 'upcoming');
+if (plannerEntry && plannerServiceDay &&
+    STATION_SET.has(entryParams.get('from')) && STATION_SET.has(entryParams.get('to'))) {
   tripOriginDropdown.setValue(entryParams.get('from'));
   tripDestinationDropdown.setValue(entryParams.get('to'));
   findAndRenderTrips();
 }
+refreshTimetable();
 
 setInterval(() => {
-  renderClock();
-  renderArrivals();
-  if (activeTimetableView === 'planner') {
+  refreshTimetable();
+  if (activeTimetableView === 'planner' && plannerServiceDay) {
     const now = BORAIL_CLOCK.now();
     const dateKey = localDateKey(now);
     if (dateKey !== plannerServiceDay) {
@@ -795,18 +827,15 @@ setInterval(() => {
   }
 }, 5000);
 
-limitSelect.addEventListener('change', renderArrivals);
-dirFilterSelect.addEventListener('change', renderArrivals);
-serviceTypeFilterSelect.addEventListener('change', renderArrivals);
-refreshBtn.addEventListener('click', () => { renderClock(); renderArrivals(); });
+limitSelect.addEventListener('change', refreshUpcomingTrains);
+dirFilterSelect.addEventListener('change', refreshUpcomingTrains);
+serviceTypeFilterSelect.addEventListener('change', refreshUpcomingTrains);
+refreshBtn.addEventListener('click', refreshTimetable);
 window.addEventListener('borail:operations', () => {
-  renderArrivals();
-  renderCustomStationsDropdown();
-  if (tripPlannerResults.childElementCount && !tripPlannerView.hidden) findAndRenderTrips();
+  refreshUpcomingTrains();
+  refreshStationOptions();
+  if (plannerServiceDay && tripPlannerResults.childElementCount && !tripPlannerView.hidden) findAndRenderTrips();
 });
-upcomingTab.addEventListener('click', () => setTimetableView('upcoming'));
-tripPlannerTab.addEventListener('click', () => setTimetableView('planner'));
-liveMapTab.addEventListener('click', () => setTimetableView('map'));
 departNowButton.addEventListener('click', () => setTripDepartureMode('now'));
 departLaterButton.addEventListener('click', () => setTripDepartureMode('later'));
 tripDateInput.addEventListener('change', () => updatePlannerServiceState(getTripPlanningDate(false) || BORAIL_CLOCK.now()));
